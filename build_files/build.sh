@@ -11,6 +11,7 @@ set -ouex pipefail
 
 # this installs a package from fedora repos
 
+dnf5 group remove 'GNOME Desktop Environment'
 dnf5 install -y @cosmic-desktop-environment
 
 # Clear cache
