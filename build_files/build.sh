@@ -12,6 +12,6 @@ dnf5 clean all
 rm -rf /var/cache/dnf/*
 
 # Switch to cosmic greeter
-systemctl disable display-manager 
-systemctl enable cosmic-greeter.service -f
+# systemctl disable display-manager 
+# systemctl enable cosmic-greeter.service -f
 
