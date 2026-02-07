@@ -4,14 +4,14 @@ set -ouex pipefail
 
 ### Install packages
 
-dnf5 install -y @cosmic-desktop-environment
-dnf5 remove -y "libreoffice-*"
+dnf5 copr enable -y swayfx/swayfx
+dnf5 install -y swayfx
 
 # Clear cache
 dnf5 clean all 
 rm -rf /var/cache/dnf/*
 
 # Switch to cosmic greeter
-# systemctl disable display-manager 
+# systemctl disable isplay-manager 
 # systemctl enable cosmic-greeter.service -f
 
