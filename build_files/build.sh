@@ -6,7 +6,7 @@ set -ouex pipefail
 
 dnf5 copr enable -y swayfx/swayfx
 dnf5 copr enable -y varlad/zellij
-dnf5 install -y swayfx kanshi alacritty wofi fira-code-fonts zellij waybar
+dnf5 install -y swayfx kanshi alacritty wofi fira-code-fonts zellij waybar blueman pavucontrol
 
 # Clear cache
 dnf5 clean all 
