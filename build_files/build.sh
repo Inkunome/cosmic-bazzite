@@ -10,6 +10,7 @@ dnf5 install -y alacritty fira-code-fonts zellij waybar blueman pavucontrol
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
     sh -s -- install ostree \
     --extra-conf "filter-syscalls = false" \
+    --init none \
     --no-confirm
 
 # Clear cache
