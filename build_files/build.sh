@@ -11,12 +11,6 @@ dnf5 install -y cosmic-desktop
 
 mkdir -p /nix
 
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
-    sh -s -- install ostree \
-    --extra-conf "filter-syscalls = false" \
-    --no-start-daemon \
-    --no-confirm
-
 # Clear cache
 dnf5 clean all 
 rm -rf /var/cache/dnf/*
