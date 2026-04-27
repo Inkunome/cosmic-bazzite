@@ -4,11 +4,13 @@ set -ouex pipefail
 
 ### Install packages
 
-dnf5 copr enable -y swayfx/swayfx
 dnf5 copr enable -y varlad/zellij
-dnf5 install -y swayfx kanshi alacritty wofi fira-code-fonts zellij waybar blueman pavucontrol nemo
+dnf5 install -y alacritty fira-code-fonts zellij waybar blueman pavucontrol
 
-# curl -fsSL https://install.determinate.systems/nix | sh -s -- install ostree --no-confirm
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
+    sh -s -- install ostree \
+    --extra-conf "filter-syscalls = false" \
+    --no-confirm
 
 # Clear cache
 dnf5 clean all 
