@@ -6,7 +6,8 @@ set -ouex pipefail
 
 dnf5 copr enable -y varlad/zellij
 dnf5 copr enable -y ryanabx/cosmic-epoch
-dnf5 install -y --setopt=install_weak_deps=False alacritty fira-code-fonts zellij cosmic-desktop
+dnf5 copr enable -y leloubil/wl-clip-persist
+dnf5 install -y --setopt=install_weak_deps=False alacritty fira-code-fonts zellij cosmic-desktop wl-clip-persist
 
 ### Install Nix
 dnf5 install -y --setopt=install_weak_deps=False nix
