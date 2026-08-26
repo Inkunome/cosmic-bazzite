@@ -122,27 +122,43 @@ jobs:
       # Rechunk repartitions the image into many equal-sized layers instead of one
       # monolithic layer, so updates transfer only the chunks that actually changed.
       # Documentation: https://github.com/hhd-dev/rechunk
-      - name: Run Rechunker
-        id: rechunk
-        uses: hhd-dev/rechunk@f153348d8100c1f504dec435460a0d7baf11a9d2 # v1.1.1
-        with:
-          rechunk: 'ghcr.io/hhd-dev/rechunk:v1.1.1'
-          ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
-          # Used to keep chunk boundaries stable between builds. Absent on the
-          # very first run, which is fine since prev-ref-fail is not set.
-          prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
-          # version defaults to <date> (YYMMDD); no need for an explicit value.
-          # Rechunk strips labels during the OSTree round-trip, so reapply them.
-          labels: ${{ steps.metadata.outputs.labels }}
-
-      # Load the rechunked image back into podman storage so push-to-registry finds it
-      - name: Load in podman and tag
-        run: |
-          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
-          sudo rm -rf ${{ steps.rechunk.outputs.output }}
-          for tag in ${{ steps.metadata.outputs.tags }}; do
-            podman tag $IMAGE ${{ env.IMAGE_NAME }}:$tag
-          done
+      #
+      # DISABLED: rechunk needs the image in root's container storage. It runs
+      # podman under sudo, which reads /var/lib/containers, while
+      # redhat-actions/buildah-build runs as the runner user and writes to
+      # ~/.local/share/containers. Rechunk therefore finds no image and podman
+      # exits 125. Note the BTRFS mount above already targets /var/lib/containers,
+      # so the rootless build does not use it either.
+      #
+      # Enabling this requires building rootfully, which is what ublue does in
+      # production: bluefin runs `sudo -E just build-ghcr` and then
+      # `sudo -E just rechunk` against the same root storage. Swapping
+      # buildah-build for `sudo podman build` means passing tags and labels by
+      # hand, so it belongs in its own change.
+      #
+      # Worth doing: our additions land in a single ~990 MB layer on top of a base
+      # that is split into 128 layers (largest 380 MB), so any change to them
+      # forces a full re-download. Upstream measures a 40% smaller update for
+      # weekly updaters and over 90% for back-to-back builds.
+      #
+      # - name: Run Rechunker
+      #   id: rechunk
+      #   uses: hhd-dev/rechunk@f153348d8100c1f504dec435460a0d7baf11a9d2 # v1.1.1
+      #   with:
+      #     rechunk: 'ghcr.io/hhd-dev/rechunk:v1.1.1'
+      #     ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+      #     prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+      #     # version defaults to <date> (YYMMDD); no need for an explicit value.
+      #     # Rechunk strips labels during the OSTree round-trip, so reapply them.
+      #     labels: ${{ steps.metadata.outputs.labels }}
+      #
+      # - name: Load in podman and tag
+      #   run: |
+      #     IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+      #     sudo rm -rf ${{ steps.rechunk.outputs.output }}
+      #     for tag in ${{ steps.metadata.outputs.tags }}; do
+      #       podman tag $IMAGE ${{ env.IMAGE_NAME }}:$tag
+      #     done
 
       # These `if` statements are so that pull requests for your custom images do not make it publish any packages under your name without you knowing
       # They also check if the runner is on the default branch so that things like the merge queue (if you enable it), are going to work
