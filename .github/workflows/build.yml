@@ -106,79 +106,91 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
-      # Built with sudo so the image lands in root's container storage at
-      # /var/lib/containers, which is where the BTRFS mount above points and
-      # where rechunk (which runs `sudo podman create`) looks for it. A rootless
-      # buildah-build would write to ~/.local/share/containers instead, leaving
-      # rechunk with nothing to mount.
       - name: Build Image
         id: build_image
-        env:
-          LABELS: ${{ steps.metadata.outputs.labels }}
-        run: |
-          set -euo pipefail
-          # Labels are newline separated and their values contain spaces, so
-          # build the argument list rather than word-splitting.
-          args=()
-          while IFS= read -r label; do
-            [ -n "$label" ] && args+=(--label "$label")
-          done <<< "$LABELS"
-          sudo podman build \
-            "${args[@]}" \
-            --file ./Containerfile \
-            --tag "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" \
-            .
-
-      # Rechunk repartitions the image into many equal-sized layers instead of
-      # one monolithic layer, so updates transfer only the chunks that actually
-      # changed. Our additions would otherwise be a single ~990 MB layer on top
-      # of a base that is already split into 128.
-      # Documentation: https://github.com/hhd-dev/rechunk
-      - name: Run Rechunker
-        id: rechunk
-        uses: hhd-dev/rechunk@f153348d8100c1f504dec435460a0d7baf11a9d2 # v1.1.1
+        uses: redhat-actions/buildah-build@3a51aade9afa17e5c78256bcbe2e1ee08c7b995b # v3.0.2
         with:
-          rechunk: 'ghcr.io/hhd-dev/rechunk:v1.1.1'
-          ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
-          # Keeps chunk boundaries stable between builds. Missing on the very
-          # first run, which is fine since prev-ref-fail is not set.
-          prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
-          # version defaults to <date> (YYMMDD); no explicit value needed.
-          # Rechunk strips labels during the OSTree round trip, so reapply them.
+          containerfiles: |
+            ./Containerfile
+          # Postfix image name with -custom to make it a little more descriptive
+          # Syntax: https://docs.github.com/en/actions/learn-github-actions/expressions#format
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          oci: false
 
-      # Rechunk writes an OCI directory into the workspace, which is on the small
-      # root partition, so load it into root's storage on the BTRFS mount and
-      # delete the directory. Everything stays rootful through to the push;
-      # pulling into rootless storage would put a second copy on that partition.
-      - name: Load rechunked image and tag
-        env:
-          TAGS: ${{ steps.metadata.outputs.tags }}
-        run: |
-          set -euo pipefail
-          IMAGE=$(sudo podman pull "${{ steps.rechunk.outputs.ref }}")
-          # The action outputs `location`, not `output`.
-          sudo rm -rf "${{ steps.rechunk.outputs.location }}"
-          for tag in $TAGS; do
-            sudo podman tag "$IMAGE" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${tag}"
-          done
+      # Rechunk repartitions the image into many equal-sized layers instead of one
+      # monolithic layer, so updates transfer only the chunks that actually changed.
+      # Documentation: https://github.com/hhd-dev/rechunk
+      #
+      # DISABLED (second attempt): building rootfully did make rechunk run, but
+      # the resulting image cannot be deployed. `bootc upgrade` fails while
+      # unpacking it:
+      #
+      #   Unencapsulating base: Layer sha256:083592e31491f225d8cde...:
+      #   Importing object 1d/2319f359b6526aba...file: Writing content object:
+      #   Corrupted file object; checksum
+      #     expected='1d2319f359b6526aba4182b0d41a9386871c7f893d020779f10219923a3d7ae8'
+      #     actual  ='e86fbad7d75befc7f182f60b7d92294220546e82da3742be6a5b75e0ae4c5c3b'
+      #
+      # An ostree content object hashes its xattrs along with its contents, so a
+      # mismatch points at SELinux labels being altered somewhere in the rootful
+      # build plus rechunk round trip. The build and push both succeed and the
+      # image passes `bootc container lint`, so nothing catches this before a
+      # client tries to deploy it. Reverted to the rootless buildah-build that
+      # produced the last image known to deploy (ff5727c).
+      #
+      # Two variables changed together, rootful build and rechunk, so which one
+      # introduces the corruption is not yet established. Anyone retrying this
+      # should isolate them, and must test an actual `bootc upgrade` onto a real
+      # system before merging, since CI cannot detect the failure.
+      #
+      # The original reason rechunk was wanted still stands: our additions are a
+      # single ~990 MB layer on a base split into 128, so every update is a full
+      # re-download. Note the one rechunked image that did build came out as 71
+      # layers with an 810 MB largest layer, so the win was never demonstrated.
+      #
+      # Previously also DISABLED because rechunk needs the image in root's
+      # storage. It runs
+      # podman under sudo, which reads /var/lib/containers, while
+      # redhat-actions/buildah-build runs as the runner user and writes to
+      # ~/.local/share/containers. Rechunk therefore finds no image and podman
+      # exits 125. Note the BTRFS mount above already targets /var/lib/containers,
+      # so the rootless build does not use it either.
+      #
+      # Enabling this requires building rootfully, which is what ublue does in
+      # production: bluefin runs `sudo -E just build-ghcr` and then
+      # `sudo -E just rechunk` against the same root storage. Swapping
+      # buildah-build for `sudo podman build` means passing tags and labels by
+      # hand, so it belongs in its own change.
+      #
+      # Worth doing: our additions land in a single ~990 MB layer on top of a base
+      # that is split into 128 layers (largest 380 MB), so any change to them
+      # forces a full re-download. Upstream measures a 40% smaller update for
+      # weekly updaters and over 90% for back-to-back builds.
+      #
+      # - name: Run Rechunker
+      #   id: rechunk
+      #   uses: hhd-dev/rechunk@f153348d8100c1f504dec435460a0d7baf11a9d2 # v1.1.1
+      #   with:
+      #     rechunk: 'ghcr.io/hhd-dev/rechunk:v1.1.1'
+      #     ref: "localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+      #     prev-ref: "${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}"
+      #     # version defaults to <date> (YYMMDD); no need for an explicit value.
+      #     # Rechunk strips labels during the OSTree round-trip, so reapply them.
+      #     labels: ${{ steps.metadata.outputs.labels }}
+      #
+      # - name: Load in podman and tag
+      #   run: |
+      #     IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+      #     sudo rm -rf ${{ steps.rechunk.outputs.output }}
+      #     for tag in ${{ steps.metadata.outputs.tags }}; do
+      #       podman tag $IMAGE ${{ env.IMAGE_NAME }}:$tag
+      #     done
 
       # These `if` statements are so that pull requests for your custom images do not make it publish any packages under your name without you knowing
       # They also check if the runner is on the default branch so that things like the merge queue (if you enable it), are going to work
-      # Two logins are required, because the push and the signing run as
-      # different users. sudo podman writes to root's auth file, which cosign
-      # (running as the runner user) cannot read, and vice versa. Dropping
-      # either one leaves the image unpushed or unsigned.
-      - name: Login to GitHub Container Registry (rootful, for podman push)
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        env:
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          echo "$REGISTRY_PASSWORD" \
-            | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-      - name: Login to GitHub Container Registry (runner user, for cosign)
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         with:
@@ -187,18 +199,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push To GHCR
-        id: push
+        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v3.0.0
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        id: push
         env:
-          TAGS: ${{ steps.metadata.outputs.tags }}
-        run: |
-          set -euo pipefail
-          for tag in $TAGS; do
-            sudo podman push \
-              --digestfile "${RUNNER_TEMP}/digest.txt" \
-              "${IMAGE_REGISTRY}/${IMAGE_NAME}:${tag}"
-          done
-          echo "digest=$(cat "${RUNNER_TEMP}/digest.txt")" >> "$GITHUB_OUTPUT"
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       # This section is optional and only needs to be enabled if you plan on distributing
       # your project for others to consume. You will need to create a public and private key
