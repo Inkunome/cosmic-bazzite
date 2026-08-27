@@ -5,6 +5,11 @@ COPY build_files /
 # Base Image
 FROM ghcr.io/ublue-os/bazzite-gnome:stable
 
+## Short commit the image was built from. Passed by `just build` from a clean
+## working tree; empty for dirty trees and for CI, which sets this label itself.
+ARG SHA_HEAD_SHORT=""
+LABEL org.opencontainers.image.revision="${SHA_HEAD_SHORT}"
+
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:latest
 # FROM ghcr.io/ublue-os/bluefin-nvidia:stable

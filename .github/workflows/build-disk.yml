@@ -15,19 +15,44 @@ on:
         options:
           - amd64
           - arm64
-  pull_request:
-    branches:
-      - main
-    paths:
-      - './disk_config/disk.toml'
-      - './disk_config/iso.toml'
-      - './.github/workflows/build-disk.yml'
+  # The pull_request trigger is disabled until disk builds work again.
+  #
+  # bootc-image-builder fails in the manifest stage:
+  #   error: cannot build manifest: mounting <image> container failed: exit status 125
+  #   Error: no container with name or ID "..." found: no such container
+  #
+  # bib creates a container from the image and then cannot find it to mount, in
+  # the /var/lib/containers/storage that the runner's own podman initialised.
+  # ubuntu-24.04 ships podman 4.9.3 while the bib image bundles a much newer one,
+  # and the two disagree over that shared graphroot. This is what the previous
+  # ghcr.io/lorbuschris/bootc-image-builder:20250608 pin worked around; that fork
+  # image is now 403 and cannot be used. The registry publishes only commit-sha
+  # tags, so pinning a compatible build means bisecting.
+  #
+  # Note this workflow has never passed in this repository, and the same paths
+  # filters upstream carry a './' prefix that never matches, so ublue-os/image-
+  # template does not exercise it on pull requests either.
+  #
+  # Run it by hand with the workflow_dispatch trigger above. Restore this block
+  # once disk builds are fixed; the paths below have the './' prefix removed and
+  # do match.
+  #
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'disk_config/disk.toml'
+  #     - 'disk_config/iso.toml'
+  #     - '.github/workflows/build-disk.yml'
 
 env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
-  BIB_IMAGE: "ghcr.io/lorbuschris/bootc-image-builder:20250608" # "quay.io/centos-bootc/bootc-image-builder:latest" - see https://github.com/osbuild/bootc-image-builder/pull/954
+  # Was pinned to ghcr.io/lorbuschris/bootc-image-builder:20250608 as a workaround;
+  # that personal fork image is no longer pullable (403) and osbuild/bootc-image-builder
+  # is archived. Back to the upstream image, which the Justfile already defaults to.
+  BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
