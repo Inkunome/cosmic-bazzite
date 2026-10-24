@@ -21,7 +21,8 @@ dnf5 install -y --setopt=install_weak_deps=False \
     cosmic-desktop \
     wl-clip-persist \
     grim \
-    nix
+    nix \
+    system-config-printer
 
 # Leave the COPRs present but disabled, matching the convention the Bazzite base
 # uses for its own COPRs. Enabled COPRs would otherwise be consulted by every
