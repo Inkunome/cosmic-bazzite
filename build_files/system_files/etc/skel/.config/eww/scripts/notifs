@@ -1,0 +1,10 @@
+#!/bin/bash
+# Print notification-center state as JSON: DND flag, active count, recent history.
+dnd=false; makoctl mode 2>/dev/null | grep -qx do-not-disturb && dnd=true
+# mako versions differ: fields may be plain values or {"type":..,"data":..} wrappers.
+JQ='def v: if type=="object" then .data else . end;
+    def items: if type=="object" then (.data // []) else . end | if ((.[0]? // null)|type)=="array" then .[0] else . end;
+    [ items[]? | {id: ((.id // 0)|v), app: ((."app-name" // "")|v), summary: ((.summary // "")|v), body: ((.body // "")|v)} ]'
+a=$(makoctl list -j 2>/dev/null | jq -c "$JQ" 2>/dev/null); a=${a:-[]}
+h=$(makoctl history -j 2>/dev/null | jq -c "$JQ | .[:8]" 2>/dev/null); h=${h:-[]}
+jq -nc --argjson dnd "$dnd" --argjson a "$a" --argjson h "$h" '{dnd:$dnd, count:($a|length), items:$h}'

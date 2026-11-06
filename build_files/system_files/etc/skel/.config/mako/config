@@ -1,0 +1,20 @@
+font=Fira Code 10
+background-color=#2a1d36d9
+text-color=#f6eaf4
+border-color=#c8a2f0
+progress-color=over #5b4570
+border-size=3
+border-radius=20
+padding=12
+margin=10
+default-timeout=6000
+layer=overlay
+max-history=30
+anchor=top-right
+
+[urgency=high]
+border-color=#e0566f
+default-timeout=0
+
+[mode=do-not-disturb]
+invisible=1

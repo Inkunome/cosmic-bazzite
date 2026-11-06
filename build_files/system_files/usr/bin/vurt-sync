@@ -1,0 +1,18 @@
+#!/bin/bash
+# Copy the image's default Vurt dotfiles (/etc/skel/.config) into your home.
+# Existing directories are moved aside to <name>.bak-<timestamp>, never deleted.
+set -eu
+ts=$(date +%Y%m%d-%H%M%S)
+for d in sway eww mako fuzzel swaylock; do
+    src=/etc/skel/.config/$d
+    dst=$HOME/.config/$d
+    [[ -d $src ]] || continue
+    if [[ -e $dst ]]; then
+        mv "$dst" "$dst.bak-$ts"
+        echo "backed up $dst -> $dst.bak-$ts"
+    fi
+    mkdir -p "$HOME/.config"
+    cp -a "$src" "$dst"
+    echo "installed $dst"
+done
+echo "Reload sway with Super+Shift+C."

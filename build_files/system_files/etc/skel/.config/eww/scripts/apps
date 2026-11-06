@@ -1,0 +1,178 @@
+#!/usr/bin/python3
+"""Application index, search and pinning for the Vurt dashboard.
+
+  apps search <query>   print matches as JSON and push them to eww (vars: query, results)
+  apps run <query>      launch the best match for <query>, then close the dashboard
+  apps launch <id>      launch an application by desktop-file id, then close the dashboard
+  apps pinned           print pinned apps as JSON and push them to eww (var: pinned)
+  apps toggle-pin <id>  pin or unpin an application, then refresh `pinned`
+"""
+import configparser, glob, json, os, subprocess, sys, time
+
+HOME = os.path.expanduser("~")
+DIRS = ["/usr/share/applications", "/usr/local/share/applications",
+        "/var/lib/flatpak/exports/share/applications",
+        f"{HOME}/.local/share/flatpak/exports/share/applications",
+        f"{HOME}/.local/share/applications"]
+ICON_DIRS = ["/usr/share/icons", "/usr/share/pixmaps", "/var/lib/flatpak/exports/share/icons",
+             f"{HOME}/.local/share/flatpak/exports/share/icons", f"{HOME}/.local/share/icons"]
+CACHE = f"{HOME}/.cache/vurt/apps.json"
+PINS = f"{HOME}/.config/vurt/pinned"
+DEFAULT_PINS = ["org.mozilla.firefox", "firefox", "Alacritty", "thunar", "org.gnome.Settings",
+                "pavucontrol", "blueman-manager", "system-config-printer"]
+MAX_PINNED, MAX_RESULTS = 8, 7
+
+
+def newest_mtime():
+    m = 0
+    for d in DIRS:
+        try:
+            m = max(m, os.stat(d).st_mtime)
+        except OSError:
+            pass
+    return m
+
+
+def icon_index():
+    """basename -> best file (prefers scalable svg, then the largest png up to 256px)."""
+    best = {}
+    for root in ICON_DIRS:
+        for dirpath, _, files in os.walk(root):
+            for f in files:
+                stem, ext = os.path.splitext(f)
+                if ext not in (".svg", ".png"):
+                    continue
+                size = 9999 if ext == ".svg" else 0
+                for part in dirpath.split(os.sep):
+                    if "x" in part and part.split("x")[0].isdigit():
+                        size = int(part.split("x")[0])
+                if size > 256 and ext == ".png":
+                    continue
+                if stem not in best or size > best[stem][0]:
+                    best[stem] = (size, os.path.join(dirpath, f))
+    return {k: v[1] for k, v in best.items()}
+
+
+def build():
+    icons = icon_index()
+    apps = {}
+    for d in DIRS:
+        for path in glob.glob(f"{d}/*.desktop"):
+            cp = configparser.RawConfigParser(strict=False, interpolation=None)
+            cp.optionxform = str
+            try:
+                cp.read(path, encoding="utf-8")
+                e = cp["Desktop Entry"]
+            except Exception:
+                continue
+            if e.get("Type") != "Application" or e.get("NoDisplay", "false").lower() == "true" \
+               or e.get("Hidden", "false").lower() == "true":
+                continue
+            ident = os.path.basename(path)[:-8]
+            icon = e.get("Icon", "")
+            icon_path = icon if os.path.isabs(icon) and os.path.exists(icon) else icons.get(icon, "")
+            apps[ident] = {"id": ident, "name": e.get("Name", ident), "icon": icon_path,
+                           "initial": (e.get("Name", ident)[:1] or "?").upper(),
+                           "keywords": " ".join([e.get("GenericName", ""), e.get("Comment", ""), e.get("Keywords", ""), ident])}
+    out = sorted(apps.values(), key=lambda a: a["name"].lower())
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, "w") as f:
+        json.dump(out, f)
+    return out
+
+
+def load():
+    try:
+        if os.path.getmtime(CACHE) > newest_mtime():
+            with open(CACHE) as f:
+                return json.load(f)
+    except (OSError, ValueError):
+        pass
+    return build()
+
+
+def pins():
+    try:
+        with open(PINS) as f:
+            return [l.strip() for l in f if l.strip()]
+    except OSError:
+        return list(DEFAULT_PINS)
+
+
+def resolve_pinned(apps):
+    by_id = {a["id"].lower(): a for a in apps}
+    out, seen = [], set()
+    for p in pins():
+        a = by_id.get(p.lower())
+        if a and a["id"] not in seen:
+            out.append(a)
+            seen.add(a["id"])
+    return out[:MAX_PINNED]
+
+
+def search(apps, q):
+    q = q.strip().lower()
+    if not q:
+        return []
+    pinned = {a["id"] for a in resolve_pinned(apps)}
+    scored = []
+    for a in apps:
+        n, k = a["name"].lower(), a["keywords"].lower()
+        s = 100 if n.startswith(q) else 80 if any(w.startswith(q) for w in n.split()) else 60 if q in n else 30 if q in k else 0
+        if s:
+            scored.append((-s, n, dict(a, pinned=a["id"] in pinned)))
+    scored.sort(key=lambda t: t[:2])
+    return [t[2] for t in scored[:MAX_RESULTS]]
+
+
+def eww(**kv):
+    for k, v in kv.items():
+        subprocess.run(["eww", "update", f"{k}={v}"], check=False)
+
+
+def close_dash():
+    subprocess.run([os.path.join(os.path.dirname(os.path.abspath(__file__)), "dash"), "close"], check=False)
+
+
+def launch(ident):
+    subprocess.run(["swaymsg", "-q", "exec", f"gtk-launch {ident} || gtk4-launch {ident}"], check=False)
+    close_dash()
+
+
+def main(argv):
+    cmd = argv[1] if len(argv) > 1 else ""
+    arg = argv[2] if len(argv) > 2 else ""
+    apps = load()
+    if cmd == "search":
+        res = json.dumps(search(apps, arg), separators=(",", ":"))
+        eww(query=arg, results=res)
+        print(res)
+    elif cmd == "run":
+        res = search(apps, arg)
+        if res:
+            launch(res[0]["id"])
+    elif cmd == "launch":
+        launch(arg)
+    elif cmd == "pinned":
+        res = json.dumps(resolve_pinned(apps), separators=(",", ":"))
+        eww(pinned=res)
+        print(res)
+    elif cmd == "toggle-pin":
+        cur = [p for p in pins()]
+        low = [p.lower() for p in cur]
+        if arg.lower() in low:
+            cur = [p for p in cur if p.lower() != arg.lower()]
+        else:
+            cur = [a["id"] for a in resolve_pinned(apps)] + [arg]
+        os.makedirs(os.path.dirname(PINS), exist_ok=True)
+        with open(PINS, "w") as f:
+            f.write("\n".join(cur) + "\n")
+        eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
+    else:
+        sys.stderr.write(__doc__)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

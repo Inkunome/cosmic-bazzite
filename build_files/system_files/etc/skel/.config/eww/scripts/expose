@@ -1,0 +1,66 @@
+#!/bin/bash
+# Expose view: every workspace with a thumbnail of each of its windows (Super+Tab).
+#   expose refresh        capture thumbnails, then push the data to eww (variable `expose`)
+#   expose capture        capture a thumbnail of every window
+#   expose json           print workspaces and windows as JSON
+#   expose watch          keep thumbnails fresh while you work (started by sway)
+#   expose goto <id>      focus a window (switches workspace if needed)
+#   expose workspace <n>  switch to a workspace
+#   expose goto-scratch <id>   bring back a minimised window
+# A window that can't be captured (hidden workspace, background tab) keeps its last thumbnail; a window
+# that was never seen shows its app initial. Thumbnails live in ~/.cache/vurt/thumbs, one PNG per window.
+here=$(dirname "$(readlink -f "$0")")
+DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vurt/thumbs"
+mkdir -p "$DIR"
+
+WINDOWS='[.. | objects | select(has("pid") and .pid != null)]'
+
+capture() {
+    local tree ids id fti vis x y w h out
+    tree=$(swaymsg -t get_tree) || return
+    while read -r id fti vis x y w h; do
+        out="$DIR/$id.png"
+        # 1) the compositor's per-window capture (works even when the window is covered), 2) the screen region
+        if [[ $fti != - ]] && grim -T "$fti" -s 0.4 "$out.tmp" 2>/dev/null && [[ -s $out.tmp ]]; then mv "$out.tmp" "$out"
+        elif [[ $vis == true ]] && grim -g "$x,$y ${w}x${h}" -s 0.4 "$out.tmp" 2>/dev/null; then mv "$out.tmp" "$out"
+        else rm -f "$out.tmp"; fi
+    done < <(jq -r "$WINDOWS | .[] | \"\(.id) \(.foreign_toplevel_identifier // \"-\") \(.visible) \(.rect.x) \(.rect.y) \(.rect.width) \(.rect.height)\"" <<<"$tree")
+    # forget the thumbnails of windows that are gone
+    ids=$(jq -r "$WINDOWS | .[] | .id" <<<"$tree")
+    for f in "$DIR"/*.png; do
+        [[ -e $f ]] || continue
+        id=$(basename "$f" .png)
+        grep -qx "$id" <<<"$ids" || rm -f "$f"
+    done
+}
+
+json() {
+    local have
+    have=$(ls "$DIR" 2>/dev/null | sed -n 's/\.png$//p' | jq -R . | jq -sc .)
+    swaymsg -t get_tree | jq -c --argjson have "${have:-[]}" --arg dir "$DIR" '
+        def win: {id, title: (.name // ""), app: (.app_id // .window_properties.class // "?"),
+                  initial: ((.app_id // .window_properties.class // "?") | .[:1] | ascii_upcase), focused,
+                  thumb: (if ((.id | tostring) as $i | $have | index($i)) then "\($dir)/\(.id).png" else "" end)};
+        [ .nodes[] | select(.name != "__i3") | .nodes[] | select(.type == "workspace")
+          | {name, focused: ([.. | objects | select(.focused == true)] | length > 0), scratch: false,
+             windows: ([.. | objects | select(has("pid") and .pid != null)] | map(win))}
+          | select((.windows | length) > 0 or .focused) ]
+        + [ ([.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]? | win]) as $s
+            | select(($s | length) > 0) | {name: "minimised", focused: false, scratch: true, windows: $s} ]'
+}
+
+case "${1:-refresh}" in
+    capture) capture ;;
+    json) json ;;
+    refresh) capture; eww update expose="$(json)" ;;
+    watch)
+        capture
+        swaymsg -t subscribe -m '["window","workspace"]' | while read -r _; do
+            while read -r -t 0.5 _; do :; done   # let a burst of events settle
+            capture
+        done ;;
+    goto)           "$here/dash" close; swaymsg -q "[con_id=${2:?id}] focus" ;;
+    goto-scratch)   "$here/dash" close; exec "$(command -v vurt-scratch)" show "${2:?id}" ;;
+    workspace)      "$here/dash" close; swaymsg -q workspace "${2:?name}" ;;
+    *) sed -n '2,13p' "$0" >&2; exit 1 ;;
+esac

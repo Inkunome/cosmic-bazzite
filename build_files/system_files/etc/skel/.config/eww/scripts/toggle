@@ -1,0 +1,17 @@
+#!/bin/bash
+# toggle <wifi|bluetooth|dnd|night|profile>
+case "${1:-}" in
+    wifi)
+        if [[ $(nmcli -t -f WIFI g) == enabled ]]; then nmcli radio wifi off; else nmcli radio wifi on; fi ;;
+    bluetooth)
+        if bluetoothctl show | grep -q "Powered: yes"; then bluetoothctl power off; else bluetoothctl power on; fi ;;
+    dnd) makoctl mode -t do-not-disturb ;;
+    night)
+        if pgrep -x wlsunset >/dev/null; then pkill -x wlsunset; else setsid wlsunset -t 3600 -T 6500 -S 21:00 -s 07:00 >/dev/null 2>&1 & fi ;;
+    profile)
+        cur=$(busctl get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile | awk -F'"' '{print $2}')
+        case $cur in power-saver) next=balanced ;; balanced) next=performance ;; *) next=power-saver ;; esac
+        busctl set-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile s "$next" ;;
+    *) echo "usage: toggle wifi|bluetooth|dnd|night|profile" >&2; exit 1 ;;
+esac
+exit 0

@@ -1,0 +1,7 @@
+#!/bin/bash
+# Print {"vol":N,"muted":bool} for the default audio sink or source.
+t="@DEFAULT_AUDIO_${1^^}@"
+out=$(wpctl get-volume "$t" 2>/dev/null) || { echo '{"vol":0,"muted":true}'; exit; }
+vol=$(awk '{printf "%d", $2*100}' <<<"$out")
+[[ $out == *MUTED* ]] && muted=true || muted=false
+echo "{\"vol\":$vol,\"muted\":$muted}"
