@@ -1,4 +1,4 @@
-# Vurt desktop on Bazzite
+# Ink desktop on Bazzite
 
 A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in light purple and pink, with a thorny branch of flowers under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
@@ -55,7 +55,7 @@ The image is named after the repository (`cosmic-bazzite`). Rename the repositor
 New users get the desktop configuration automatically. For an existing home directory, copy it in once with:
 
 ```bash
-vurt-sync        # backs up ~/.config/{sway,eww,mako,fuzzel,swaylock}, then installs the defaults
+ink-sync        # backs up ~/.config/{sway,eww,mako,fuzzel,swaylock}, then installs the defaults
 ```
 
 Then reload Sway with `Super+Shift+C`.
@@ -123,18 +123,18 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | `/etc/skel/.config/sway/config` | Sway config: look, keys, autostart, keyboard layouts |
 | `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `scripts/`, `icons/` |
 | `/etc/skel/.config/{mako,fuzzel,swaylock}/` | Notifications, launcher styling, lock screen |
-| `/usr/bin/vurt-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
-| `/usr/bin/vurt-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
-| `/usr/bin/vurt-scratch` | Minimise to the scratchpad, cycle, list |
-| `/usr/bin/vurt-sync` | Copy the default configuration into your home |
-| `/usr/share/backgrounds/vurt/` | Wallpapers: `lilac-dusk` (default), `forest-night`, `vurt-feathers`, `loam-moss` |
+| `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
+| `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
+| `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
+| `/usr/bin/ink-sync` | Copy the default configuration into your home |
+| `/usr/share/backgrounds/ink/` | Wallpapers: `lilac-dusk` (default), `forest-night`, `ink-feathers`, `loam-moss` |
 
 ### Make it yours
 
 - **Wallpaper**: change the `output * bg …` line in `~/.config/sway/config`.
-- **Pinned apps**: the launcher keeps them in `~/.config/vurt/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
+- **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
-- **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/vurt-layout` in the same order.
+- **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
 - **Monitors**: `wdisplays` for a quick layout; add a `~/.config/kanshi/config` and start `kanshi` if you want profiles.
 
 ## Build and test

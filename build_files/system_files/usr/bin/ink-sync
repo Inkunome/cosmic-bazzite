@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copy the image's default Vurt dotfiles (/etc/skel/.config) into your home.
+# Copy the image's default Ink dotfiles (/etc/skel/.config) into your home.
 # Existing directories are moved aside to <name>.bak-<timestamp>, never deleted.
 set -eu
 ts=$(date +%Y%m%d-%H%M%S)

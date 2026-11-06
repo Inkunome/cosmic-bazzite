@@ -8,9 +8,9 @@
 #   expose workspace <n>  switch to a workspace
 #   expose goto-scratch <id>   bring back a minimised window
 # A window that can't be captured (hidden workspace, background tab) keeps its last thumbnail; a window
-# that was never seen shows its app initial. Thumbnails live in ~/.cache/vurt/thumbs, one PNG per window.
+# that was never seen shows its app initial. Thumbnails live in ~/.cache/ink/thumbs, one PNG per window.
 here=$(dirname "$(readlink -f "$0")")
-DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vurt/thumbs"
+DIR="${XDG_CACHE_HOME:-$HOME/.cache}/ink/thumbs"
 mkdir -p "$DIR"
 
 WINDOWS='[.. | objects | select(has("pid") and .pid != null)]'
@@ -60,7 +60,7 @@ case "${1:-refresh}" in
             capture
         done ;;
     goto)           "$here/dash" close; swaymsg -q "[con_id=${2:?id}] focus" ;;
-    goto-scratch)   "$here/dash" close; exec "$(command -v vurt-scratch)" show "${2:?id}" ;;
+    goto-scratch)   "$here/dash" close; exec "$(command -v ink-scratch)" show "${2:?id}" ;;
     workspace)      "$here/dash" close; swaymsg -q workspace "${2:?name}" ;;
     *) sed -n '2,13p' "$0" >&2; exit 1 ;;
 esac
