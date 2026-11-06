@@ -144,11 +144,11 @@ EOF
 systemctl enable nix.mount
 systemctl enable nix-daemon.socket
 
-### Vurt desktop (swayfx + eww)
-## Default dotfiles live in /etc/skel for new users; `vurt-sync` copies them into
+### Ink desktop (swayfx + eww)
+## Default dotfiles live in /etc/skel for new users; `ink-sync` copies them into
 ## an existing home. Sway itself is selected from the GDM session menu.
 cp -a /ctx/system_files/. /
-chmod +x /usr/bin/vurt-layout /usr/bin/vurt-sync \
+chmod +x /usr/bin/ink-layout /usr/bin/ink-sync \
     /etc/skel/.config/eww/scripts/*
 
 # Bazzite's GNOME base already ships gdm; keep it as the greeter (it lists the

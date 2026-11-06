@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Application index, search and pinning for the Vurt dashboard.
+"""Application index, search and pinning for the Ink dashboard.
 
   apps search <query>   print matches as JSON and push them to eww (vars: query, results)
   apps run <query>      launch the best match for <query>, then close the dashboard
@@ -16,8 +16,8 @@ DIRS = ["/usr/share/applications", "/usr/local/share/applications",
         f"{HOME}/.local/share/applications"]
 ICON_DIRS = ["/usr/share/icons", "/usr/share/pixmaps", "/var/lib/flatpak/exports/share/icons",
              f"{HOME}/.local/share/flatpak/exports/share/icons", f"{HOME}/.local/share/icons"]
-CACHE = f"{HOME}/.cache/vurt/apps.json"
-PINS = f"{HOME}/.config/vurt/pinned"
+CACHE = f"{HOME}/.cache/ink/apps.json"
+PINS = f"{HOME}/.config/ink/pinned"
 DEFAULT_PINS = ["org.mozilla.firefox", "firefox", "Alacritty", "thunar", "org.gnome.Settings",
                 "pavucontrol", "blueman-manager", "system-config-printer"]
 MAX_PINNED, MAX_RESULTS = 8, 7

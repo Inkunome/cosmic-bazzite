@@ -1,13 +1,13 @@
 #!/bin/bash
 # Minimise windows to sway's scratchpad and cycle through them.
-#   vurt-scratch minimize    send the focused window to the scratchpad (Alt+Esc)
-#   vurt-scratch cycle       hide the shown one and bring up the next (Alt+Tab)
-#   vurt-scratch show <id>   restore one window by container id (dock click)
-#   vurt-scratch list        hidden windows as JSON (for the eww dock)
-#   vurt-scratch watch       print `list` now and on every window/workspace event
-# Windows sent here carry the mark _vurt_min so `cycle` can tell which one is shown.
+#   ink-scratch minimize    send the focused window to the scratchpad (Alt+Esc)
+#   ink-scratch cycle       hide the shown one and bring up the next (Alt+Tab)
+#   ink-scratch show <id>   restore one window by container id (dock click)
+#   ink-scratch list        hidden windows as JSON (for the eww dock)
+#   ink-scratch watch       print `list` now and on every window/workspace event
+# Windows sent here carry the mark _ink_min so `cycle` can tell which one is shown.
 set -u
-MARK=_vurt_min
+MARK=_ink_min
 JQ_LIST='[.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]?
   | {id, name: (.name // ""), app: (.app_id // .window_properties.class // "?"),
      initial: ((.app_id // .window_properties.class // "?") | .[:1] | ascii_upcase)}]'
@@ -17,7 +17,7 @@ list() { tree | jq -c "$JQ_LIST"; }
 
 case "${1:-}" in
     minimize) exec swaymsg -q "mark --add $MARK, move scratchpad" ;;
-    show) exec swaymsg -q "[con_id=${2:?usage: vurt-scratch show <id>}] scratchpad show" ;;
+    show) exec swaymsg -q "[con_id=${2:?usage: ink-scratch show <id>}] scratchpad show" ;;
     list) list ;;
     watch)
         list
@@ -33,5 +33,5 @@ case "${1:-}" in
             if ((hidden > 0)); then swaymsg -q "[con_id=$shown] move scratchpad; scratchpad show"
             else swaymsg -q "[con_id=$shown] move scratchpad"; fi
         elif ((hidden > 0)); then swaymsg -q "scratchpad show"; fi ;;
-    *) echo "usage: vurt-scratch minimize|cycle|show <id>|list|watch" >&2; exit 1 ;;
+    *) echo "usage: ink-scratch minimize|cycle|show <id>|list|watch" >&2; exit 1 ;;
 esac

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Keyboard layout switcher for the Vurt desktop (sway/swayfx).
+# Keyboard layout switcher for the Ink desktop (sway/swayfx).
 # Layout order must match xkb_layout in ~/.config/sway/config:
 #   0 = qwerty (default)   1 = azerty   2 = bepo
 #
-#   vurt-layout next|prev     cycle
-#   vurt-layout set <name>    bepo | azerty | qwerty
-#   vurt-layout status        print current layout name once
-#   vurt-layout watch         print current layout now and on every change (for eww)
+#   ink-layout next|prev     cycle
+#   ink-layout set <name>    bepo | azerty | qwerty
+#   ink-layout status        print current layout name once
+#   ink-layout watch         print current layout now and on every change (for eww)
 set -eu
 NAMES=(qwerty azerty bepo)
 
@@ -29,5 +29,5 @@ case "${1:-status}" in
     watch)
         current
         swaymsg -t subscribe -m '["input"]' | while read -r _; do current; done ;;
-    *) echo "usage: vurt-layout next|prev|set <bepo|azerty|qwerty>|status|watch" >&2; exit 1 ;;
+    *) echo "usage: ink-layout next|prev|set <bepo|azerty|qwerty>|status|watch" >&2; exit 1 ;;
 esac

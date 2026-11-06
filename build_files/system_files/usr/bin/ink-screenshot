@@ -1,7 +1,7 @@
 #!/bin/bash
-# Screenshot utility for the Vurt desktop (sway/swayfx).
-#   vurt-screenshot <area|window|screen|output> <copy|save|edit> [--delay N]
-#   vurt-screenshot menu          pick the mode and action from a fuzzel menu
+# Screenshot utility for the Ink desktop (sway/swayfx).
+#   ink-screenshot <area|window|screen|output> <copy|save|edit> [--delay N]
+#   ink-screenshot menu          pick the mode and action from a fuzzel menu
 #
 #   area    drag a rectangle           window  click a visible window
 #   screen  all outputs                output  the focused output

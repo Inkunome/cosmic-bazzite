@@ -1,8 +1,8 @@
-;; Vurt bar — workspaces | clock | layout, stats, tray
+;; Ink bar — workspaces | clock | layout, stats, tray
 (deflisten workspaces :initial "[]" "~/.config/eww/scripts/workspaces")
-(deflisten scratch :initial "[]" "vurt-scratch watch")
+(deflisten scratch :initial "[]" "ink-scratch watch")
 (deflisten media :initial "{\"status\":\"Stopped\",\"artist\":\"\",\"title\":\"\"}" "~/.config/eww/scripts/media")
-(deflisten layout :initial "qwerty" "vurt-layout watch")
+(deflisten layout :initial "qwerty" "ink-layout watch")
 (defpoll sink :interval "1s" :initial "{\"vol\":0,\"muted\":false}" "~/.config/eww/scripts/audio sink")
 (defpoll src :interval "1s" :initial "{\"vol\":0,\"muted\":false}" "~/.config/eww/scripts/audio source")
 (defpoll nt :interval "2s" :initial "{\"dnd\":false,\"count\":0,\"items\":[]}" "~/.config/eww/scripts/notifs")
@@ -42,7 +42,7 @@
     (box :halign "end" :space-evenly false
       (eventbox :onhover "eww update keys_pill=true && eww open keys"
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
-        (button :class "pill layout" :onclick "vurt-layout next" :onrightclick "vurt-layout prev"
+        (button :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
       (eventbox :onhover "eww update sys_pill=true && eww open sysinfo"
                 :onhoverlost "eww update sys_pill=false && ~/.config/eww/scripts/popclose sysinfo sys"
@@ -82,10 +82,10 @@
   :geometry (geometry :x "0%" :y "6px" :width "98%" :height "54px" :anchor "top center")
   :stacking "fg"
   :exclusive true
-  :namespace "vurt-bar"
+  :namespace "ink-bar"
   (bar))
 
-;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Vurt-styled SVGs in ~/.config/eww/icons.
+;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
 (defwidget dock-app [app tip]
   (button :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
     (image :path "${EWW_CONFIG_DIR}/icons/${app}.svg" :image-width 44 :image-height 44)))
@@ -95,7 +95,7 @@
     ;; minimised windows (sway scratchpad): click to bring one back
     (box :orientation "h" :space-evenly false :visible {arraylength(scratch) > 0}
       (for w in scratch
-        (button :class "dock-icon mini" :tooltip {w.name} :onclick "vurt-scratch show ${w.id}"
+        (button :class "dock-icon mini" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
           (label :text {w.initial})))
       (box :class "dock-sep" :width 2))
     (dock-app :app "dashboard" :tip "Dashboard")
@@ -109,7 +109,7 @@
   :geometry (geometry :x "0px" :y "16px" :anchor "bottom center")
   :stacking "fg"
   :exclusive true
-  :namespace "vurt-dock"
+  :namespace "ink-dock"
   (dock))
 
 ;; ── Flyouts ──────────────────────────────────────────────
@@ -154,14 +154,14 @@
   :monitor 0
   :geometry (geometry :x "260px" :y "62px" :width "280px" :anchor "top right")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (sysinfo))
 
 (defwindow volpop
   :monitor 0
   :geometry (geometry :x "110px" :y "62px" :width "280px" :anchor "top right")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (volpop))
 
 ;; ── Quick settings (top-right menu) ──────────────────────
@@ -215,7 +215,7 @@
           (app :label "Printers" :cmd "system-config-printer")
           (app :label "Dashboard" :cmd "~/.config/eww/scripts/dash toggle dashboard"))
         (box :spacing 4
-          (app :label "Screenshot" :cmd "vurt-screenshot menu")
+          (app :label "Screenshot" :cmd "ink-screenshot menu")
           (app :label "Clipboard" :cmd "sh -c 'cliphist list | fuzzel --dmenu | cliphist decode | wl-copy'")
           (app :label "Files" :cmd "thunar")))
       (label :class "pop-title" :halign "start" :text "power")
@@ -230,7 +230,7 @@
   :monitor 0
   :geometry (geometry :x "12px" :y "62px" :width "400px" :anchor "top right")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (quick))
 
 ;; ── Notification centre (bell in the bar) ────────────────
@@ -262,7 +262,7 @@
   :monitor 0
   :geometry (geometry :x "180px" :y "62px" :width "320px" :anchor "top right")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (notifs))
 
 ;; ── Shortcut sheet (hover the keyboard layout in the bar) ─
@@ -332,7 +332,7 @@
   :monitor 0
   :geometry (geometry :x "0px" :y "62px" :width "1120px" :anchor "top center")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (keys))
 
 ;; ── Calendar (hover the date in the bar) ─────────────────
@@ -348,7 +348,7 @@
   :monitor 0
   :geometry (geometry :x "0px" :y "62px" :width "300px" :anchor "top center")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (calbox))
 
 (defwidget ring [label value]
@@ -435,7 +435,7 @@
   :geometry (geometry :x "0px" :y "-60px" :width "700px" :anchor "center")
   :stacking "overlay"
   :focusable true
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (launcher))
 
 (defwindow launcher-long [mon]
@@ -443,7 +443,7 @@
   :geometry (geometry :x "0px" :y "0px" :width "92%" :height "80%" :anchor "center")
   :stacking "overlay"
   :focusable true
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (launcher-long))
 
 ;; ── Dashboard (Alt+Space, or the dock icon): time, system, media, toggles, calendar, notifications ──
@@ -512,14 +512,14 @@
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "800px" :anchor "center")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (dashboard))
 
 (defwindow dashboard-long [mon]
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "92%" :height "88%" :anchor "center")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (dashboard-long))
 
 ;; ── Expose (Super+Tab): every workspace and window as a thumbnail, click one to jump to it ──
@@ -558,5 +558,5 @@
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "94%" :height "88%" :anchor "center")
   :stacking "overlay"
-  :namespace "vurt-pop"
+  :namespace "ink-pop"
   (expose-view))

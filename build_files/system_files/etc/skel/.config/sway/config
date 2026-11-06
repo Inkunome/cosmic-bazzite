@@ -1,4 +1,4 @@
-# Vurt — swayfx config (forest / mushroom / Vurt palette)
+# Ink — swayfx config (forest / mushroom / Ink palette)
 set $mod Mod4
 set $term alacritty
 set $menu fuzzel
@@ -31,8 +31,8 @@ shadow_blur_radius 24
 shadow_color #1c142499
 default_dim_inactive 0.08
 dim_inactive_colors.unfocused #1c1424
-layer_effects "vurt-dock" blur enable; shadows enable; corner_radius 24
-layer_effects "vurt-pop" blur enable; shadows enable; corner_radius 22
+layer_effects "ink-dock" blur enable; shadows enable; corner_radius 24
+layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
@@ -43,11 +43,11 @@ client.unfocused        $moss     $loam    $spore  $moss     $moss
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
-# wallpaper: change the file to switch (forest-night, vurt-feathers and loam-moss are also installed)
-output * bg /usr/share/backgrounds/vurt/lilac-dusk.jpg fill
+# wallpaper: change the file to switch (forest-night, ink-feathers and loam-moss are also installed)
+output * bg /usr/share/backgrounds/ink/lilac-dusk.jpg fill
 
 # ── input: bépo / azerty / qwerty ──────────────────────────
-# Order = vurt-layout indices: 0 qwerty (the default), 1 azerty, 2 bepo
+# Order = ink-layout indices: 0 qwerty (the default), 1 azerty, 2 bepo
 input type:keyboard {
     xkb_layout  "us,fr,fr"
     xkb_variant ",,bepo"
@@ -57,11 +57,11 @@ input type:touchpad {
     tap enabled
     natural_scroll enabled
 }
-bindsym $mod+space exec vurt-layout next
-bindsym $mod+Shift+space exec vurt-layout prev
-bindsym $mod+Ctrl+1 exec vurt-layout set bepo
-bindsym $mod+Ctrl+2 exec vurt-layout set azerty
-bindsym $mod+Ctrl+3 exec vurt-layout set qwerty
+bindsym $mod+space exec ink-layout next
+bindsym $mod+Shift+space exec ink-layout prev
+bindsym $mod+Ctrl+1 exec ink-layout set bepo
+bindsym $mod+Ctrl+2 exec ink-layout set azerty
+bindsym $mod+Ctrl+3 exec ink-layout set qwerty
 
 # spellbook: persistent zellij session "code" in a dedicated alacritty window
 bindsym $mod+Ctrl+space exec alacritty --title spellbook --command zellij attach code --create options --default-layout compact --show-startup-tips false
@@ -86,8 +86,8 @@ bindcode $mod+26 layout toggle split              # E
 bindcode $mod+25 layout tabbed                    # W
 
 # minimise to the dock (scratchpad): Alt+Esc sends the focused window away, Alt+Tab cycles through them
-bindsym Mod1+Escape exec vurt-scratch minimize
-bindsym Mod1+Tab exec vurt-scratch cycle
+bindsym Mod1+Escape exec ink-scratch minimize
+bindsym Mod1+Tab exec ink-scratch cycle
 
 # focus a window: Super+arrows. Move it: Super+Shift+arrows. In a tabbed container, moving a window
 # sideways takes it out of the tabs and splits the screen (the way to tile windows side by side).
@@ -147,10 +147,10 @@ bindcode $mod+Shift+38 focus child               # A
 # screenshots on Super+S (key position, so it works in bépo, azerty and qwerty):
 #   Super+S = area -> editor, Super+Shift+S = menu (mode, action, 5 s delay),
 #   Super+Ctrl+S = full screen -> file, Super+Alt+S = window -> clipboard
-bindcode $mod+39 exec vurt-screenshot area edit              # S
-bindcode $mod+Shift+39 exec vurt-screenshot menu             # S
-bindcode $mod+Ctrl+39 exec vurt-screenshot screen save       # S
-bindcode $mod+Mod1+39 exec vurt-screenshot window copy       # S
+bindcode $mod+39 exec ink-screenshot area edit              # S
+bindcode $mod+Shift+39 exec ink-screenshot menu             # S
+bindcode $mod+Ctrl+39 exec ink-screenshot screen save       # S
+bindcode $mod+Mod1+39 exec ink-screenshot window copy       # S
 bindcode $mod+54 exec cliphist list | fuzzel --dmenu | cliphist decode | wl-copy   # C
 bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
 bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
