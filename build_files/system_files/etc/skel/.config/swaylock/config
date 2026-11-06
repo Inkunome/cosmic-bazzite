@@ -1,0 +1,12 @@
+color=1c1424
+inside-color=2a1d36
+ring-color=5b4570
+key-hl-color=c8a2f0
+bs-hl-color=e0566f
+ring-ver-color=ff9ccf
+inside-ver-color=2a1d36
+line-color=00000000
+text-color=f6eaf4
+font=Fira Code
+indicator-radius=90
+show-failed-attempts

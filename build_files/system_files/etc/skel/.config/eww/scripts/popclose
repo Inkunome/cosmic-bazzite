@@ -1,0 +1,5 @@
+#!/bin/bash
+# popclose <window> <prefix>: close a flyout once neither its pill (<prefix>_pill) nor itself (<prefix>_pop) is hovered.
+sleep 0.5
+[[ $(eww get "$2_pill") == false && $(eww get "$2_pop") == false ]] && eww close "$1"
+exit 0

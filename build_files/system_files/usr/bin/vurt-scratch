@@ -1,0 +1,37 @@
+#!/bin/bash
+# Minimise windows to sway's scratchpad and cycle through them.
+#   vurt-scratch minimize    send the focused window to the scratchpad (Alt+Esc)
+#   vurt-scratch cycle       hide the shown one and bring up the next (Alt+Tab)
+#   vurt-scratch show <id>   restore one window by container id (dock click)
+#   vurt-scratch list        hidden windows as JSON (for the eww dock)
+#   vurt-scratch watch       print `list` now and on every window/workspace event
+# Windows sent here carry the mark _vurt_min so `cycle` can tell which one is shown.
+set -u
+MARK=_vurt_min
+JQ_LIST='[.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]?
+  | {id, name: (.name // ""), app: (.app_id // .window_properties.class // "?"),
+     initial: ((.app_id // .window_properties.class // "?") | .[:1] | ascii_upcase)}]'
+
+tree() { swaymsg -t get_tree; }
+list() { tree | jq -c "$JQ_LIST"; }
+
+case "${1:-}" in
+    minimize) exec swaymsg -q "mark --add $MARK, move scratchpad" ;;
+    show) exec swaymsg -q "[con_id=${2:?usage: vurt-scratch show <id>}] scratchpad show" ;;
+    list) list ;;
+    watch)
+        list
+        swaymsg -t subscribe -m '["window","workspace"]' | while read -r _; do list; done ;;
+    cycle)
+        t=$(tree)
+        hidden=$(jq '[.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]?] | length' <<<"$t")
+        # a shown scratchpad window = marked, but not sitting in the hidden list
+        shown=$(jq -r --arg m "$MARK" '
+            ([.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]? | .id]) as $h
+            | [.. | objects | select((.marks? // []) | index($m)) | .id | select(. as $i | $h | index($i) | not)] | first // empty' <<<"$t")
+        if [[ -n $shown ]]; then
+            if ((hidden > 0)); then swaymsg -q "[con_id=$shown] move scratchpad; scratchpad show"
+            else swaymsg -q "[con_id=$shown] move scratchpad"; fi
+        elif ((hidden > 0)); then swaymsg -q "scratchpad show"; fi ;;
+    *) echo "usage: vurt-scratch minimize|cycle|show <id>|list|watch" >&2; exit 1 ;;
+esac

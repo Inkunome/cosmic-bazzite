@@ -1,0 +1,118 @@
+// Vurt palette
+$loam: #1c1424;
+$surface: rgba(42, 29, 54, 0.72);
+$moss: #5b4570;
+$spore: #f6eaf4;
+$dim: #b9a3c4;
+$glow: #c8a2f0;
+$feather: #ff9ccf;
+$pink: #ff8fc4;
+$amanita: #e0566f;
+$amber: #ffd1e6;
+
+* { all: unset; font-family: "Fira Code", monospace; font-size: 13px; color: $spore; }
+
+.bar { padding: 0 12px; }  /* no frame: pills and the branch carry the look */
+.pill { padding: 3px 12px; margin: 5px 3px; border-radius: 16px; background: rgba($moss, 0.45); }
+.ws { padding: 3px 11px; margin: 5px 2px; border-radius: 16px; color: $dim; }
+.ws:hover { background: rgba($moss, 0.6); }
+.ws.visible { color: $spore; }
+.ws.focused { color: $loam; background: $glow; }
+.ws.urgent { color: $spore; background: $amanita; }
+.layout { color: $feather; border: 1px solid rgba($feather, 0.5); }
+.layout:hover { background: rgba($feather, 0.2); }
+.clock { color: $amber; font-weight: bold; }
+.vol { color: $glow; }
+.vol.muted { color: $amanita; }
+.bat.low { color: $amanita; }
+.cpu { color: $pink; }
+
+.dock {
+  background: $surface;
+  border: 1px solid rgba($glow, 0.25);
+  border-radius: 24px;
+  padding: 8px;
+}
+.dock-icon { padding: 4px; margin: 3px 0; border-radius: 14px; }
+.dock-icon:hover { background: rgba($glow, 0.18); }
+.dock-icon:active { background: rgba($glow, 0.32); }
+
+.bar-pad { padding: 0; }
+.vine { background-color: transparent; background-repeat: repeat-x; background-size: auto 16px; background-position: left top; }
+
+// Flyouts
+.pop { background-color: rgba(42, 29, 54, 0.9); border: 2px solid rgba($glow, 0.35); border-radius: 24px; padding: 14px 16px; }
+.pop-title { color: $feather; font-weight: bold; }
+.dim { color: $dim; }
+.pop-btn { color: $spore; border-radius: 8px; padding: 0 2px; }
+.pop-btn:hover { color: $glow; }
+.pop-btn.muted { color: $amanita; }
+.meter { margin: 0; }
+progressbar trough { background: rgba($moss, 0.7); min-height: 6px; border-radius: 6px; }
+progressbar progress { background: $glow; min-height: 6px; border-radius: 6px; }
+scale trough { background: rgba($moss, 0.7); min-height: 6px; border-radius: 6px; }
+scale highlight { background: $glow; border-radius: 6px; }
+scale slider { background: $spore; min-width: 14px; min-height: 14px; border-radius: 50%; margin: -5px; }
+scale slider:hover { background: $pink; }
+
+// Quick settings
+.qs { padding: 3px 10px; }
+.qs:hover { background: rgba($glow, 0.2); }
+.tile { background: rgba($moss, 0.5); border-radius: 12px; padding: 8px 12px; min-width: 140px; }
+.tile:hover { background: rgba($moss, 0.8); }
+.tile.on { background: rgba($glow, 0.22); border: 1px solid rgba($glow, 0.6); }
+.tile-label { font-weight: bold; }
+.app { background: rgba($moss, 0.4); border-radius: 14px; padding: 6px 4px; min-width: 96px; }
+.app:hover { background: rgba($glow, 0.2); color: $glow; }
+.pbtn { background: rgba($moss, 0.4); border-radius: 14px; padding: 6px 2px; min-width: 64px; font-size: 12px; }
+.pbtn:hover { background: rgba($pink, 0.25); }
+.pbtn.confirm { background: $amanita; color: $loam; }
+
+.notif { background: rgba(91, 69, 112, 0.35); border-radius: 14px; padding: 6px 10px; }
+
+// Minimised windows in the dock
+.mini label { color: $glow; font-weight: bold; font-size: 16px; min-width: 40px; min-height: 40px; }
+.dock-icon.mini { border: 2px solid rgba($glow, 0.6); border-radius: 16px; }
+.dock-sep { background: rgba($moss, 0.8); border-radius: 2px; margin: 10px 4px; }
+
+// Shortcut sheet
+.keycol { min-width: 205px; }
+.keydesc { font-size: 12px; }
+.keycap { background: rgba(91, 69, 112, 0.55); border: 1px solid rgba($glow, 0.45); border-bottom: 3px solid rgba($glow, 0.6); border-radius: 8px; padding: 0 7px; font-size: 11px; font-weight: bold; color: $spore; }
+
+// Calendar
+calendar { color: $spore; padding: 2px 4px; }
+calendar.header { color: $feather; font-weight: bold; }
+calendar.button { color: $glow; padding: 0 8px; }
+calendar.button:hover { color: $pink; }
+calendar:selected { background: $glow; color: $loam; border-radius: 10px; }
+calendar:indeterminate { color: $dim; }
+calendar.highlight { color: $feather; font-weight: bold; }
+
+// Dashboard
+.dash { padding: 18px 22px; }
+.dash-time { font-size: 44px; font-weight: bold; color: $glow; }
+.card { background: rgba(91, 69, 112, 0.35); border-radius: 18px; padding: 10px 14px; }
+.ring { min-width: 74px; min-height: 74px; color: $glow; background-color: rgba($moss, 0.5); }
+
+// Dashboard launcher
+.search { background: rgba($moss, 0.45); border: 2px solid rgba($glow, 0.5); border-radius: 18px; padding: 8px 16px; font-size: 15px; caret-color: $glow; }
+.search:focus { border-color: $glow; }
+.app-tile { border-radius: 18px; padding: 8px 6px; min-width: 84px; }
+.app-tile:hover { background: rgba($glow, 0.2); }
+.app-icon { min-width: 48px; min-height: 48px; }
+.app-icon-sm { min-width: 32px; min-height: 32px; }
+.app-initial { font-size: 22px; font-weight: bold; color: $glow; min-width: 40px; }
+.result { border-radius: 14px; padding: 6px 12px; }
+.result:hover { background: rgba($glow, 0.2); }
+
+.dash-long { padding: 16px 18px; }
+.dash-long .dash-time { font-size: 52px; }
+
+// Expose
+.ecard { border-radius: 18px; padding: 8px; }
+.ecard:hover { background: rgba($glow, 0.2); }
+.ecard.focused { border: 2px solid $glow; }
+.ethumb { background: rgba($moss, 0.35); border-radius: 12px; }
+.ews { color: $feather; font-weight: bold; border-radius: 12px; padding: 2px 8px; }
+.ews.focused { color: $loam; background: $glow; }

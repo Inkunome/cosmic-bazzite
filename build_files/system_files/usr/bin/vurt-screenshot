@@ -1,0 +1,51 @@
+#!/bin/bash
+# Screenshot utility for the Vurt desktop (sway/swayfx).
+#   vurt-screenshot <area|window|screen|output> <copy|save|edit> [--delay N]
+#   vurt-screenshot menu          pick the mode and action from a fuzzel menu
+#
+#   area    drag a rectangle           window  click a visible window
+#   screen  all outputs                output  the focused output
+#   copy    clipboard only             save    ~/Pictures/Screenshots + clipboard
+#   edit    open in swappy (annotate, then save or copy from there)
+set -u
+DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+
+menu() {
+    local choice
+    choice=$(printf '%s\n' \
+        "Area → edit" "Area → copy" "Area → save" \
+        "Window → copy" "Window → save" \
+        "Screen → save" "Screen → copy" \
+        "Output → save" \
+        "Area → edit (after 5 s)" \
+        | fuzzel --dmenu --prompt "screenshot ❯ " --width 34 --lines 9) || exit 0
+    local delay=0; [[ $choice == *"5 s"* ]] && delay=5
+    local mode action
+    mode=$(tr '[:upper:]' '[:lower:]' <<<"${choice%% *}")
+    action=${choice#* → }; action=${action%% *}
+    exec "$0" "$mode" "$action" --delay "$delay"
+}
+
+[[ ${1:-} == menu ]] && menu
+
+mode=${1:-area}; action=${2:-edit}; delay=0
+[[ ${3:-} == --delay ]] && delay=${4:-0}
+mkdir -p "$DIR"
+file="$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png"
+((delay > 0)) && { notify-send -t $((delay * 1000)) "Screenshot" "in ${delay} s"; sleep "$delay"; }
+
+geom=()
+case $mode in
+    area)   g=$(slurp) || exit 0; geom=(-g "$g") ;;
+    window) g=$(swaymsg -t get_tree | jq -r '.. | select(.pid? and .visible?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | slurp -r) || exit 0; geom=(-g "$g") ;;
+    output) o=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name'); geom=(-o "$o") ;;
+    screen) ;;
+    *) echo "unknown mode '$mode' (area|window|screen|output)" >&2; exit 1 ;;
+esac
+
+case $action in
+    copy) grim "${geom[@]}" - | wl-copy --type image/png && notify-send "Screenshot" "Copied to clipboard" ;;
+    save) grim "${geom[@]}" "$file" && wl-copy --type image/png < "$file" && notify-send "Screenshot" "Saved to ${file/#$HOME/~} and copied" ;;
+    edit) grim "${geom[@]}" - | swappy -f - -o "$file" ;;
+    *) echo "unknown action '$action' (copy|save|edit)" >&2; exit 1 ;;
+esac

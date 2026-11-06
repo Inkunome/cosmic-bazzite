@@ -1,0 +1,10 @@
+#!/bin/bash
+# Stream the current media player state as JSON ({status, artist, title}); idle JSON when no player runs.
+idle='{"status":"Stopped","artist":"","title":""}'
+while true; do
+    echo "$idle"
+    playerctl -F metadata --format '{{status}}|{{artist}}|{{title}}' 2>/dev/null | while IFS='|' read -r st ar ti; do
+        jq -nc --arg s "$st" --arg a "$ar" --arg t "$ti" '{status:$s,artist:$a,title:$t}'
+    done
+    sleep 3
+done

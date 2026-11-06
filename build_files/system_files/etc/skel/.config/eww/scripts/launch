@@ -1,0 +1,10 @@
+#!/bin/bash
+# Launch a dock app, falling back to the Flatpak build when needed.
+case "${1:-}" in
+    browser)  command -v firefox >/dev/null && exec firefox || exec flatpak run org.mozilla.firefox ;;
+    terminal) exec alacritty ;;
+    files)    exec thunar ;;
+    dashboard) exec ~/.config/eww/scripts/dash toggle dashboard ;;
+    settings) XDG_CURRENT_DESKTOP=GNOME exec gnome-control-center ;;
+    *) echo "usage: launch browser|terminal|files|dashboard|settings" >&2; exit 1 ;;
+esac

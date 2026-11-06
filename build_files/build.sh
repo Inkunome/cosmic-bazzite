@@ -4,7 +4,8 @@ set -ouex pipefail
 
 COPRS=(
     varlad/zellij
-    ryanabx/cosmic-epoch
+    swayfx/swayfx
+    varlad/eww
     leloubil/wl-clip-persist
 )
 
@@ -18,9 +19,37 @@ dnf5 install -y --setopt=install_weak_deps=False \
     alacritty \
     fira-code-fonts \
     zellij \
-    cosmic-desktop \
     wl-clip-persist \
+    swayfx \
+    eww \
+    swaybg \
+    swayidle \
+    swaylock \
+    fuzzel \
+    mako \
     grim \
+    slurp \
+    swappy \
+    wl-clipboard \
+    cliphist \
+    brightnessctl \
+    playerctl \
+    pavucontrol \
+    network-manager-applet \
+    blueman \
+    mate-polkit \
+    kanshi \
+    wlr-randr \
+    wlogout \
+    jq \
+    socat \
+    xdg-desktop-portal-wlr \
+    xdg-desktop-portal-gtk \
+    thunar \
+    nm-connection-editor \
+    wlsunset \
+    wdisplays \
+    udiskie \
     nix \
     system-config-printer
 
@@ -115,6 +144,13 @@ EOF
 systemctl enable nix.mount
 systemctl enable nix-daemon.socket
 
-# Switch to cosmic greeter
-systemctl disable gdm
-systemctl enable cosmic-greeter
+### Vurt desktop (swayfx + eww)
+## Default dotfiles live in /etc/skel for new users; `vurt-sync` copies them into
+## an existing home. Sway itself is selected from the GDM session menu.
+cp -a /ctx/system_files/. /
+chmod +x /usr/bin/vurt-layout /usr/bin/vurt-sync \
+    /etc/skel/.config/eww/scripts/*
+
+# Bazzite's GNOME base already ships gdm; keep it as the greeter (it lists the
+# "Sway" session installed by swayfx) and keep GNOME as a fallback session.
+systemctl enable gdm

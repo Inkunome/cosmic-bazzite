@@ -1,0 +1,188 @@
+# Vurt — swayfx config (forest / mushroom / Vurt palette)
+set $mod Mod4
+set $term alacritty
+set $menu fuzzel
+
+# ── palette ────────────────────────────────────────────────
+set $loam    #1c1424
+set $moss    #5b4570
+set $spore   #f6eaf4
+set $glow    #c8a2f0
+set $feather #ff9ccf
+set $amanita #e0566f
+
+# ── look (swayfx) ──────────────────────────────────────────
+font pango:Fira Code 10
+default_border pixel 2
+# new windows open as tabs of the workspace by default (Super+E splits, Super+W re-tabs);
+# when a container is split, tile side by side on landscape screens and stacked on portrait ones
+workspace_layout tabbed
+default_orientation auto
+title_align center
+titlebar_padding 10 5
+gaps inner 8
+gaps outer 4
+corner_radius 18
+blur enable
+blur_passes 3
+blur_radius 5
+shadows enable
+shadow_blur_radius 24
+shadow_color #1c142499
+default_dim_inactive 0.08
+dim_inactive_colors.unfocused #1c1424
+layer_effects "vurt-dock" blur enable; shadows enable; corner_radius 24
+layer_effects "vurt-pop" blur enable; shadows enable; corner_radius 22
+layer_effects "launcher" blur enable; corner_radius 18
+layer_effects "notifications" blur enable; corner_radius 18
+
+#                       border    bg       text    indicator child_border
+client.focused          $glow     $loam    $spore  $feather  $glow
+client.focused_inactive $moss     $loam    $spore  $moss     $moss
+client.unfocused        $moss     $loam    $spore  $moss     $moss
+client.urgent           $amanita  $loam    $spore  $amanita  $amanita
+
+output * bg $loam solid_color
+# wallpaper: change the file to switch (forest-night, vurt-feathers and loam-moss are also installed)
+output * bg /usr/share/backgrounds/vurt/lilac-dusk.jpg fill
+
+# ── input: bépo / azerty / qwerty ──────────────────────────
+# Order = vurt-layout indices: 0 qwerty (the default), 1 azerty, 2 bepo
+input type:keyboard {
+    xkb_layout  "us,fr,fr"
+    xkb_variant ",,bepo"
+    xkb_numlock enabled
+}
+input type:touchpad {
+    tap enabled
+    natural_scroll enabled
+}
+bindsym $mod+space exec vurt-layout next
+bindsym $mod+Shift+space exec vurt-layout prev
+bindsym $mod+Ctrl+1 exec vurt-layout set bepo
+bindsym $mod+Ctrl+2 exec vurt-layout set azerty
+bindsym $mod+Ctrl+3 exec vurt-layout set qwerty
+
+# spellbook: persistent zellij session "code" in a dedicated alacritty window
+bindsym $mod+Ctrl+space exec alacritty --title spellbook --command zellij attach code --create options --default-layout compact --show-startup-tips false
+
+# ── bindings ───────────────────────────────────────────────
+# Letters/digits use bindcode (physical key positions, QWERTY names in comments)
+# so shortcuts stay in the same place whatever layout is active.
+floating_modifier $mod normal
+bindsym $mod+Return fullscreen
+bindsym $mod+Shift+Return exec $term
+bindcode $mod+28 exec alacritty --command zellij -l welcome options --default-layout compact --show-startup-tips false   # T
+bindcode $mod+40 exec ~/.config/eww/scripts/dash toggle launcher   # D: app launcher
+bindsym Ctrl+space exec ~/.config/eww/scripts/dash toggle launcher
+bindsym Mod1+space exec ~/.config/eww/scripts/dash toggle dashboard
+bindcode $mod+Shift+24 kill                       # Q
+bindcode $mod+Shift+54 reload                     # C
+bindcode $mod+Shift+26 exec wlogout -b 4          # E
+bindcode $mod+46 exec swaylock -f                 # L
+bindcode $mod+41 fullscreen                       # F
+bindcode $mod+Shift+41 floating toggle            # F
+bindcode $mod+26 layout toggle split              # E
+bindcode $mod+25 layout tabbed                    # W
+
+# minimise to the dock (scratchpad): Alt+Esc sends the focused window away, Alt+Tab cycles through them
+bindsym Mod1+Escape exec vurt-scratch minimize
+bindsym Mod1+Tab exec vurt-scratch cycle
+
+# focus a window: Super+arrows. Move it: Super+Shift+arrows. In a tabbed container, moving a window
+# sideways takes it out of the tabs and splits the screen (the way to tile windows side by side).
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# workspaces on the number row (keycodes 10..18 = 1..9)
+bindcode $mod+10 workspace 1
+bindcode $mod+11 workspace 2
+bindcode $mod+12 workspace 3
+bindcode $mod+13 workspace 4
+bindcode $mod+14 workspace 5
+bindcode $mod+15 workspace 6
+bindcode $mod+16 workspace 7
+bindcode $mod+17 workspace 8
+bindcode $mod+18 workspace 9
+bindcode $mod+Shift+10 move container to workspace 1
+bindcode $mod+Shift+11 move container to workspace 2
+bindcode $mod+Shift+12 move container to workspace 3
+bindcode $mod+Shift+13 move container to workspace 4
+bindcode $mod+Shift+14 move container to workspace 5
+bindcode $mod+Shift+15 move container to workspace 6
+bindcode $mod+Shift+16 move container to workspace 7
+bindcode $mod+Shift+17 move container to workspace 8
+bindcode $mod+Shift+18 move container to workspace 9
+
+# screenshots, clipboard history, media
+# workspaces: next/previous, send a window along, move a workspace to another screen.
+# Super+Tab opens the expose view; pressing the number of the current workspace goes back to the previous one.
+workspace_auto_back_and_forth yes
+bindsym $mod+Prior workspace prev_on_output
+bindsym $mod+Next workspace next_on_output
+bindsym $mod+Ctrl+Left workspace prev_on_output
+bindsym $mod+Ctrl+Right workspace next_on_output
+bindsym $mod+Tab exec ~/.config/eww/scripts/dash toggle expose
+bindsym $mod+Shift+Prior move container to workspace prev_on_output; workspace prev_on_output
+bindsym $mod+Shift+Next move container to workspace next_on_output; workspace next_on_output
+bindsym $mod+Ctrl+Shift+Left move container to workspace prev_on_output; workspace prev_on_output
+bindsym $mod+Ctrl+Shift+Right move container to workspace next_on_output; workspace next_on_output
+bindsym $mod+Mod1+Left move workspace to output left
+bindsym $mod+Mod1+Right move workspace to output right
+bindsym --whole-window $mod+button4 workspace prev_on_output
+bindsym --whole-window $mod+button5 workspace next_on_output
+bindcode $mod+19 workspace 10
+bindcode $mod+Shift+19 move container to workspace 10
+
+# windows: focus the parent / child container
+bindcode $mod+38 focus parent                    # A
+bindcode $mod+Shift+38 focus child               # A
+
+# screenshots on Super+S (key position, so it works in bépo, azerty and qwerty):
+#   Super+S = area -> editor, Super+Shift+S = menu (mode, action, 5 s delay),
+#   Super+Ctrl+S = full screen -> file, Super+Alt+S = window -> clipboard
+bindcode $mod+39 exec vurt-screenshot area edit              # S
+bindcode $mod+Shift+39 exec vurt-screenshot menu             # S
+bindcode $mod+Ctrl+39 exec vurt-screenshot screen save       # S
+bindcode $mod+Mod1+39 exec vurt-screenshot window copy       # S
+bindcode $mod+54 exec cliphist list | fuzzel --dmenu | cliphist decode | wl-copy   # C
+bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+bindsym XF86MonBrightnessUp exec brightnessctl set 5%+
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+
+# ── autostart ──────────────────────────────────────────────
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+exec mako
+exec udiskie --tray
+exec /usr/libexec/polkit-mate-authentication-agent-1
+exec nm-applet --indicator
+exec blueman-applet
+exec wl-paste --watch cliphist store
+exec wl-clip-persist --clipboard regular
+exec swayidle -w timeout 300 'swaylock -f' timeout 600 'swaymsg "output * power off"' \
+    resume 'swaymsg "output * power on"' before-sleep 'swaylock -f'
+# bar on landscape screens, dock on portrait screens: re-evaluated at every reload and whenever outputs change
+exec_always ~/.config/eww/scripts/screens apply
+exec ~/.config/eww/scripts/screens watch
+exec ~/.config/eww/scripts/expose watch
+
+# while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
+mode "dash" {
+    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
+    bindsym Mod1+space exec ~/.config/eww/scripts/dash close
+    bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
+}
+
+include /etc/sway/config.d/*
