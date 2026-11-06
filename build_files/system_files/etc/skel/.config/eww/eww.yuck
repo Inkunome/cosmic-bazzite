@@ -32,30 +32,30 @@
   (centerbox :class "bar" :orientation "h"
     (box :halign "start" :space-evenly false
       (for ws in workspaces
-        (button :class "ws ${ws.focused ? 'focused' : ws.visible ? 'visible' : ''} ${ws.urgent ? 'urgent' : ''}"
+        (button :timeout "10s" :class "ws ${ws.focused ? 'focused' : ws.visible ? 'visible' : ''} ${ws.urgent ? 'urgent' : ''}"
                 :onclick "swaymsg workspace ${ws.name}"
           {ws.focused ? "◉ ${ws.name}" : "○ ${ws.name}"})))
     (box :halign "center"
-      (eventbox :onhover "eww update cal_pill=true && eww open cal --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update cal_pill=true && eww open cal --arg mon=${mon}"
                 :onhoverlost "eww update cal_pill=false && ~/.config/eww/scripts/popclose cal cal"
         (label :class "pill clock" :text clock)))
     (box :halign "end" :space-evenly false
-      (eventbox :onhover "eww update keys_pill=true && eww open keys --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update keys_pill=true && eww open keys --arg mon=${mon}"
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
-        (button :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
+        (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
-      (eventbox :onhover "eww update sys_pill=true && eww open sysinfo --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update sys_pill=true && eww open sysinfo --arg mon=${mon}"
                 :onhoverlost "eww update sys_pill=false && ~/.config/eww/scripts/popclose sysinfo sys"
         (box :class "pill" :tooltip "cpu ${round(EWW_CPU.avg, 0)}% · ram ${round(EWW_RAM.used_mem_perc, 0)}%"
           (image :path "${EWW_CONFIG_DIR}/icons/cpu.svg" :image-width 18 :image-height 18)))
-      (eventbox :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
                 :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         (box :class "pill vol ${sink.muted ? 'muted' : ''}" :tooltip {sink.muted ? "muted" : "volume ${sink.vol}%"}
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (sink.muted ? "vol-muted" : sink.vol < 34 ? "vol-low" : "vol-high") + ".svg"}
                  :image-width 18 :image-height 18)))
-      (eventbox :onhover "eww update nt_pill=true && eww open notifs --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update nt_pill=true && eww open notifs --arg mon=${mon}"
                 :onhoverlost "eww update nt_pill=false && ~/.config/eww/scripts/popclose notifs nt"
                 :onclick "makoctl mode -t do-not-disturb; eww poll nt"
         (box :class "pill" :tooltip {nt.dnd ? "do not disturb" : nt.count > 0 ? "${nt.count} notification(s)" : "no notifications"}
@@ -65,7 +65,7 @@
              :visible {EWW_BATTERY != ""}
              :text "bat ${EWW_BATTERY == '' ? '' : EWW_BATTERY.total_avg}%")
       (systray :class "pill" :icon-size 16 :spacing 6)
-      (eventbox :onhover "eww update qs_pill=true && eww open quick --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "eww update qs_pill=true && eww open quick --arg mon=${mon}"
                 :onhoverlost "eww update qs_pill=false && ~/.config/eww/scripts/popclose quick qs"
         (box :class "pill qs" (image :path "${EWW_CONFIG_DIR}/icons/paw.svg" :image-width 18 :image-height 18))))))
 
@@ -87,7 +87,7 @@
 
 ;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
 (defwidget dock-app [app tip]
-  (button :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
+  (button :timeout "10s" :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
     (image :path "${EWW_CONFIG_DIR}/icons/${app}.svg" :image-width 44 :image-height 44)))
 
 (defwidget dock []
@@ -95,7 +95,7 @@
     ;; minimised windows (sway scratchpad): click to bring one back
     (box :orientation "h" :space-evenly false :visible {arraylength(scratch) > 0}
       (for w in scratch
-        (button :class "dock-icon mini" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
+        (button :timeout "10s" :class "dock-icon mini" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
           (label :text {w.initial})))
       (box :class "dock-sep" :width 2))
     (dock-app :app "dashboard" :tip "Dashboard")
@@ -122,7 +122,7 @@
     (progress :value value :class "bar-meter")))
 
 (defwidget sysinfo []
-  (eventbox :onhover "eww update sys_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update sys_pop=true"
             :onhoverlost "eww update sys_pop=false && ~/.config/eww/scripts/popclose sysinfo sys"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
@@ -135,15 +135,15 @@
 (defwidget slider-row [name data target]
   (box :class "meter" :orientation "v" :space-evenly false
     (box :space-evenly false
-      (button :class "pop-btn ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
+      (button :timeout "10s" :class "pop-btn ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
               :onclick "wpctl set-mute ${target} toggle"
         {data.muted ? "${name} (muted)" : name})
       (label :halign "end" :text "${data.vol}%"))
-    (scale :class "slider" :min 0 :max 101 :value {data.vol}
+    (scale :timeout "10s" :class "slider" :min 0 :max 101 :value {data.vol}
            :onchange "wpctl set-volume ${target} {}%")))
 
 (defwidget volpop []
-  (eventbox :onhover "eww update vol_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update vol_pop=true"
             :onhoverlost "eww update vol_pop=false && ~/.config/eww/scripts/popclose volpop vol"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 12
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
@@ -168,22 +168,22 @@
 ;; Everything needed day to day: network, bluetooth, notifications, night light,
 ;; power profile, brightness, system apps and the power menu.
 (defwidget tile [label sub on action]
-  (button :class "tile ${on ? 'on' : ''}"
+  (button :timeout "10s" :class "tile ${on ? 'on' : ''}"
           :onclick "~/.config/eww/scripts/toggle ${action}; eww poll qs"
     (box :orientation "v" :space-evenly false :halign "start"
       (label :class "tile-label" :halign "start" :text label)
       (label :class "dim" :halign "start" :limit-width 14 :text sub))))
 
 (defwidget app [label cmd]
-  (button :class "app" :onclick "eww close quick; ${cmd} &" label))
+  (button :timeout "10s" :class "app" :onclick "eww close quick; ${cmd} &" label))
 
 (defwidget pbtn [label action]
-  (button :class "pbtn ${pwr_confirm == action ? 'confirm' : ''}"
+  (button :timeout "10s" :class "pbtn ${pwr_confirm == action ? 'confirm' : ''}"
           :onclick "~/.config/eww/scripts/power ${action}"
     {pwr_confirm == action ? "sure?" : label}))
 
 (defwidget quick []
-  (eventbox :onhover "eww update qs_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update qs_pop=true"
             :onhoverlost "eww update qs_pop=false && ~/.config/eww/scripts/popclose quick qs"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 12
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
@@ -202,7 +202,7 @@
         (box :space-evenly false
           (label :class "dim" :halign "start" :hexpand true :text "brightness")
           (label :halign "end" :text "${qs.bright}%"))
-        (scale :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
+        (scale :timeout "10s" :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
                :onchange "brightnessctl -q set {}%"))
       (label :class "pop-title" :halign "start" :text "settings")
       (box :orientation "v" :space-evenly false :spacing 4
@@ -242,21 +242,21 @@
     (label :class "dim" :halign "start" :limit-width 34 :visible {body != ""} :text body)))
 
 (defwidget notifs []
-  (eventbox :onhover "eww update nt_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update nt_pop=true"
             :onhoverlost "eww update nt_pop=false && ~/.config/eww/scripts/popclose notifs nt"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
       (box :space-evenly false
         (label :class "pop-title" :halign "start" :hexpand true :text "notifications")
-        (button :class "pop-btn ${nt.dnd ? 'muted' : ''}" :onclick "makoctl mode -t do-not-disturb; eww poll nt"
+        (button :timeout "10s" :class "pop-btn ${nt.dnd ? 'muted' : ''}" :onclick "makoctl mode -t do-not-disturb; eww poll nt"
           {nt.dnd ? "do not disturb: on" : "do not disturb: off"}))
       (box :orientation "v" :space-evenly false :spacing 6 :visible {arraylength(nt.items) > 0}
         (for n in {nt.items}
           (notif-item :app {n.app} :summary {n.summary} :body {n.body})))
       (label :class "dim" :halign "start" :visible {arraylength(nt.items) == 0} :text "nothing yet")
       (box :spacing 4
-        (button :class "app" :onclick "makoctl dismiss -a; eww poll nt" "Dismiss all")
-        (button :class "app" :onclick "makoctl restore; eww poll nt" "Restore last")))))
+        (button :timeout "10s" :class "app" :onclick "makoctl dismiss -a; eww poll nt" "Dismiss all")
+        (button :timeout "10s" :class "app" :onclick "makoctl restore; eww poll nt" "Restore last")))))
 
 (defwindow notifs [mon]
   :monitor mon
@@ -273,7 +273,7 @@
     (label :class "dim keydesc" :halign "start" :hexpand true :limit-width 28 :text desc)))
 
 (defwidget keys []
-  (eventbox :onhover "eww update keys_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update keys_pop=true"
             :onhoverlost "eww update keys_pop=false && ~/.config/eww/scripts/popclose keys keys"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
@@ -337,7 +337,7 @@
 
 ;; ── Calendar (hover the date in the bar) ─────────────────
 (defwidget calbox []
-  (eventbox :onhover "eww update cal_pop=true"
+  (eventbox :timeout "10s" :onhover "eww update cal_pop=true"
             :onhoverlost "eww update cal_pop=false && ~/.config/eww/scripts/popclose cal cal"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 8
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
@@ -364,12 +364,12 @@
     (label :halign "start" :limit-width 34 :text {media.title != "" ? media.title : "nothing playing"})
     (label :class "dim" :halign "start" :limit-width 34 :text {media.artist})
     (box :spacing 6 :halign "start"
-      (button :class "app" :onclick "playerctl previous" "prev")
-      (button :class "app" :onclick "playerctl play-pause" {media.status == "Playing" ? "pause" : "play"})
-      (button :class "app" :onclick "playerctl next" "next"))))
+      (button :timeout "10s" :class "app" :onclick "playerctl previous" "prev")
+      (button :timeout "10s" :class "app" :onclick "playerctl play-pause" {media.status == "Playing" ? "pause" : "play"})
+      (button :timeout "10s" :class "app" :onclick "playerctl next" "next"))))
 
 (defwidget app-tile [id name icon initial]
-  (button :class "app-tile" :tooltip "${name}  (right-click: pin / unpin)"
+  (button :timeout "10s" :class "app-tile" :tooltip "${name}  (right-click: pin / unpin)"
           :onclick "~/.config/eww/scripts/apps launch ${id}"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
     (box :orientation "v" :space-evenly false :spacing 4
@@ -379,7 +379,7 @@
       (label :class "dim" :limit-width 10 :text name))))
 
 (defwidget result-row [id name icon initial pinned]
-  (button :class "result" :onclick "~/.config/eww/scripts/apps launch ${id}"
+  (button :timeout "10s" :class "result" :onclick "~/.config/eww/scripts/apps launch ${id}"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
     (box :space-evenly false :spacing 10
       (box :class "app-icon-sm"
@@ -400,7 +400,7 @@
       (input :class "search" :hexpand true :value query :timeout "2s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
-      (button :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
         (result-row :id {r.id} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned}))
@@ -419,7 +419,7 @@
       (input :class "search" :hexpand true :value query :timeout "2s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
-      (button :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
         (result-row :id {r.id} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned}))
@@ -453,7 +453,7 @@
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "dashboard")
       (label :class "dim" :halign "end" :text "up ${uptime}  ")
-      (button :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :spacing 18 :valign "start"
       (box :orientation "v" :space-evenly false :spacing 10 :valign "start"
         (label :class "dash-time" :halign "start" :text {formattime(EWW_TIME, "%H:%M")})
@@ -483,7 +483,7 @@
     :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "dashboard")
-      (button :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll false :vexpand true
       (box :orientation "v" :space-evenly false :spacing 16
         (box :orientation "v" :space-evenly false :spacing 2
@@ -524,7 +524,7 @@
 
 ;; ── Expose (Super+Tab): every workspace and window as a thumbnail, click one to jump to it ──
 (defwidget expose-card [id title initial thumb focused scratch]
-  (button :class "ecard ${focused ? 'focused' : ''}" :tooltip title
+  (button :timeout "10s" :class "ecard ${focused ? 'focused' : ''}" :tooltip title
           :onclick {scratch ? "~/.config/eww/scripts/expose goto-scratch ${id}" : "~/.config/eww/scripts/expose goto ${id}"}
     (box :orientation "v" :space-evenly false :spacing 6
       (box :class "ethumb" :width 300 :height 170
@@ -534,7 +534,7 @@
 
 (defwidget expose-ws [name focused scratch windows]
   (box :orientation "v" :space-evenly false :spacing 6
-    (button :class "ews ${focused ? 'focused' : ''}" :halign "start"
+    (button :timeout "10s" :class "ews ${focused ? 'focused' : ''}" :halign "start"
             :onclick "~/.config/eww/scripts/expose workspace ${name}"
       {scratch ? "minimised" : "workspace ${name}"})
     (box :spacing 12 :halign "start"
@@ -548,7 +548,7 @@
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "expose")
       (label :class "dim" :halign "end" :text "click a window to jump to it   ")
-      (button :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll true :vexpand true
       (box :orientation "v" :space-evenly false :spacing 18
         (for ws in expose
