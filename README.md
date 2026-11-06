@@ -135,7 +135,7 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
 - **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
-- **Monitors**: `wdisplays` for a quick layout; add a `~/.config/kanshi/config` and start `kanshi` if you want profiles.
+- **Monitors**: `wdisplays` for a quick layout. To keep positions and rotation across reloads and reboots, write a `~/.config/kanshi/config`; `kanshi` then starts by itself and re-applies it after every reload.
 
 ## Build and test
 

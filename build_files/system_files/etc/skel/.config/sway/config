@@ -173,6 +173,10 @@ exec wl-clip-persist --clipboard regular
 exec swayidle -w timeout 300 'swaylock -f' timeout 600 'swaymsg "output * power off"' \
     resume 'swaymsg "output * power on"' before-sleep 'swaylock -f'
 # bar on landscape screens, dock on portrait screens: re-evaluated at every reload and whenever outputs change
+# screen layout profiles (position, rotation): kanshi runs only if ~/.config/kanshi/config exists, and is told to
+# re-apply its profile after every reload (a reload puts the screens back in automatic layout)
+exec sh -c 'test -f ~/.config/kanshi/config && exec kanshi'
+exec_always sh -c 'test -f ~/.config/kanshi/config && pgrep -x kanshi >/dev/null && kanshictl reload'
 exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch

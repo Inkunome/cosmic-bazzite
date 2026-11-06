@@ -28,7 +28,7 @@
 (defpoll qs :interval "3s" :initial "{\"wifi\":false,\"ssid\":\"\",\"bt\":false,\"dnd\":false,\"night\":false,\"profile\":\"unknown\",\"bright\":-1}" "~/.config/eww/scripts/qs")
 (defpoll clock :interval "10s" "date '+%a %d %b  %H:%M'")
 
-(defwidget bar-content []
+(defwidget bar-content [mon]
   (centerbox :class "bar" :orientation "h"
     (box :halign "start" :space-evenly false
       (for ws in workspaces
@@ -36,26 +36,26 @@
                 :onclick "swaymsg workspace ${ws.name}"
           {ws.focused ? "◉ ${ws.name}" : "○ ${ws.name}"})))
     (box :halign "center"
-      (eventbox :onhover "eww update cal_pill=true && eww open cal"
+      (eventbox :onhover "eww update cal_pill=true && eww open cal --arg mon=${mon}"
                 :onhoverlost "eww update cal_pill=false && ~/.config/eww/scripts/popclose cal cal"
         (label :class "pill clock" :text clock)))
     (box :halign "end" :space-evenly false
-      (eventbox :onhover "eww update keys_pill=true && eww open keys"
+      (eventbox :onhover "eww update keys_pill=true && eww open keys --arg mon=${mon}"
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
-      (eventbox :onhover "eww update sys_pill=true && eww open sysinfo"
+      (eventbox :onhover "eww update sys_pill=true && eww open sysinfo --arg mon=${mon}"
                 :onhoverlost "eww update sys_pill=false && ~/.config/eww/scripts/popclose sysinfo sys"
         (box :class "pill" :tooltip "cpu ${round(EWW_CPU.avg, 0)}% · ram ${round(EWW_RAM.used_mem_perc, 0)}%"
           (image :path "${EWW_CONFIG_DIR}/icons/cpu.svg" :image-width 18 :image-height 18)))
-      (eventbox :onhover "eww update vol_pill=true && eww open volpop"
+      (eventbox :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
                 :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         (box :class "pill vol ${sink.muted ? 'muted' : ''}" :tooltip {sink.muted ? "muted" : "volume ${sink.vol}%"}
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (sink.muted ? "vol-muted" : sink.vol < 34 ? "vol-low" : "vol-high") + ".svg"}
                  :image-width 18 :image-height 18)))
-      (eventbox :onhover "eww update nt_pill=true && eww open notifs"
+      (eventbox :onhover "eww update nt_pill=true && eww open notifs --arg mon=${mon}"
                 :onhoverlost "eww update nt_pill=false && ~/.config/eww/scripts/popclose notifs nt"
                 :onclick "makoctl mode -t do-not-disturb; eww poll nt"
         (box :class "pill" :tooltip {nt.dnd ? "do not disturb" : nt.count > 0 ? "${nt.count} notification(s)" : "no notifications"}
@@ -65,15 +65,15 @@
              :visible {EWW_BATTERY != ""}
              :text "bat ${EWW_BATTERY == '' ? '' : EWW_BATTERY.total_avg}%")
       (systray :class "pill" :icon-size 16 :spacing 6)
-      (eventbox :onhover "eww update qs_pill=true && eww open quick"
+      (eventbox :onhover "eww update qs_pill=true && eww open quick --arg mon=${mon}"
                 :onhoverlost "eww update qs_pill=false && ~/.config/eww/scripts/popclose quick qs"
         (box :class "pill qs" (image :path "${EWW_CONFIG_DIR}/icons/paw.svg" :image-width 18 :image-height 18))))))
 
 ;; A brown thorny branch with flowers and a rose runs along the bottom edge of the bar.
 ;; It sits below the bar, so it never covers any widget.
-(defwidget bar []
+(defwidget bar [mon]
   (box :orientation "v" :space-evenly false
-    (box :class "bar-pad" (bar-content))
+    (box :class "bar-pad" (bar-content :mon mon))
     (box :class "vine" :height 16
          :style "background-image: url('${EWW_CONFIG_DIR}/icons/vine-bottom.svg');")))
 
@@ -83,7 +83,7 @@
   :stacking "fg"
   :exclusive true
   :namespace "ink-bar"
-  (bar))
+  (bar :mon mon))
 
 ;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
 (defwidget dock-app [app tip]
@@ -150,15 +150,15 @@
       (slider-row :name "speakers" :data sink :target "@DEFAULT_AUDIO_SINK@")
       (slider-row :name "microphone" :data src :target "@DEFAULT_AUDIO_SOURCE@"))))
 
-(defwindow sysinfo
-  :monitor 0
+(defwindow sysinfo [mon]
+  :monitor mon
   :geometry (geometry :x "260px" :y "62px" :width "280px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (sysinfo))
 
-(defwindow volpop
-  :monitor 0
+(defwindow volpop [mon]
+  :monitor mon
   :geometry (geometry :x "110px" :y "62px" :width "280px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
@@ -226,8 +226,8 @@
         (pbtn :label "Reboot" :action "reboot")
         (pbtn :label "Shut down" :action "poweroff")))))
 
-(defwindow quick
-  :monitor 0
+(defwindow quick [mon]
+  :monitor mon
   :geometry (geometry :x "12px" :y "62px" :width "400px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
@@ -258,8 +258,8 @@
         (button :class "app" :onclick "makoctl dismiss -a; eww poll nt" "Dismiss all")
         (button :class "app" :onclick "makoctl restore; eww poll nt" "Restore last")))))
 
-(defwindow notifs
-  :monitor 0
+(defwindow notifs [mon]
+  :monitor mon
   :geometry (geometry :x "180px" :y "62px" :width "320px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
@@ -328,8 +328,8 @@
           (keyrow :keys {["Super", "Shift", "E"]} :desc "power menu")
           (keyrow :keys {["Super", "Shift", "C"]} :desc "reload"))))))
 
-(defwindow keys
-  :monitor 0
+(defwindow keys [mon]
+  :monitor mon
   :geometry (geometry :x "0px" :y "62px" :width "1120px" :anchor "top center")
   :stacking "overlay"
   :namespace "ink-pop"
@@ -344,8 +344,8 @@
       (label :class "pop-title" :halign "start" :text {formattime(EWW_TIME, "%A %d %B %Y")})
       (calendar :class "cal" :show-heading true :show-week-numbers false))))
 
-(defwindow cal
-  :monitor 0
+(defwindow cal [mon]
+  :monitor mon
   :geometry (geometry :x "0px" :y "62px" :width "300px" :anchor "top center")
   :stacking "overlay"
   :namespace "ink-pop"
