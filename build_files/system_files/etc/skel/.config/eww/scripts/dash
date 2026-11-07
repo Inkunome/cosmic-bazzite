@@ -26,7 +26,7 @@ open_kind() {
     elif ((h > w)); then eww open "$kind-long" --id "$kind" --arg "mon=$idx"
     else eww open "$kind-wide" --id "$kind" --arg "mon=$idx"; fi
     # the launcher also owns Up, Down, Tab and Return (see the "launcher" mode in the sway config)
-    if [[ $kind == launcher ]]; then swaymsg -q mode launcher; else swaymsg -q mode dash; fi
+    if [[ $kind == launcher ]]; then swaymsg -q mode launcher-pinned; else swaymsg -q mode dash; fi
 }
 # which kind is open right now (empty when none)
 current() { eww active-windows 2>/dev/null | sed -n 's/^\(dashboard\|launcher\|expose\): .*/\1/p' | head -1; }

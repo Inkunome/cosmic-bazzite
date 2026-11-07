@@ -190,7 +190,7 @@ exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
-# the launcher: Up/Down/Tab/Shift+Tab move the selection, Return launches it (typing still goes to the search field)
+# the launcher: Up/Down/Tab/Shift+Tab move the selection (Left/Right too while the search is empty, see below), Return launches it (typing still goes to the search field)
 mode "launcher" {
     bindsym Escape exec ~/.config/eww/scripts/dash close
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
@@ -200,6 +200,22 @@ mode "launcher" {
     bindsym Tab exec ~/.config/eww/scripts/apps nav next
     bindsym Up exec ~/.config/eww/scripts/apps nav prev
     bindsym Shift+Tab exec ~/.config/eww/scripts/apps nav prev
+    bindsym Return exec ~/.config/eww/scripts/apps accept
+    bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
+}
+
+# the same while the search field is empty: Left and Right choose a pinned app (`apps search` switches between the two)
+mode "launcher-pinned" {
+    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
+    bindsym Mod1+space exec ~/.config/eww/scripts/dash close
+    bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
+    bindsym Down exec ~/.config/eww/scripts/apps nav next
+    bindsym Tab exec ~/.config/eww/scripts/apps nav next
+    bindsym Right exec ~/.config/eww/scripts/apps nav right
+    bindsym Up exec ~/.config/eww/scripts/apps nav prev
+    bindsym Shift+Tab exec ~/.config/eww/scripts/apps nav prev
+    bindsym Left exec ~/.config/eww/scripts/apps nav left
     bindsym Return exec ~/.config/eww/scripts/apps accept
     bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
 }
