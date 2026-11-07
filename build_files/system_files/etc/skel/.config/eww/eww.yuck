@@ -665,7 +665,7 @@
     :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "expose")
-      (label :class "dim" :halign "end" :text {picked != "" ? "click a workspace to move the window there, right-click it again to cancel   " : "click a window to jump to it, right-click one to move it   "})
+      (label :class "dim" :halign "end" :text {picked != "" ? "now click a workspace, or + new workspace, to put it there  ·  right-click it again to cancel   " : "click a window to jump to it  ·  right-click one to move it to another workspace or a new one   "})
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll true :vexpand true
       (box :orientation "v" :space-evenly false :spacing 18
