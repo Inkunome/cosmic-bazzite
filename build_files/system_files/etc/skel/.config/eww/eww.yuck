@@ -32,11 +32,11 @@
 (defpoll qs :interval "3s" :initial "{\"wifi\":false,\"ssid\":\"\",\"bt\":false,\"dnd\":false,\"night\":false,\"profile\":\"unknown\",\"bright\":-1}" "~/.config/eww/scripts/qs")
 (defpoll clock :interval "10s" "date '+%a %d %b  %H:%M'")
 
-(defwidget bar-content [mon]
+(defwidget bar-content [mon out]
   (centerbox :class "bar" :orientation "h"
     (box :halign "start" :space-evenly false
       (for ws in workspaces
-        (button :timeout "10s" :class "ws ${ws.focused ? 'focused' : ws.visible ? 'visible' : ''} ${ws.urgent ? 'urgent' : ''}"
+        (button :timeout "10s" :visible {ws.output == out} :class "ws ${ws.focused ? 'focused' : ws.visible ? 'visible' : ''} ${ws.urgent ? 'urgent' : ''}"
                 :onclick "swaymsg workspace ${ws.name}"
           {ws.focused ? "◉ ${ws.name}" : "○ ${ws.name}"})))
     (box :halign "center"
@@ -75,19 +75,19 @@
 
 ;; A brown thorny branch with flowers and a rose runs along the bottom edge of the bar.
 ;; It sits below the bar, so it never covers any widget.
-(defwidget bar [mon]
+(defwidget bar [mon out]
   (box :orientation "v" :space-evenly false
-    (box :class "bar-pad" (bar-content :mon mon))
+    (box :class "bar-pad" (bar-content :mon mon :out out))
     (box :class "vine" :height 16
          :style "background-image: url('${EWW_CONFIG_DIR}/icons/vine-bottom.svg');")))
 
-(defwindow bar [mon]
+(defwindow bar [mon out]
   :monitor mon
   :geometry (geometry :x "0%" :y "6px" :width "98%" :height "54px" :anchor "top center")
   :stacking "fg"
   :exclusive true
   :namespace "ink-bar"
-  (bar :mon mon))
+  (bar :mon mon :out out))
 
 ;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left, the media player on the right.
 ;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.

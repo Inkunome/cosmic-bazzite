@@ -14,7 +14,7 @@ apply() {
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries[] | "\(.key) \(.value.rect.width) \(.value.rect.height) \(.value.name)"' |
     while read -r idx w h name; do
         if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$idx"; eww open clock-big --id "clock-$idx" --arg "mon=$idx"; eww open ws-dock --id "wsd-$idx" --arg "mon=$idx" --arg "out=$name"
-        else eww open bar --id "bar-$idx" --arg "mon=$idx"; eww open strip --id "strip-$idx" --arg "mon=$idx"; fi
+        else eww open bar --id "bar-$idx" --arg "mon=$idx" --arg "out=$name"; eww open strip --id "strip-$idx" --arg "mon=$idx"; fi
     done
 }
 
