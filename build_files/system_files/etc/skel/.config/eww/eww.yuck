@@ -109,18 +109,17 @@
     (dock-app :app "settings" :tip "Settings")))
 
 (defwidget bigclock []
-  (box :class "bigclock" :orientation "v" :space-evenly false
-    (label :class "bigclock-time" :text {formattime(EWW_TIME, "%H:%M")})
-    (label :class "bigclock-date" :text {formattime(EWW_TIME, "%A %d %B")})))
+  (box :class "bigclock" :valign "fill" :halign "fill"
+    (label :class "bigclock-time" :hexpand true :vexpand true :text {formattime(EWW_TIME, "%H:%M")})))
 
-;; The big clock sits at the bottom right of a portrait screen, to the right of the dock. A portrait screen has no
-;; bar, so this is where its time is.
+;; The big clock sits at the bottom right of a portrait screen, to the right of the dock, and is as tall as the dock.
+;; It shows only the time: a portrait screen has no bar, so this is where its time is.
 (defwindow clock-big [mon]
   :monitor mon
   ;; a fixed size: sized from its content, the window would be laid out before the time has a value and keep that width.
   ;; y is negative because the dock reserves its own height at the bottom edge and this window is placed above that zone:
   ;; -76 px brings its bottom edge level with the dock (16 px from the screen edge).
-  :geometry (geometry :x "24px" :y "-76px" :width "250px" :height "96px" :anchor "bottom right")
+  :geometry (geometry :x "24px" :y "-76px" :width "180px" :height "76px" :anchor "bottom right")
   :stacking "fg"
   :exclusive false
   :namespace "ink-dock"

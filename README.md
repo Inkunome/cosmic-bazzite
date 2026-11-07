@@ -12,7 +12,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
 | **eww bar** (landscape screens) | Workspaces, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
-| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom, with a big clock at its right. No bar on portrait screens |
+| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom, with a clock (time only, same height) at its right. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, click one to jump to it |
@@ -33,7 +33,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 
 ### Portrait screens
 
-The bar is replaced by a dock with a big clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
+The bar is replaced by a dock with a clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
 
 | Dock | Dashboard |
 | :---: | :---: |
