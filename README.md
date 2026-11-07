@@ -85,6 +85,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+W`, `Super+E` | tabs, split |
 | `Super+A`, `Super+Shift+A` | focus parent, child container |
 | `Super+Shift+Q` | close |
+| `Ctrl+Alt+F`, middle click on a tab | close the window, close that tab |
 | `Alt+Esc`, `Alt+Tab` | minimise to the dock, next minimised window |
 | `Super+1…9`, `Super+Shift+1…9` | go to a workspace, send the window there |
 | `Super+PgUp/PgDn`, `Super+Ctrl+←/→` | previous / next workspace |

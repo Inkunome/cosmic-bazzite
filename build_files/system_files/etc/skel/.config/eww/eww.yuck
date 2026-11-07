@@ -152,14 +152,14 @@
 
 (defwindow sysinfo [mon]
   :monitor mon
-  :geometry (geometry :x "260px" :y "62px" :width "280px" :anchor "top right")
+  :geometry (geometry :x "260px" :y "4px" :width "280px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (sysinfo))
 
 (defwindow volpop [mon]
   :monitor mon
-  :geometry (geometry :x "110px" :y "62px" :width "280px" :anchor "top right")
+  :geometry (geometry :x "110px" :y "4px" :width "280px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (volpop))
@@ -228,7 +228,7 @@
 
 (defwindow quick [mon]
   :monitor mon
-  :geometry (geometry :x "12px" :y "62px" :width "400px" :anchor "top right")
+  :geometry (geometry :x "12px" :y "4px" :width "400px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (quick))
@@ -260,7 +260,7 @@
 
 (defwindow notifs [mon]
   :monitor mon
-  :geometry (geometry :x "180px" :y "62px" :width "320px" :anchor "top right")
+  :geometry (geometry :x "180px" :y "4px" :width "320px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (notifs))
@@ -308,6 +308,8 @@
           (keyrow :keys {["Super", "W"]} :desc "tabs")
           (keyrow :keys {["Super", "E"]} :desc "split")
           (keyrow :keys {["Super", "Shift", "Q"]} :desc "close")
+          (keyrow :keys {["Ctrl", "Alt", "F"]} :desc "close window")
+          (keyrow :keys {["Middle click", "tab"]} :desc "close tab")
           (keyrow :keys {["Super", "A"]} :desc "focus parent")
           (keyrow :keys {["Super", "Shift", "A"]} :desc "focus child")
           (label :class "pop-title" :halign "start" :text "minimise")
@@ -330,7 +332,7 @@
 
 (defwindow keys [mon]
   :monitor mon
-  :geometry (geometry :x "0px" :y "62px" :width "1120px" :anchor "top center")
+  :geometry (geometry :x "0px" :y "4px" :width "1120px" :anchor "top center")
   :stacking "overlay"
   :namespace "ink-pop"
   (keys))
@@ -346,7 +348,7 @@
 
 (defwindow cal [mon]
   :monitor mon
-  :geometry (geometry :x "0px" :y "62px" :width "300px" :anchor "top center")
+  :geometry (geometry :x "0px" :y "4px" :width "300px" :anchor "top center")
   :stacking "overlay"
   :namespace "ink-pop"
   (calbox))

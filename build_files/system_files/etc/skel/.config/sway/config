@@ -77,6 +77,9 @@ bindcode $mod+40 exec ~/.config/eww/scripts/dash toggle launcher   # D: app laun
 bindsym Ctrl+space exec ~/.config/eww/scripts/dash toggle launcher
 bindsym Mod1+space exec ~/.config/eww/scripts/dash toggle dashboard
 bindcode $mod+Shift+24 kill                       # Q
+bindcode Ctrl+Mod1+41 kill                        # Ctrl+Alt+F
+# sway cannot draw a clickable cross in a tab, so a middle click on a tab title (the default target of a mouse binding) closes it
+bindsym button2 kill
 bindcode $mod+Shift+54 reload                     # C
 bindcode $mod+Shift+26 exec wlogout -b 4          # E
 bindcode $mod+46 exec swaylock -f                 # L
