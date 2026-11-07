@@ -13,7 +13,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | Piece | What it does |
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, caffeine button, tray, quick-settings menu |
+| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, caffeine button (no auto-lock, no screen blanking, no idle suspend), tray, quick-settings menu |
 | **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
 | **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
