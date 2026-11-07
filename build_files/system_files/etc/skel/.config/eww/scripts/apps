@@ -9,7 +9,8 @@
   apps dock             print the dock apps as JSON
   apps dock-sync        push them to eww (variable dock_apps); the screens script runs it before opening a dock
   apps dock-toggle <id> add an application to the dock, or remove it from the dock
-  apps nav next|prev    move the selection in the open launcher (sway binds Down, Up, Tab, Shift+Tab to this)
+  apps nav next|prev    move the selection in the open launcher (sway binds Down, Up, Tab, Shift+Tab to this, and
+                        Left, Right while the search field is empty)
   apps accept           launch the selected entry (sway binds Return to this)
 """
 import configparser, glob, json, os, shlex, subprocess, sys, time
@@ -250,6 +251,9 @@ def main(argv):
     if cmd == "search":
         res = json.dumps(search(apps, arg), separators=(",", ":"))
         eww(query=arg, results=res, sel=0)
+        # Left and Right choose a pinned app while the search is empty; once you type they belong to the text field
+        if subprocess.run("eww active-windows | grep -q '^launcher:'", shell=True).returncode == 0:
+            subprocess.run(["swaymsg", "-q", "mode", "launcher" if arg else "launcher-pinned"], check=False)
         if sys.stdout.isatty():
             print(res)
     elif cmd == "run":
@@ -265,7 +269,7 @@ def main(argv):
                 sel = int(eww_get("sel"))
             except ValueError:
                 sel = 0
-            eww(sel=(sel + (1 if arg == "next" else -1)) % len(items))
+            eww(sel=(sel + (1 if arg in ("next", "right") else -1)) % len(items))
     elif cmd == "accept":
         items = launcher_items()
         if items:
