@@ -2,7 +2,7 @@
 
 A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in light purple and pink, with a thorny branch of flowers under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
-![Desktop: tabbed windows, bar with a thorny branch, lilac wallpaper](docs/img/desktop.webp)
+![Desktop: tabbed windows, bar with a thorny branch, bottom strip, lilac wallpaper](docs/img/desktop.webp)
 
 Everything lives in `build_files/`. The image is built by GitHub Actions and signed with cosign.
 
@@ -24,7 +24,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 ### Launcher and expose
 
 ![App launcher with pinned applications](docs/img/launcher.webp)
-![Expose view: workspaces and window thumbnails](docs/img/expose.webp)
+![Expose view: workspaces and window thumbnails, grouped by screen](docs/img/expose.webp)
 
 ### Dashboard and menus
 
@@ -38,7 +38,7 @@ The bar is replaced by a dock, with that screen's workspaces at its left and a c
 
 | Dock | Dashboard |
 | :---: | :---: |
-| ![Portrait screen with the dock](docs/img/portrait.webp) | ![Portrait dashboard](docs/img/portrait-dashboard.webp) |
+| ![Portrait screen with workspaces, dock and clock](docs/img/portrait.webp) | ![Portrait dashboard](docs/img/portrait-dashboard.webp) |
 
 ## Install
 
