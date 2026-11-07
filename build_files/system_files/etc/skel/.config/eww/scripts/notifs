@@ -1,6 +1,7 @@
 #!/bin/bash
 # Notification centre data for eww.
 #   notifs          print the state as JSON: DND flag, number of active notifications, recent history
+#   notifs push     hand the fresh state to eww at once (this eww has no `poll` command)
 #   notifs clear    dismiss the active notifications and empty the list shown in the panel
 #
 # makoctl cannot erase its history, so "clear" remembers the id of the newest entry and the panel only lists
@@ -16,6 +17,7 @@ history() { makoctl history -j 2>/dev/null | jq -c "$JQ" 2>/dev/null || echo '[]
 newest() { jq -r 'map(.id) | max // 0'; }
 
 case "${1:-json}" in
+    push) eww update nt="$("$0")"; exit 0 ;;
     clear)
         makoctl dismiss -a 2>/dev/null
         history | newest > "$marker_file"

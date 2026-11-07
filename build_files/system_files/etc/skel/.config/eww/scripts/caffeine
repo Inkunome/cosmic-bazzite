@@ -1,0 +1,41 @@
+#!/bin/bash
+# Caffeine mode: no automatic lock and no screen blanking while it is on (a manual lock and the lock before a
+# suspend still work). It lasts until you turn it off or log out.
+#   caffeine run      start swayidle the normal way (sway runs this at login)
+#   caffeine on|off|toggle
+#   caffeine status   print true or false
+STATE="${XDG_RUNTIME_DIR:-/tmp}/ink-caffeine"
+
+lock_cmd() {
+    if command -v ink-lock >/dev/null; then echo ink-lock
+    elif [[ -x $HOME/.local/bin/ink-lock ]]; then echo "$HOME/.local/bin/ink-lock"
+    else echo "swaylock -f"; fi
+}
+
+normal() {   # lock after 5 minutes, blank the screens after 10
+    local lock; lock=$(lock_cmd)
+    exec swayidle -w timeout 300 "$lock" timeout 600 'swaymsg "output * power off"' \
+        resume 'swaymsg "output * power on"' before-sleep "$lock"
+}
+
+awake() {    # only the lock before a suspend
+    exec swayidle -w before-sleep "$(lock_cmd)"
+}
+
+restart() {  # restart swayidle in the requested mode, detached
+    pkill -x swayidle
+    setsid -f "$0" "$1" >/dev/null 2>&1
+}
+
+case "${1:-status}" in
+    run)    [[ -e $STATE ]] && awake || normal ;;
+    awake)  awake ;;
+    on)     touch "$STATE"; restart awake
+            # wake the screens only if they are off: `power on` on a lit output makes sway rebuild it, and the bar and
+            # dock would be laid out again for nothing
+            swaymsg -t get_outputs -r | jq -e 'any(.[]; .active and (.power == false))' >/dev/null && swaymsg -q "output * power on" ;;
+    off)    rm -f "$STATE"; restart run ;;
+    toggle) if [[ -e $STATE ]]; then "$0" off; else "$0" on; fi ;;
+    status) [[ -e $STATE ]] && echo true || echo false ;;
+    *) echo "usage: caffeine run|on|off|toggle|status" >&2; exit 1 ;;
+esac
