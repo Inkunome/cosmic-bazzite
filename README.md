@@ -69,7 +69,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 
 ## Shortcuts
 
-`Super` is the Windows key. Letters and number keys are bound by **key position**, so they stay in the same place in qwerty, azerty and bépo. Hover the keyboard layout in the bar for the full sheet.
+`Super` is the Windows key. Letters and number keys are bound by **key position**, so they stay in the same place in qwerty, azerty and bépo. Hover the keyboard layout in the bar for the full sheet (it opens under that item).
 
 | Keys | Action |
 | --- | --- |
