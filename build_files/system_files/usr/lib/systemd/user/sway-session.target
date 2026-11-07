@@ -1,0 +1,9 @@
+[Unit]
+Description=sway compositor session
+Documentation=man:systemd.special(7)
+# Binding to graphical-session.target is what lets xdg-desktop-portal start: its unit has
+# Requisite=graphical-session.target, and without a session target it fails with "Dependency failed", so links
+# opened from Flatpak apps (Discord, ...) never reach the browser.
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target

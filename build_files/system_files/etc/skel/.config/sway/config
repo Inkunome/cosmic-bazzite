@@ -168,6 +168,9 @@ bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
 
 # ── autostart ──────────────────────────────────────────────
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+# tell systemd the graphical session is up (the desktop portals, which open links from Flatpak apps, need it)
+exec systemctl --user start sway-session.target
+exec swaymsg -mt subscribe '["shutdown"]' && systemctl --user stop sway-session.target
 exec mako
 exec udiskie --tray
 exec /usr/libexec/polkit-mate-authentication-agent-1
