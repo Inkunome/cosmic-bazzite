@@ -1,7 +1,50 @@
 #!/bin/bash
-# Print {"vol":N,"muted":bool} for the default audio sink or source.
-t="@DEFAULT_AUDIO_${1^^}@"
-out=$(wpctl get-volume "$t" 2>/dev/null) || { echo '{"vol":0,"muted":true}'; exit; }
-vol=$(awk '{printf "%d", $2*100}' <<<"$out")
-[[ $out == *MUTED* ]] && muted=true || muted=false
-echo "{\"vol\":$vol,\"muted\":$muted}"
+# Audio helpers for the volume flyout (PipeWire through wpctl and pactl).
+#   audio sink|source          {"vol":N,"muted":bool} of the default output / input (polled by eww)
+#   audio set <sink|source> N  set that volume to N %, and update the number shown next to the slider at once
+#   audio mute <sink|source>   toggle mute
+#   audio devices              {"sinks":[…],"sources":[…]}: every output / input with its description and which is the default
+#   audio default <sink|source> <name>   make a device the default, then refresh the flyout
+#   audio sync                 push the current volumes and devices to eww (run when the flyout opens)
+kind_target() { [[ $1 == sink ]] && echo @DEFAULT_AUDIO_SINK@ || echo @DEFAULT_AUDIO_SOURCE@; }
+state() {
+    local t="@DEFAULT_AUDIO_${1^^}@" out vol muted
+    out=$(wpctl get-volume "$t" 2>/dev/null) || { echo '{"vol":0,"muted":true}'; return; }
+    vol=$(awk '{printf "%d", $2*100}' <<<"$out")
+    [[ $out == *MUTED* ]] && muted=true || muted=false
+    echo "{\"vol\":$vol,\"muted\":$muted}"
+}
+devices() {
+    local ds dsrc
+    ds=$(pactl get-default-sink 2>/dev/null); dsrc=$(pactl get-default-source 2>/dev/null)
+    jq -nc \
+        --argjson sinks "$(pactl -f json list sinks 2>/dev/null || echo '[]')" \
+        --argjson sources "$(pactl -f json list sources 2>/dev/null || echo '[]')" \
+        --arg ds "$ds" --arg dsrc "$dsrc" '
+        {sinks:   [$sinks[]   | {name, desc: .description, default: (.name == $ds)}],
+         sources: [$sources[] | select(.name | endswith(".monitor") | not) | {name, desc: .description, default: (.name == $dsrc)}]}'
+}
+sync() {
+    local o i
+    o=$(state sink | jq -r .vol); i=$(state source | jq -r .vol)
+    eww update "vol_sink_v=$o" "vol_source_v=$i"
+    eww poll adev   # `adev` is polled; asking for a poll is how its value is refreshed
+}
+
+case "${1:-}" in
+    sink|source) state "$1" ;;
+    set)
+        # eww sends a float with a dot (55.4321); bash's printf wants the locale's separator, so round with awk
+        v=$(LC_ALL=C awk -v x="${3:?value}" 'BEGIN { printf "%d", x + 0.5 }')
+        wpctl set-volume "$(kind_target "${2:?sink|source}")" "${v}%"
+        eww update "vol_${2}_v=$v" ;;
+    mute)
+        wpctl set-mute "$(kind_target "${2:?sink|source}")" toggle
+        eww poll sink src ;;
+    devices) devices ;;
+    default)
+        pactl "set-default-${2:?sink|source}" "${3:?name}"
+        sync; eww poll sink src ;;
+    sync) sync ;;
+    *) sed -n '2,9p' "$0" >&2; exit 1 ;;
+esac

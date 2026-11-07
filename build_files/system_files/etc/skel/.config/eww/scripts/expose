@@ -1,5 +1,5 @@
 #!/bin/bash
-# Expose view: every workspace with a thumbnail of each of its windows (Super+Tab).
+# Expose view: every workspace, grouped by screen, with a thumbnail of each of its windows (Super+Tab).
 #   expose refresh        capture thumbnails, then push the data to eww (variable `expose`)
 #   expose capture        capture a thumbnail of every window
 #   expose json           print workspaces and windows as JSON
@@ -41,12 +41,17 @@ json() {
         def win: {id, title: (.name // ""), app: (.app_id // .window_properties.class // "?"),
                   initial: ((.app_id // .window_properties.class // "?") | .[:1] | ascii_upcase), focused,
                   thumb: (if ((.id | tostring) as $i | $have | index($i)) then "\($dir)/\(.id).png" else "" end)};
-        [ .nodes[] | select(.name != "__i3") | .nodes[] | select(.type == "workspace")
+        def ws: .nodes[] | select(.type == "workspace")
           | {name, focused: ([.. | objects | select(.focused == true)] | length > 0), scratch: false,
              windows: ([.. | objects | select(has("pid") and .pid != null)] | map(win))}
-          | select((.windows | length) > 0 or .focused) ]
+          | select((.windows | length) > 0 or .focused);
+        # one group per screen (in the order sway lists them), then the minimised windows
+        [ .nodes[] | select(.name != "__i3")
+          | {output: .name, size: "\(.rect.width)×\(.rect.height)", workspaces: [ ws ]}
+          | select((.workspaces | length) > 0) ]
         + [ ([.. | objects | select(.name? == "__i3_scratch") | .floating_nodes[]? | win]) as $s
-            | select(($s | length) > 0) | {name: "minimised", focused: false, scratch: true, windows: $s} ]'
+            | select(($s | length) > 0)
+            | {output: "", size: "", workspaces: [{name: "minimised", focused: false, scratch: true, windows: $s}]} ]'
 }
 
 case "${1:-refresh}" in

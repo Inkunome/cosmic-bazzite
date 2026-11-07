@@ -6,8 +6,11 @@
   apps launch <id>      launch an application by desktop-file id, then close the dashboard
   apps pinned           print pinned apps as JSON and push them to eww (var: pinned)
   apps toggle-pin <id>  pin or unpin an application, then refresh `pinned`
+  apps nav next|prev    move the selection in the open launcher (sway binds Down, Up, Tab, Shift+Tab to this)
+  apps accept           launch the selected entry (sway binds Return to this)
 """
-import configparser, glob, json, os, subprocess, sys, time
+import configparser, glob, json, os, shlex, subprocess, sys, time
+from urllib.parse import quote, unquote
 
 HOME = os.path.expanduser("~")
 DIRS = ["/usr/share/applications", "/usr/local/share/applications",
@@ -107,7 +110,7 @@ def resolve_pinned(apps):
         if a and a["id"] not in seen:
             out.append(a)
             seen.add(a["id"])
-    return out[:MAX_PINNED]
+    return [dict(p, idx=i) for i, p in enumerate(with_q(out[:MAX_PINNED]))]
 
 
 def search(apps, q):
@@ -120,9 +123,34 @@ def search(apps, q):
         n, k = a["name"].lower(), a["keywords"].lower()
         s = 100 if n.startswith(q) else 80 if any(w.startswith(q) for w in n.split()) else 60 if q in n else 30 if q in k else 0
         if s:
-            scored.append((-s, n, dict(a, pinned=a["id"] in pinned)))
+            scored.append((-s, n, dict(a, pinned=a["id"] in pinned, q=quote(a["id"], safe=""))))
     scored.sort(key=lambda t: t[:2])
-    return [t[2] for t in scored[:MAX_RESULTS]]
+    out = [t[2] for t in scored[:MAX_RESULTS]]
+    for i, r in enumerate(out):
+        r["idx"] = i          # position in the list: the launcher highlights the one equal to `sel`
+    return out
+
+
+def with_q(apps):
+    """Add `q`, the id percent-encoded, to each app. eww pastes it into a shell command, so it must hold no space,
+    bracket or quote; `launch` and `toggle-pin` decode it."""
+    return [dict(a, q=quote(a["id"], safe="")) for a in apps]
+
+
+def eww_get(var):
+    r = subprocess.run(["eww", "get", var], capture_output=True, text=True)
+    return r.stdout.strip()
+
+
+def launcher_items():
+    """What the open launcher shows: the search results while something is typed, the pinned apps otherwise."""
+    if "launcher" not in subprocess.run(["eww", "active-windows"], capture_output=True, text=True).stdout:
+        return None
+    var = "results" if eww_get("query").strip() else "pinned"
+    try:
+        return json.loads(eww_get(var))
+    except ValueError:
+        return []
 
 
 def eww(**kv):
@@ -135,7 +163,8 @@ def close_dash():
 
 
 def launch(ident):
-    subprocess.run(["swaymsg", "-q", "exec", f"gtk-launch {ident} || gtk4-launch {ident}"], check=False)
+    q = shlex.quote(ident)
+    subprocess.run(["swaymsg", "-q", "exec", f"gtk-launch {q} || gtk4-launch {q}"], check=False)
     close_dash()
 
 
@@ -145,19 +174,38 @@ def main(argv):
     apps = load()
     if cmd == "search":
         res = json.dumps(search(apps, arg), separators=(",", ":"))
-        eww(query=arg, results=res)
-        print(res)
+        eww(query=arg, results=res, sel=0)
+        if sys.stdout.isatty():
+            print(res)
     elif cmd == "run":
         res = search(apps, arg)
         if res:
             launch(res[0]["id"])
     elif cmd == "launch":
-        launch(arg)
+        launch(unquote(arg))
+    elif cmd == "nav":
+        items = launcher_items()
+        if items:
+            try:
+                sel = int(eww_get("sel"))
+            except ValueError:
+                sel = 0
+            eww(sel=(sel + (1 if arg == "next" else -1)) % len(items))
+    elif cmd == "accept":
+        items = launcher_items()
+        if items:
+            try:
+                sel = int(eww_get("sel"))
+            except ValueError:
+                sel = 0
+            launch(items[sel if 0 <= sel < len(items) else 0]["id"])
     elif cmd == "pinned":
         res = json.dumps(resolve_pinned(apps), separators=(",", ":"))
         eww(pinned=res)
-        print(res)
+        if sys.stdout.isatty():
+            print(res)
     elif cmd == "toggle-pin":
+        arg = unquote(arg)
         cur = [p for p in pins()]
         low = [p.lower() for p in cur]
         if arg.lower() in low:

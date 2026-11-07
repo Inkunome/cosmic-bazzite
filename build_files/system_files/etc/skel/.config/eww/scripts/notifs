@@ -1,10 +1,31 @@
 #!/bin/bash
-# Print notification-center state as JSON: DND flag, active count, recent history.
-dnd=false; makoctl mode 2>/dev/null | grep -qx do-not-disturb && dnd=true
-# mako versions differ: fields may be plain values or {"type":..,"data":..} wrappers.
+# Notification centre data for eww.
+#   notifs          print the state as JSON: DND flag, number of active notifications, recent history
+#   notifs clear    dismiss the active notifications and empty the list shown in the panel
+#
+# makoctl cannot erase its history, so "clear" remembers the id of the newest entry and the panel only lists
+# entries newer than that. mako numbers notifications from 1 again after a restart: a marker above the newest
+# id is stale and is dropped.
+dir="${XDG_CACHE_HOME:-$HOME/.cache}/ink"; mkdir -p "$dir"; marker_file="$dir/notif-cleared"
+# mako versions differ: fields may be plain values or {"type":..,"data":..} wrappers, and the name is app_name or app-name.
 JQ='def v: if type=="object" then .data else . end;
     def items: if type=="object" then (.data // []) else . end | if ((.[0]? // null)|type)=="array" then .[0] else . end;
-    [ items[]? | {id: ((.id // 0)|v), app: ((."app-name" // "")|v), summary: ((.summary // "")|v), body: ((.body // "")|v)} ]'
-a=$(makoctl list -j 2>/dev/null | jq -c "$JQ" 2>/dev/null); a=${a:-[]}
-h=$(makoctl history -j 2>/dev/null | jq -c "$JQ | .[:8]" 2>/dev/null); h=${h:-[]}
-jq -nc --argjson dnd "$dnd" --argjson a "$a" --argjson h "$h" '{dnd:$dnd, count:($a|length), items:$h}'
+    [ items[]? | {id: ((.id // 0)|v), app: ((.app_name // ."app-name" // "")|v), summary: ((.summary // "")|v), body: ((.body // "")|v)} ]'
+active() { makoctl list -j 2>/dev/null | jq -c "$JQ" 2>/dev/null || echo '[]'; }
+history() { makoctl history -j 2>/dev/null | jq -c "$JQ" 2>/dev/null || echo '[]'; }
+newest() { jq -r 'map(.id) | max // 0'; }
+
+case "${1:-json}" in
+    clear)
+        makoctl dismiss -a 2>/dev/null
+        history | newest > "$marker_file"
+        exit 0 ;;
+    json)
+        dnd=false; makoctl mode 2>/dev/null | grep -qx do-not-disturb && dnd=true
+        a=$(active); h=$(history)
+        marker=$(cat "$marker_file" 2>/dev/null || echo 0)
+        (( marker > $(newest <<<"$h") )) && marker=0
+        h=$(jq -c --argjson m "${marker:-0}" '[.[] | select(.id > $m)] | .[:8]' <<<"$h")
+        jq -nc --argjson dnd "$dnd" --argjson a "${a:-[]}" --argjson h "${h:-[]}" '{dnd:$dnd, count:($a|length), items:$h}' ;;
+    *) echo "usage: notifs [json|clear]" >&2; exit 1 ;;
+esac

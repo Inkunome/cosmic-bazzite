@@ -9,6 +9,8 @@ set $moss    #5b4570
 set $spore   #f6eaf4
 set $glow    #c8a2f0
 set $feather #ff9ccf
+# pastel pink: the drop target shown while dragging a window
+set $blush   #ffc8e2
 set $amanita #e0566f
 
 # ── look (swayfx) ──────────────────────────────────────────
@@ -37,7 +39,7 @@ layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
 #                       border    bg       text    indicator child_border
-client.focused          $glow     $loam    $spore  $feather  $glow
+client.focused          $glow     $loam    $spore  $blush    $glow
 client.focused_inactive $moss     $loam    $spore  $moss     $moss
 client.unfocused        $moss     $loam    $spore  $moss     $moss
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
@@ -77,6 +79,9 @@ bindcode $mod+40 exec ~/.config/eww/scripts/dash toggle launcher   # D: app laun
 bindsym Ctrl+space exec ~/.config/eww/scripts/dash toggle launcher
 bindsym Mod1+space exec ~/.config/eww/scripts/dash toggle dashboard
 bindcode $mod+Shift+24 kill                       # Q
+bindcode Ctrl+Mod1+41 kill                        # Ctrl+Alt+F
+# sway cannot draw a clickable cross in a tab, so a middle click on a tab title (the default target of a mouse binding) closes it
+bindsym button2 kill
 bindcode $mod+Shift+54 reload                     # C
 bindcode $mod+Shift+26 exec wlogout -b 4          # E
 bindcode $mod+46 exec swaylock -f                 # L
@@ -173,11 +178,29 @@ exec wl-clip-persist --clipboard regular
 exec swayidle -w timeout 300 'swaylock -f' timeout 600 'swaymsg "output * power off"' \
     resume 'swaymsg "output * power on"' before-sleep 'swaylock -f'
 # bar on landscape screens, dock on portrait screens: re-evaluated at every reload and whenever outputs change
+# screen layout profiles (position, rotation): kanshi runs only if ~/.config/kanshi/config exists, and is told to
+# re-apply its profile after every reload (a reload puts the screens back in automatic layout)
+exec sh -c 'test -f ~/.config/kanshi/config && exec kanshi'
+exec_always sh -c 'test -f ~/.config/kanshi/config && pgrep -x kanshi >/dev/null && kanshictl reload'
 exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
+# the launcher: Up/Down/Tab/Shift+Tab move the selection, Return launches it (typing still goes to the search field)
+mode "launcher" {
+    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
+    bindsym Mod1+space exec ~/.config/eww/scripts/dash close
+    bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
+    bindsym Down exec ~/.config/eww/scripts/apps nav next
+    bindsym Tab exec ~/.config/eww/scripts/apps nav next
+    bindsym Up exec ~/.config/eww/scripts/apps nav prev
+    bindsym Shift+Tab exec ~/.config/eww/scripts/apps nav prev
+    bindsym Return exec ~/.config/eww/scripts/apps accept
+    bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
+}
+
 mode "dash" {
     bindsym Escape exec ~/.config/eww/scripts/dash close
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
@@ -186,3 +209,7 @@ mode "dash" {
 }
 
 include /etc/sway/config.d/*
+
+# your own settings go in ~/.config/ink/sway.d/*.conf (wallpapers, per-device input, extra keys). They are read last, so
+# they override this file, and they are not touched by ink-sync.
+include ~/.config/ink/sway.d/*.conf

@@ -46,6 +46,10 @@ dnf5 install -y --setopt=install_weak_deps=False \
     xdg-desktop-portal-wlr \
     xdg-desktop-portal-gtk \
     thunar \
+    ripgrep \
+    fd-find \
+    chafa \
+    neovim \
     nm-connection-editor \
     wlsunset \
     wdisplays \

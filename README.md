@@ -11,11 +11,12 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | Piece | What it does |
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces, clock, keyboard layout, system chip, volume, notifications, tray, quick-settings menu |
-| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom. No bar on portrait screens |
-| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `Enter` to start. Right-click an app to pin or unpin it |
+| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
+| **eww strip** (landscape screens) | A 36 px strip at the bottom, no background except behind the player: minimised windows on the left (click to bring one back), media player on the right. Windows stop above it |
+| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
+| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
-| **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, click one to jump to it |
+| **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
 | **Minimise to the dock** | `Alt+Esc` sends a window away, `Alt+Tab` brings the next one back |
@@ -33,7 +34,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 
 ### Portrait screens
 
-The bar is replaced by a dock and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
+The bar is replaced by a dock, with that screen's workspaces at its left and a clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
 
 | Dock | Dashboard |
 | :---: | :---: |
@@ -68,14 +69,14 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 
 ## Shortcuts
 
-`Super` is the Windows key. Letters and number keys are bound by **key position**, so they stay in the same place in qwerty, azerty and bépo. Hover the keyboard layout in the bar for the full sheet.
+`Super` is the Windows key. Letters and number keys are bound by **key position**, so they stay in the same place in qwerty, azerty and bépo. Hover the keyboard layout in the bar for the full sheet (it opens under that item).
 
 | Keys | Action |
 | --- | --- |
 | `Super+Shift+Return` | terminal |
 | `Super+T` | zellij in a terminal |
 | `Super+Ctrl+Space` | spellbook: zellij session `code` |
-| `Ctrl+Space`, `Super+D` | app launcher |
+| `Ctrl+Space`, `Super+D` | app launcher (`↑` `↓` `Tab` `Shift+Tab` select, `Enter` start) |
 | `Alt+Space` | dashboard |
 | `Super+Tab` | expose |
 | `Super+C` | clipboard history |
@@ -85,6 +86,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+W`, `Super+E` | tabs, split |
 | `Super+A`, `Super+Shift+A` | focus parent, child container |
 | `Super+Shift+Q` | close |
+| `Ctrl+Alt+F`, middle click on a tab | close the window, close that tab |
 | `Alt+Esc`, `Alt+Tab` | minimise to the dock, next minimised window |
 | `Super+1…9`, `Super+Shift+1…9` | go to a workspace, send the window there |
 | `Super+PgUp/PgDn`, `Super+Ctrl+←/→` | previous / next workspace |
@@ -113,6 +115,7 @@ Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varl
 | Screenshots | `grim`, `slurp`, `swappy` |
 | System | `brightnessctl`, `playerctl`, `pavucontrol`, `wlsunset`, `udiskie`, `network-manager-applet`, `nm-connection-editor`, `blueman`, `mate-polkit`, `system-config-printer` |
 | Apps and tools | `alacritty`, `zellij`, `thunar`, `fira-code-fonts`, `jq`, `socat`, `nix` |
+| Command-line tools | `ripgrep`, `fd-find`, `chafa`, `neovim` |
 
 Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, PipeWire / WirePlumber, `tuned-ppd` (power profiles), GNOME Settings, gvfs, udisks2.
 
@@ -123,6 +126,8 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | `/etc/skel/.config/sway/config` | Sway config: look, keys, autostart, keyboard layouts |
 | `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `scripts/`, `icons/` |
 | `/etc/skel/.config/{mako,fuzzel,swaylock}/` | Notifications, launcher styling, lock screen |
+| `/etc/skel/.config/zellij/` | Zellij defaults and the `ink` theme (the same palette as the desktop) |
+| `/etc/skel/.config/alacritty/` | Terminal padding |
 | `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
 | `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
 | `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
@@ -131,11 +136,14 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 
 ### Make it yours
 
-- **Wallpaper**: change the `output * bg …` line in `~/.config/sway/config`.
+- **Your own settings**: put them in `~/.config/ink/sway.d/*.conf` (wallpapers, per-device input, extra keys). Sway reads them last, so they override the defaults, and `ink-sync` never touches them.
+- **Wallpaper**: in that folder, `output "<make> <model> <serial>" bg /path/to/image.png fill` (one line per screen; `swaymsg -t get_outputs` shows the names). Without it you get the default, set by the `output * bg …` line in the Sway config.
+- **Keep a keyboard in qwerty**: `input "<identifier>" { xkb_layout "us"  xkb_variant "" }` in a file of that folder (identifiers: `swaymsg -t get_inputs`). That keyboard then ignores the layout switch.
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
+- **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding by default; `ink-sync` leaves your terminal config alone).
 - **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
-- **Monitors**: `wdisplays` for a quick layout; add a `~/.config/kanshi/config` and start `kanshi` if you want profiles.
+- **Monitors**: `wdisplays` for a quick layout. To keep positions and rotation across reloads and reboots, write a `~/.config/kanshi/config`; `kanshi` then starts by itself and re-applies it after every reload.
 
 ## Build and test
 

@@ -1,0 +1,4 @@
+# Terminal defaults for the ink desktop. Alacritty reloads this file when it changes.
+[window]
+padding = { x = 16, y = 14 }   # space between the text and the window border
+dynamic_padding = true         # share the leftover pixels evenly instead of leaving a gap on one side

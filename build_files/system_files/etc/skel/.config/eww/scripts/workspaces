@@ -1,5 +1,5 @@
 #!/bin/bash
 # Stream sway workspaces as a JSON array, once now and on every workspace event.
-emit() { swaymsg -t get_workspaces -r | jq -c '[.[] | {name, focused, urgent, visible}] | sort_by(.name|tonumber? // 99)'; }
+emit() { swaymsg -t get_workspaces -r | jq -c '[.[] | {name, focused, urgent, visible, output}] | sort_by(.name|tonumber? // 99)'; }
 emit
 swaymsg -t subscribe -m '["workspace"]' | while read -r _; do emit; done

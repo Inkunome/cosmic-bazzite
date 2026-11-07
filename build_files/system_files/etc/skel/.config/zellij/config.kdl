@@ -1,0 +1,5 @@
+// Zellij defaults for the ink desktop. The theme lives in themes/ink.kdl.
+theme "ink"
+copy_command "wl-copy"
+show_startup_tips false
+session_serialization false

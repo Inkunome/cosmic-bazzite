@@ -1,5 +1,13 @@
 #!/bin/bash
 # popclose <window> <prefix>: close a flyout once neither its pill (<prefix>_pill) nor itself (<prefix>_pop) is hovered.
+#
+# eww kills a hover handler after 200 ms by default, and bash runs the last command of `sh -c "a && b"` as the
+# process eww launched, so a script that waits would be killed before it could close anything. Re-launch
+# ourselves in a new session and return at once; the detached copy does the waiting.
+if [[ -z ${INK_POPCLOSE_DETACHED:-} ]]; then
+    INK_POPCLOSE_DETACHED=1 setsid -f "$0" "$@" >/dev/null 2>&1
+    exit 0
+fi
 sleep 0.5
 [[ $(eww get "$2_pill") == false && $(eww get "$2_pop") == false ]] && eww close "$1"
 exit 0
