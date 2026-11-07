@@ -7,13 +7,13 @@ here=$(readlink -f "$0")
 
 apply() {
     eww ping >/dev/null 2>&1 || { eww daemon; sleep 1; }
-    # close what we opened before (ids bar-<output> and dock-<output>)
-    eww active-windows 2>/dev/null | awk -F': ' '/^(bar|dock)-/{print $1}' | while read -r id; do eww close "$id"; done
+    # close what we opened before (ids bar-N, dock-N and clock-N)
+    eww active-windows 2>/dev/null | awk -F': ' '/^(bar|dock|clock)-/{print $1}' | while read -r id; do eww close "$id"; done
     # eww 0.6 identifies a monitor by index (or by model), not by connector name: use the position among the
     # active outputs, which is the order GDK lists them in
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries[] | "\(.key) \(.value.rect.width) \(.value.rect.height)"' |
     while read -r idx w h; do
-        if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$idx"
+        if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$idx"; eww open clock-big --id "clock-$idx" --arg "mon=$idx"
         else eww open bar --id "bar-$idx" --arg "mon=$idx"; fi
     done
 }

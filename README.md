@@ -11,8 +11,8 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | Piece | What it does |
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces, clock, keyboard layout, system chip, volume, notifications, tray, quick-settings menu |
-| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom. No bar on portrait screens |
+| **eww bar** (landscape screens) | Workspaces, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
+| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom, with a big clock at its right. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, click one to jump to it |
@@ -33,7 +33,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 
 ### Portrait screens
 
-The bar is replaced by a dock and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
+The bar is replaced by a dock with a big clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
 
 | Dock | Dashboard |
 | :---: | :---: |
@@ -124,6 +124,8 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | `/etc/skel/.config/sway/config` | Sway config: look, keys, autostart, keyboard layouts |
 | `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `scripts/`, `icons/` |
 | `/etc/skel/.config/{mako,fuzzel,swaylock}/` | Notifications, launcher styling, lock screen |
+| `/etc/skel/.config/zellij/` | Zellij defaults and the `ink` theme (the same palette as the desktop) |
+| `/etc/skel/.config/alacritty/` | Terminal padding |
 | `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
 | `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
 | `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
