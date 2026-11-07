@@ -173,3 +173,6 @@ tooltip * { color: $spore; }
 // The dock on landscape screens, in the bottom strip next to the player
 .strip-dock { background-color: rgba(42, 29, 54, 0.66); border-radius: 14px; padding: 0 8px; margin: 5px 0; }
 .strip-dock .dock-icon { padding: 2px; margin: 1px 1px; border-radius: 9px; }
+
+// Caffeine button of the bar: lit when the screen is kept awake
+.pill.caf.on { background: rgba($feather, 0.28); }

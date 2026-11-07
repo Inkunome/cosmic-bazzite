@@ -31,7 +31,7 @@
 (defvar qs_pill false)
 (defvar qs_pop false)
 (defvar pwr_confirm "")
-(defpoll qs :interval "3s" :initial "{\"wifi\":false,\"ssid\":\"\",\"bt\":false,\"dnd\":false,\"night\":false,\"profile\":\"unknown\",\"bright\":-1}" "~/.config/eww/scripts/qs")
+(defpoll qs :interval "3s" :initial "{\"wifi\":false,\"ssid\":\"\",\"bt\":false,\"dnd\":false,\"night\":false,\"caffeine\":false,\"profile\":\"unknown\",\"bright\":-1}" "~/.config/eww/scripts/qs")
 (defpoll clock :interval "10s" "date '+%a %d %b  %H:%M'")
 
 (defwidget bar-content [mon out]
@@ -63,9 +63,14 @@
                  :image-width 18 :image-height 18)))
       (eventbox :timeout "10s" :onhover "eww update nt_pill=true && eww open notifs --arg mon=${mon}"
                 :onhoverlost "eww update nt_pill=false && ~/.config/eww/scripts/popclose notifs nt"
-                :onclick "makoctl mode -t do-not-disturb; eww poll nt"
+                :onclick "makoctl mode -t do-not-disturb; ~/.config/eww/scripts/notifs push"
         (box :class "pill" :tooltip {nt.dnd ? "do not disturb" : nt.count > 0 ? "${nt.count} notification(s)" : "no notifications"}
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (nt.dnd ? "bell-off" : nt.count > 0 ? "bell-dot" : "bell") + ".svg"}
+                 :image-width 18 :image-height 18)))
+      ;; Caffeine: click to keep the screen awake (no auto-lock, no blanking), click again to go back
+      (eventbox :timeout "10s" :onclick "~/.config/eww/scripts/toggle caffeine; ~/.config/eww/scripts/qs push"
+        (box :class "pill caf ${qs.caffeine ? 'on' : ''}" :tooltip {qs.caffeine ? "caffeine: the screen stays awake (click to stop)" : "caffeine: keep the screen awake"}
+          (image :path {"${EWW_CONFIG_DIR}/icons/" + (qs.caffeine ? "coffee-on" : "coffee") + ".svg"}
                  :image-width 18 :image-height 18)))
       (label :class "pill bat ${EWW_BATTERY == '' ? '' : 'show'}"
              :visible {EWW_BATTERY != ""}
@@ -263,7 +268,7 @@
 ;; power profile, brightness, system apps and the power menu.
 (defwidget tile [label sub on action]
   (button :timeout "10s" :class "tile ${on ? 'on' : ''}"
-          :onclick "~/.config/eww/scripts/toggle ${action}; eww poll qs"
+          :onclick "~/.config/eww/scripts/toggle ${action}; ~/.config/eww/scripts/qs push"
     (box :orientation "v" :space-evenly false :halign "start"
       (label :class "tile-label" :halign "start" :text label)
       (label :class "dim" :halign "start" :limit-width 14 :text sub))))
@@ -291,7 +296,7 @@
           (tile :label "Night light" :sub {qs.night ? "on" : "off"} :on {qs.night} :action "night"))
         (box :spacing 8
           (tile :label "Power profile" :sub {qs.profile} :on {qs.profile == "performance"} :action "profile")
-          (box :hexpand true)))
+          (tile :label "Caffeine" :sub {qs.caffeine ? "no auto-lock" : "off"} :on {qs.caffeine} :action "caffeine")))
       (box :orientation "v" :space-evenly false :visible {qs.bright >= 0}
         (box :space-evenly false
           (label :class "dim" :halign "start" :hexpand true :text "brightness")
@@ -574,7 +579,10 @@
             (tile :label "Bluetooth" :sub {qs.bt ? "on" : "off"} :on {qs.bt} :action "bluetooth"))
           (box :spacing 8
             (tile :label "Do not disturb" :sub {qs.dnd ? "on" : "off"} :on {qs.dnd} :action "dnd")
-            (tile :label "Night light" :sub {qs.night ? "on" : "off"} :on {qs.night} :action "night"))))
+            (tile :label "Night light" :sub {qs.night ? "on" : "off"} :on {qs.night} :action "night"))
+          (box :spacing 8
+            (tile :label "Caffeine" :sub {qs.caffeine ? "no auto-lock" : "off"} :on {qs.caffeine} :action "caffeine")
+            (box :hexpand true))))
       (calendar :class "cal" :valign "start" :show-heading true :show-week-numbers false))
     (label :class "pop-title" :halign "start" :text "recent notifications")
     (box :orientation "v" :space-evenly false :spacing 6
@@ -604,7 +612,10 @@
             (tile :label "Bluetooth" :sub {qs.bt ? "on" : "off"} :on {qs.bt} :action "bluetooth"))
           (box :spacing 8
             (tile :label "Do not disturb" :sub {qs.dnd ? "on" : "off"} :on {qs.dnd} :action "dnd")
-            (tile :label "Night light" :sub {qs.night ? "on" : "off"} :on {qs.night} :action "night")))
+            (tile :label "Night light" :sub {qs.night ? "on" : "off"} :on {qs.night} :action "night"))
+          (box :spacing 8
+            (tile :label "Caffeine" :sub {qs.caffeine ? "no auto-lock" : "off"} :on {qs.caffeine} :action "caffeine")
+            (box :hexpand true)))
         (label :class "pop-title" :halign "start" :text "recent notifications")
         (box :orientation "v" :space-evenly false :spacing 6
           (for n in {nt.items}

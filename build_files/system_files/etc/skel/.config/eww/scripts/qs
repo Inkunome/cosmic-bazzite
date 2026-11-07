@@ -1,13 +1,16 @@
 #!/bin/bash
 # Print the quick-settings state as JSON (polled by eww).
+#   qs push   print nothing, hand the fresh state to eww at once (run after a toggle, so the tiles do not wait for the poll)
+if [[ ${1:-} == push ]]; then eww update qs="$("$0")"; exit 0; fi
 wifi=false; [[ $(nmcli -t -f WIFI g 2>/dev/null) == enabled ]] && wifi=true
 ssid=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')
 bt=false; bluetoothctl show 2>/dev/null | grep -q "Powered: yes" && bt=true
 dnd=false; makoctl mode 2>/dev/null | grep -qx do-not-disturb && dnd=true
 night=false; pgrep -x wlsunset >/dev/null && night=true
+caffeine=$(~/.config/eww/scripts/caffeine status)
 profile=$(busctl get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile 2>/dev/null | awk -F'"' '{print $2}')
 bright=-1
 if out=$(brightnessctl -m -c backlight 2>/dev/null | head -1) && [[ -n $out ]]; then bright=$(cut -d, -f4 <<<"$out" | tr -d %); fi
 jq -nc --argjson wifi "$wifi" --arg ssid "$ssid" --argjson bt "$bt" --argjson dnd "$dnd" \
-   --argjson night "$night" --arg profile "${profile:-unknown}" --argjson bright "$bright" \
-   '{wifi:$wifi,ssid:$ssid,bt:$bt,dnd:$dnd,night:$night,profile:$profile,bright:$bright}'
+   --argjson night "$night" --argjson caffeine "$caffeine" --arg profile "${profile:-unknown}" --argjson bright "$bright" \
+   '{wifi:$wifi,ssid:$ssid,bt:$bt,dnd:$dnd,night:$night,caffeine:$caffeine,profile:$profile,bright:$bright}'

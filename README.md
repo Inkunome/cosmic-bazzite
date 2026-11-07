@@ -11,13 +11,14 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | Piece | What it does |
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
+| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, caffeine button, tray, quick-settings menu |
 | **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
 | **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
+| **Caffeine** | The cup in the bar (also a tile in the quick settings and the dashboard) keeps the screen awake: no automatic lock, no blanking, until you click it again or log out. The lock before a suspend stays |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
 | **Minimise** | `Alt+Esc` sends a window away (to the dock on a portrait screen, to the bottom strip on a landscape one), `Alt+Tab` brings the next one back |
 
