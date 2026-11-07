@@ -30,7 +30,10 @@ restart() {  # restart swayidle in the requested mode, detached
 case "${1:-status}" in
     run)    [[ -e $STATE ]] && awake || normal ;;
     awake)  awake ;;
-    on)     touch "$STATE"; restart awake; swaymsg -q "output * power on" ;;
+    on)     touch "$STATE"; restart awake
+            # wake the screens only if they are off: `power on` on a lit output makes sway rebuild it, and the bar and
+            # dock would be laid out again for nothing
+            swaymsg -t get_outputs -r | jq -e 'any(.[]; .active and (.power == false))' >/dev/null && swaymsg -q "output * power on" ;;
     off)    rm -f "$STATE"; restart run ;;
     toggle) if [[ -e $STATE ]]; then "$0" off; else "$0" on; fi ;;
     status) [[ -e $STATE ]] && echo true || echo false ;;
