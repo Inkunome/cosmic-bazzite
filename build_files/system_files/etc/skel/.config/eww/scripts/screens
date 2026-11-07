@@ -1,12 +1,26 @@
 #!/bin/bash
 # Per-screen layout: landscape screens get the top bar and a bottom strip (no dock), portrait screens get the dock
 # at the bottom (no bar).
-#   screens apply   (re)open the right windows on every active output
+#   screens apply [--changed]   (re)open the right windows on every active output (--changed: only if the screens differ
+#                               from the last layout)
 #   screens watch   re-apply whenever outputs change (plug, unplug, rotate)
 here=$(readlink -f "$0")
+SIG="${XDG_RUNTIME_DIR:-/tmp}/ink-screens.sig"
+
+# What the layout depends on: which screens there are, and the shape of each after rotation.
+sig() {
+    swaymsg -t get_outputs -r | jq -r '[.[] | select(.active) | "\(.name) \(.model) \(.rect.width)x\(.rect.height)"] | join(";")'
+}
 
 apply() {
-    eww ping >/dev/null 2>&1 || { eww daemon; sleep 1; }
+    # two layouts at once (a late one and a new one) would close each other's windows: run one at a time
+    exec 9>"${XDG_RUNTIME_DIR:-/tmp}/ink-screens.lock"; flock 9
+    # `apply --changed` does nothing when the screens are the same as at the last layout and the windows are still there:
+    # an output that is only woken up or rebuilt (caffeine, the idle timeout) must not make the bar blink
+    if [[ ${1:-} == --changed ]] && [[ "$(sig)" == "$(cat "$SIG" 2>/dev/null)" ]] &&
+        eww active-windows 2>/dev/null | grep -qE '^(bar|dock)-'; then return; fi
+    # (the daemon must not inherit the lock: it would hold it for as long as eww runs)
+    eww ping >/dev/null 2>&1 || { eww daemon 9>&-; sleep 1; }
     "$(dirname "$here")/apps" dock-sync   # the dock list is a plain variable: fill it before a dock opens
     # close what we opened before (ids bar-N, strip-N, dock-N, clock-N and wsd-N)
     eww active-windows 2>/dev/null | awk -F': ' '/^(bar|strip|dock|clock|wsd)-/{print $1}' | while read -r id; do eww close "$id"; done
@@ -17,13 +31,20 @@ apply() {
         if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$idx"; eww open clock-big --id "clock-$idx" --arg "mon=$idx"; eww open ws-dock --id "wsd-$idx" --arg "mon=$idx" --arg "out=$name"
         else eww open bar --id "bar-$idx" --arg "mon=$idx" --arg "out=$name"; eww open strip --id "strip-$idx" --arg "mon=$idx"; fi
     done
+    sig > "$SIG"
+    [[ -n ${INK_SCREENS_LOG:-} ]] && echo "layout $(date +%T)" >> "$INK_SCREENS_LOG"
 }
 
 case "${1:-apply}" in
-    apply) apply ;;
+    apply) apply "${2:-}" ;;
     watch)
+        # An output that wakes up from sleep is destroyed and created again, and kanshi rotates it a moment later: wait
+        # until the events stop for a second and a half, then lay the screens out on their final shape, and once more a
+        # few seconds later in case something (a slow monitor, kanshi) was still moving.
         swaymsg -t subscribe -m '["output"]' | while read -r _; do
-            sleep 0.5; "$here" apply   # let the burst of events settle
+            while read -r -t 1.5 _; do :; done
+            "$here" apply --changed
+            ( sleep 4; "$here" apply --changed ) &
         done ;;
     *) echo "usage: screens apply|watch" >&2; exit 1 ;;
 esac

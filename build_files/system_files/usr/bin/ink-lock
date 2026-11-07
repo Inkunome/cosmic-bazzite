@@ -1,0 +1,65 @@
+#!/usr/bin/python3
+"""Lock the screen with your wallpaper.
+
+Every screen is locked with the image its own `output ... bg <image>` line gives it, in the Sway config and in
+~/.config/ink/sway.d/*.conf (read in that order, the last line wins, a line for one screen beats a `*` line). A
+screen can be named by its connector (DP-1) or by "<make> <model> <serial>". Anything else (a plain colour) falls
+back to the colour of the swaylock config. Arguments are passed on to swaylock.
+
+  ink-lock          lock now (what Super+L, the power menu and swayidle run)
+  INK_LOCK_DRY=1 ink-lock    print the swaylock command instead of running it
+"""
+import glob, json, os, re, shlex, subprocess, sys
+
+HOME = os.path.expanduser("~")
+FILES = [f"{HOME}/.config/sway/config"] + sorted(glob.glob(f"{HOME}/.config/ink/sway.d/*.conf"))
+LINE = re.compile(r'^\s*output\s+("[^"]+"|\S+)\s+(?:bg|background)\s+("[^"]+"|\S+)\s+(\S+)', re.I)
+
+
+def wallpapers():
+    found = {}
+    for path in FILES:
+        try:
+            lines = open(path).read().splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            m = LINE.match(line)
+            if not m:
+                continue
+            who, img, mode = m.group(1).strip('"'), m.group(2).strip('"'), m.group(3)
+            img = os.path.expanduser(img)
+            if mode != "solid_color" and os.path.isabs(img) and os.path.exists(img):
+                found[who] = img
+            else:
+                found.pop(who, None)   # a later colour line replaces an earlier image
+    return found
+
+
+def outputs():
+    try:
+        out = subprocess.run(["swaymsg", "-t", "get_outputs", "-r"], capture_output=True, text=True, check=True).stdout
+        return [o for o in json.loads(out) if o.get("active")]
+    except (OSError, subprocess.CalledProcessError, ValueError):
+        return []
+
+
+def main(argv):
+    found = wallpapers()
+    args = ["swaylock", "-f"]
+    for o in outputs():
+        ident = f'{o.get("make", "")} {o.get("model", "")} {o.get("serial", "")}'
+        img = found.get(o["name"]) or found.get(ident) or found.get("*")
+        if img:
+            args += ["-i", f'{o["name"]}:{img}']
+    if "-i" in args:
+        args += ["-s", "fill"]
+    args += argv[1:]
+    if os.environ.get("INK_LOCK_DRY"):
+        print(" ".join(shlex.quote(a) for a in args))
+        return 0
+    os.execvp(args[0], args)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

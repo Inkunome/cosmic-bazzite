@@ -84,7 +84,7 @@ bindcode Ctrl+Mod1+41 kill                        # Ctrl+Alt+F
 bindsym button2 kill
 bindcode $mod+Shift+54 reload                     # C
 bindcode $mod+Shift+26 exec wlogout -b 4          # E
-bindcode $mod+46 exec swaylock -f                 # L
+bindcode $mod+46 exec ink-lock                        # L
 bindcode $mod+41 fullscreen                       # F
 bindcode $mod+Shift+41 floating toggle            # F
 bindcode $mod+26 layout toggle split              # E
