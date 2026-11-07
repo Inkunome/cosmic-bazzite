@@ -4,6 +4,8 @@ A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite
 
 ![Desktop: tabbed windows, bar with a thorny branch, bottom strip, lilac wallpaper](docs/img/desktop.webp)
 
+The screenshots below are taken from the real desktop (sway + eww in a headless session), not from a mock-up.
+
 Everything lives in `build_files/`. The image is built by GitHub Actions and signed with cosign.
 
 ## What you get
