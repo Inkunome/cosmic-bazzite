@@ -6,6 +6,9 @@
   apps launch <id>      launch an application by desktop-file id, then close the dashboard
   apps pinned           print pinned apps as JSON and push them to eww (var: pinned)
   apps toggle-pin <id>  pin or unpin an application, then refresh `pinned`
+  apps dock             print the dock apps as JSON
+  apps dock-sync        push them to eww (variable dock_apps); the screens script runs it before opening a dock
+  apps dock-toggle <id> add an application to the dock, or remove it from the dock
   apps nav next|prev    move the selection in the open launcher (sway binds Down, Up, Tab, Shift+Tab to this)
   apps accept           launch the selected entry (sway binds Return to this)
 """
@@ -24,6 +27,15 @@ PINS = f"{HOME}/.config/ink/pinned"
 DEFAULT_PINS = ["org.mozilla.firefox", "firefox", "Alacritty", "thunar", "org.gnome.Settings",
                 "pavucontrol", "blueman-manager", "system-config-printer"]
 MAX_PINNED, MAX_RESULTS = 8, 7
+
+# The dock (portrait screens). Its list lives in ~/.config/ink/dock, one id per line. The four first entries are
+# built in: they have their own Ink icon and launch command (scripts/launch); their desktop-file ids are aliases, so
+# adding Firefox from the launcher does not make a second Firefox icon.
+DOCK = f"{HOME}/.config/ink/dock"
+BUILTIN = {"browser": "Firefox", "terminal": "Terminal", "files": "Files", "settings": "Settings"}
+ALIASES = {"browser": {"org.mozilla.firefox", "firefox"}, "terminal": {"alacritty", "org.alacritty.alacritty"},
+           "files": {"thunar", "org.xfce.thunar"}, "settings": {"org.gnome.settings", "gnome-control-center"}}
+ICON_DIR = f"{HOME}/.config/eww/icons"
 
 
 def newest_mtime():
@@ -118,12 +130,13 @@ def search(apps, q):
     if not q:
         return []
     pinned = {a["id"] for a in resolve_pinned(apps)}
+    docked = docked_set()
     scored = []
     for a in apps:
         n, k = a["name"].lower(), a["keywords"].lower()
         s = 100 if n.startswith(q) else 80 if any(w.startswith(q) for w in n.split()) else 60 if q in n else 30 if q in k else 0
         if s:
-            scored.append((-s, n, dict(a, pinned=a["id"] in pinned, q=quote(a["id"], safe=""))))
+            scored.append((-s, n, dict(a, pinned=a["id"] in pinned, docked=canon(a["id"]).lower() in docked, q=quote(a["id"], safe=""))))
     scored.sort(key=lambda t: t[:2])
     out = [t[2] for t in scored[:MAX_RESULTS]]
     for i, r in enumerate(out):
@@ -131,10 +144,50 @@ def search(apps, q):
     return out
 
 
+def canon(ident):
+    low = ident.lower()
+    for key, names in ALIASES.items():
+        if low == key or low in names:
+            return key
+    return ident
+
+
+def dock_ids():
+    try:
+        with open(DOCK) as f:
+            return [l.strip() for l in f if l.strip()]
+    except OSError:
+        return list(BUILTIN)
+
+
+def docked_set():
+    return {canon(i).lower() for i in dock_ids()}
+
+
+def dock_items(apps):
+    by_id = {a["id"].lower(): a for a in apps}
+    out, seen = [], set()
+    for d in dock_ids():
+        c = canon(d)
+        if c.lower() in seen:
+            continue
+        if c in BUILTIN:
+            out.append({"id": c, "q": c, "name": BUILTIN[c], "icon": f"{ICON_DIR}/{c}.svg", "initial": BUILTIN[c][0], "builtin": True})
+        elif c.lower() in by_id:
+            a = by_id[c.lower()]
+            out.append({"id": a["id"], "q": quote(a["id"], safe=""), "name": a["name"], "icon": a["icon"],
+                        "initial": a["initial"], "builtin": False})
+        else:
+            continue
+        seen.add(c.lower())
+    return out
+
+
 def with_q(apps):
     """Add `q`, the id percent-encoded, to each app. eww pastes it into a shell command, so it must hold no space,
     bracket or quote; `launch` and `toggle-pin` decode it."""
-    return [dict(a, q=quote(a["id"], safe="")) for a in apps]
+    docked = docked_set()
+    return [dict(a, q=quote(a["id"], safe=""), docked=canon(a["id"]).lower() in docked) for a in apps]
 
 
 def eww_get(var):
@@ -216,6 +269,26 @@ def main(argv):
         with open(PINS, "w") as f:
             f.write("\n".join(cur) + "\n")
         eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
+    elif cmd == "dock":
+        print(json.dumps(dock_items(apps), separators=(",", ":")))
+    elif cmd == "dock-sync":
+        eww(dock_apps=json.dumps(dock_items(apps), separators=(",", ":")))
+    elif cmd == "dock-toggle":
+        c = canon(unquote(arg))
+        cur = [canon(i) for i in dock_ids()]
+        if c.lower() in [i.lower() for i in cur]:
+            cur = [i for i in cur if i.lower() != c.lower()]
+        else:
+            cur.append(c)
+        os.makedirs(os.path.dirname(DOCK), exist_ok=True)
+        with open(DOCK, "w") as f:
+            f.write("\n".join(cur) + "\n")
+        eww(dock_apps=json.dumps(dock_items(apps), separators=(",", ":")))
+        # the open launcher shows which apps are in the dock: refresh what it lists
+        eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
+        q = eww_get("query")
+        if q.strip():
+            eww(results=json.dumps(search(apps, q), separators=(",", ":")))
     else:
         sys.stderr.write(__doc__)
         return 1

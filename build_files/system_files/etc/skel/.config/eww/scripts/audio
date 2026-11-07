@@ -28,7 +28,7 @@ sync() {
     local o i
     o=$(state sink | jq -r .vol); i=$(state source | jq -r .vol)
     eww update "vol_sink_v=$o" "vol_source_v=$i"
-    eww poll adev   # `adev` is polled; asking for a poll is how its value is refreshed
+    # `adev`, `sink` and `src` are polled by eww (this eww has no `poll` command), so they catch up within a second or two
 }
 
 case "${1:-}" in
@@ -40,11 +40,11 @@ case "${1:-}" in
         eww update "vol_${2}_v=$v" ;;
     mute)
         wpctl set-mute "$(kind_target "${2:?sink|source}")" toggle
-        eww poll sink src ;;
+        ;;
     devices) devices ;;
     default)
         pactl "set-default-${2:?sink|source}" "${3:?name}"
-        sync; eww poll sink src ;;
+        sync ;;
     sync) sync ;;
     *) sed -n '2,9p' "$0" >&2; exit 1 ;;
 esac

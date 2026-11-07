@@ -163,3 +163,6 @@ menu menuitem arrow { min-width: 10px; min-height: 10px; margin-left: 10px; -gtk
 menu separator { min-height: 1px; margin: 5px 8px; background: rgba($moss, 0.9); }
 tooltip { background-color: rgba(42, 29, 54, 0.97); border: 1px solid rgba($glow, 0.4); border-radius: 10px; padding: 4px 8px; }
 tooltip * { color: $spore; }
+
+// An app that is in the dock gets a pink line under it in the launcher
+.app-tile.docked { border-bottom: 2px solid $feather; }

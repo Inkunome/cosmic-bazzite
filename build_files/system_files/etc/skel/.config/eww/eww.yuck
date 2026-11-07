@@ -7,6 +7,7 @@
 (defpoll adev :interval "2s" :run-while {vol_pill || vol_pop} :initial "{\"sinks\":[],\"sources\":[]}" "~/.config/eww/scripts/audio devices")
 (defpoll src :interval "1s" :initial "{\"vol\":0,\"muted\":false}" "~/.config/eww/scripts/audio source")
 (defpoll nt :interval "2s" :initial "{\"dnd\":false,\"count\":0,\"items\":[]}" "~/.config/eww/scripts/notifs")
+(defvar dock_apps "[]")
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
 (defvar sys_pill false)
@@ -138,6 +139,16 @@
   (button :timeout "10s" :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
     (image :path "${EWW_CONFIG_DIR}/icons/${app}.svg" :image-width 44 :image-height 44)))
 
+;; An application of the dock: click starts it, right-click removes it from the dock. Add one with a middle-click on it in
+;; the launcher. The list is ~/.config/ink/dock.
+(defwidget dock-item [id name icon initial builtin]
+  (button :timeout "10s" :class "dock-icon" :tooltip "${name}  (right-click: remove from the dock)"
+          :onclick {builtin ? "~/.config/eww/scripts/launch ${id}" : "~/.config/eww/scripts/apps launch ${id}"}
+          :onrightclick "~/.config/eww/scripts/apps dock-toggle ${id}"
+    (box
+      (image :visible {icon != ""} :path {icon} :image-width 44 :image-height 44)
+      (label :visible {icon == ""} :class "app-initial" :text initial))))
+
 (defwidget dock []
   (box :class "dock" :orientation "h" :space-evenly false
     ;; minimised windows (sway scratchpad): click to bring one back
@@ -147,10 +158,8 @@
           (label :text {w.initial})))
       (box :class "dock-sep" :width 2))
     (dock-app :app "dashboard" :tip "Dashboard")
-    (dock-app :app "browser" :tip "Firefox")
-    (dock-app :app "terminal" :tip "Terminal")
-    (dock-app :app "files" :tip "Files")
-    (dock-app :app "settings" :tip "Settings")))
+    (for a in dock_apps
+      (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin}))))
 
 (defwidget bigclock []
   (box :class "bigclock" :valign "fill" :halign "fill"
@@ -446,25 +455,29 @@
       (button :timeout "10s" :class "app" :onclick "playerctl play-pause" {media.status == "Playing" ? "pause" : "play"})
       (button :timeout "10s" :class "app" :onclick "playerctl next" "next"))))
 
-(defwidget app-tile [id name icon initial selected]
-  (button :timeout "10s" :class "app-tile ${selected ? 'selected' : ''}" :tooltip "${name}  (right-click: pin / unpin)"
+(defwidget app-tile [id name icon initial selected docked]
+  (button :timeout "10s" :class "app-tile ${selected ? 'selected' : ''} ${docked ? 'docked' : ''}"
+          :tooltip "${name}  (right-click: pin / unpin, middle-click: add to / remove from the dock)"
           :onclick "~/.config/eww/scripts/apps launch ${id}"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
+          :onmiddleclick "~/.config/eww/scripts/apps dock-toggle ${id}"
     (box :orientation "v" :space-evenly false :spacing 4
       (box :class "app-icon" :halign "center"
         (image :visible {icon != ""} :path {icon} :image-width 40 :image-height 40)
         (label :visible {icon == ""} :class "app-initial" :text initial))
       (label :class "dim" :limit-width 10 :text name))))
 
-(defwidget result-row [id name icon initial pinned selected]
+(defwidget result-row [id name icon initial pinned selected docked]
   (button :timeout "10s" :class "result ${selected ? 'selected' : ''}" :onclick "~/.config/eww/scripts/apps launch ${id}"
+          :tooltip "right-click: pin / unpin, middle-click: add to / remove from the dock"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
+          :onmiddleclick "~/.config/eww/scripts/apps dock-toggle ${id}"
     (box :space-evenly false :spacing 10
       (box :class "app-icon-sm"
         (image :visible {icon != ""} :path {icon} :image-width 28 :image-height 28)
         (label :visible {icon == ""} :class "app-initial" :text initial))
       (label :halign "start" :hexpand true :limit-width 50 :text name)
-      (label :class "dim" :text {pinned ? "pinned" : ""}))))
+      (label :class "dim" :text {(pinned ? "pinned  " : "") + (docked ? "dock" : "")}))))
 
 
 ;; ── Launcher (Ctrl+Space, Super+D): search + pinned applications ───────────
@@ -481,14 +494,14 @@
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
-        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :selected {r.idx == sel}))
+        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
       (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
     (box :orientation "v" :space-evenly false :spacing 12 :visible {query == ""}
       (label :class "pop-title" :halign "start" :text "pinned")
       (box :spacing 6 :halign "start"
         (for a in pinned
-          (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :selected {a.idx == sel})))
-      (label :class "dim" :halign "start" :text "right-click an app to pin or unpin it"))))
+          (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :docked {a.docked} :selected {a.idx == sel})))
+      (label :class "dim" :halign "start" :text "right-click: pin or unpin   ·   middle-click: add to or remove from the dock"))))
 
 (defwidget launcher-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false :spacing 12
@@ -500,13 +513,13 @@
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
-        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :selected {r.idx == sel}))
+        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
       (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
     (scroll :vscroll true :hscroll false :vexpand true :visible {query == ""}
       (box :orientation "v" :space-evenly false :spacing 2
         (label :class "pop-title" :halign "start" :text "pinned")
         (for a in pinned
-          (result-row :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :pinned false :selected {a.idx == sel}))))))
+          (result-row :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :pinned false :docked {a.docked} :selected {a.idx == sel}))))))
 
 (defwindow launcher-wide [mon]
   :monitor mon

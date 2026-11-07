@@ -7,6 +7,7 @@ here=$(readlink -f "$0")
 
 apply() {
     eww ping >/dev/null 2>&1 || { eww daemon; sleep 1; }
+    "$(dirname "$here")/apps" dock-sync   # the dock list is a plain variable: fill it before a dock opens
     # close what we opened before (ids bar-N, strip-N, dock-N, clock-N and wsd-N)
     eww active-windows 2>/dev/null | awk -F': ' '/^(bar|strip|dock|clock|wsd)-/{print $1}' | while read -r id; do eww close "$id"; done
     # eww 0.6 identifies a monitor by index (or by model), not by connector name: use the position among the
