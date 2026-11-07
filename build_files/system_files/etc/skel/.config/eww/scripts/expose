@@ -7,6 +7,8 @@
 #   expose goto <id>      focus a window (switches workspace if needed)
 #   expose workspace <n>  switch to a workspace
 #   expose goto-scratch <id>   bring back a minimised window
+#   expose pick <id>      pick a window up (again: put it down); expose header <n>  move it to workspace n, or go there
+#   expose newws <output> put the picked window on a new workspace of that screen
 # A window that can't be captured (hidden workspace, background tab) keeps its last thumbnail; a window
 # that was never seen shows its app initial. Thumbnails live in ~/.cache/ink/thumbs, one PNG per window.
 here=$(dirname "$(readlink -f "$0")")
@@ -66,6 +68,21 @@ case "${1:-refresh}" in
         done ;;
     goto)           "$here/dash" close; swaymsg -q "[con_id=${2:?id}] focus" ;;
     goto-scratch)   "$here/dash" close; exec "$(command -v ink-scratch)" show "${2:?id}" ;;
+    pick)           if [[ $(eww get picked) == "${2:?id}" ]]; then eww update picked=""; else eww update picked="$2"; fi ;;
+    header)         id=$(eww get picked)
+                    if [[ -n $id ]]; then
+                        swaymsg -q "[con_id=$id] move container to workspace ${2:?name}"
+                        eww update picked=""; "$here/expose" refresh
+                    else "$here/expose" workspace "$2"; fi ;;
+    newws)          id=$(eww get picked); out=${2:?output}
+                    [[ -n $id ]] || exit 0
+                    # the lowest number no workspace uses yet; a new workspace opens on the focused screen, so go there
+                    # for a moment
+                    n=1; used=$(swaymsg -t get_workspaces -r | jq -r '.[].num')
+                    while grep -qx "$n" <<<"$used"; do n=$((n + 1)); done
+                    prev=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | .name')
+                    swaymsg -q "focus output $out; [con_id=$id] move container to workspace number $n; focus output $prev"
+                    eww update picked=""; "$here/expose" refresh ;;
     workspace)      "$here/dash" close; swaymsg -q workspace "${2:?name}" ;;
-    *) sed -n '2,13p' "$0" >&2; exit 1 ;;
+    *) sed -n '2,15p' "$0" >&2; exit 1 ;;
 esac

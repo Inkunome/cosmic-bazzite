@@ -176,3 +176,7 @@ tooltip * { color: $spore; }
 
 // Caffeine button of the bar: lit when the screen is kept awake
 .pill.caf.on { background: rgba($feather, 0.28); }
+
+/* expose: a window picked up to be moved, and the workspaces it can land on */
+.ecard.picked { background: rgba(255, 200, 226, 0.28); border: 2px dashed #ffc8e2; }
+.ews.target { border: 1px dashed #ffc8e2; background: rgba(255, 200, 226, 0.14); }

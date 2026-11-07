@@ -19,6 +19,8 @@
 (defvar cal_pill false)
 (defvar cal_pop false)
 (defvar expose "[]")
+;; window picked up in the expose view (right-click it), to be put on a workspace (click the workspace)
+(defvar picked "")
 (defvar vol_sink_v 0)
 (defvar vol_source_v 0)
 (defvar query "")
@@ -639,7 +641,8 @@
 
 ;; ── Expose (Super+Tab): every workspace and window as a thumbnail, click one to jump to it ──
 (defwidget expose-card [id title initial thumb focused scratch]
-  (button :timeout "10s" :class "ecard ${focused ? 'focused' : ''}" :tooltip title
+  (button :timeout "10s" :class "ecard ${focused ? 'focused' : ''} ${picked == id ? 'picked' : ''}" :tooltip title
+          :onrightclick {scratch ? "" : "~/.config/eww/scripts/expose pick ${id}"}
           :onclick {scratch ? "~/.config/eww/scripts/expose goto-scratch ${id}" : "~/.config/eww/scripts/expose goto ${id}"}
     (box :orientation "v" :space-evenly false :spacing 6
       (box :class "ethumb" :width 300 :height 170
@@ -649,9 +652,9 @@
 
 (defwidget expose-ws [name focused scratch windows]
   (box :orientation "v" :space-evenly false :spacing 6
-    (button :timeout "10s" :class "ews ${focused ? 'focused' : ''}" :halign "start"
-            :onclick "~/.config/eww/scripts/expose workspace ${name}"
-      {scratch ? "minimised" : "workspace ${name}"})
+    (button :timeout "10s" :class "ews ${focused ? 'focused' : ''} ${picked != '' && !scratch ? 'target' : ''}" :halign "start"
+            :onclick {scratch ? "" : "~/.config/eww/scripts/expose header ${name}"}
+      {scratch ? "minimised" : (picked != "" ? "move here  ›  workspace ${name}" : "workspace ${name}")})
     (box :spacing 12 :halign "start"
       (for w in windows
         (expose-card :id {w.id} :title {w.title} :initial {w.initial} :thumb {w.thumb} :focused {w.focused} :scratch scratch))
@@ -662,7 +665,7 @@
     :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "expose")
-      (label :class "dim" :halign "end" :text "click a window to jump to it   ")
+      (label :class "dim" :halign "end" :text {picked != "" ? "now click a workspace, or + new workspace, to put it there  ·  right-click it again to cancel   " : "click a window to jump to it  ·  right-click one to move it to another workspace or a new one   "})
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll true :vexpand true
       (box :orientation "v" :space-evenly false :spacing 18
@@ -671,7 +674,10 @@
             ;; one section per screen; the minimised windows are in a last section of their own
             (box :class "escreen" :space-evenly false :spacing 10 :halign "start"
               (label :class "pop-title" :text {scr.output != "" ? "screen ${scr.output}" : "no screen"})
-              (label :class "dim" :text {scr.output != "" ? scr.size : "hidden"}))
+              (label :class "dim" :text {scr.output != "" ? scr.size : "hidden"})
+              ;; a window is picked up: put it on a new workspace of this screen
+              (button :timeout "10s" :class "ews target" :visible {picked != "" && scr.output != ""}
+                      :onclick "~/.config/eww/scripts/expose newws ${scr.output}" "+ new workspace on ${scr.output}"))
             (for ws in {scr.workspaces}
               (expose-ws :name {ws.name} :focused {ws.focused} :scratch {ws.scratch} :windows {ws.windows}))))))))
 
