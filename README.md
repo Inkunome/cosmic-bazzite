@@ -14,12 +14,12 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
 | **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
 | **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
-| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it, middle-click to add it to the dock (or remove it) |
+| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
-| **Minimise to the dock** | `Alt+Esc` sends a window away, `Alt+Tab` brings the next one back |
+| **Minimise** | `Alt+Esc` sends a window away (to the dock on a portrait screen, to the bottom strip on a landscape one), `Alt+Tab` brings the next one back |
 
 ### Launcher and expose
 
@@ -87,7 +87,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+A`, `Super+Shift+A` | focus parent, child container |
 | `Super+Shift+Q` | close |
 | `Ctrl+Alt+F`, middle click on a tab | close the window, close that tab |
-| `Alt+Esc`, `Alt+Tab` | minimise to the dock, next minimised window |
+| `Alt+Esc`, `Alt+Tab` | minimise (dock or strip), next minimised window |
 | `Super+1…9`, `Super+Shift+1…9` | go to a workspace, send the window there |
 | `Super+PgUp/PgDn`, `Super+Ctrl+←/→` | previous / next workspace |
 | `Super+Alt+←/→` | move the workspace to another screen |
@@ -160,6 +160,8 @@ GitHub Actions (`.github/workflows/build.yml`) builds the image on every pull re
 ## Notes
 
 - Built for eww 0.6: monitors are addressed by index, and `Ctrl+Space` is a global shortcut, so applications do not get it (editor autocompletion, input methods).
-- The panels that open on hover sit at a fixed distance from the right edge of the bar; adjust the `:x` of each window in `eww.yuck` if one is off on your screen.
+- The panels that open on hover sit at a fixed distance from the right edge of the bar; adjust the `:x` of each window in `eww.yuck` if one is off on your screen (the shortcut sheet is aligned with the keyboard layout pill, which moves left when the tray gets more icons).
+- This eww has no `poll` command: values that change on demand (the dock list, the launcher marks) are plain variables pushed by the scripts, the rest is polled.
+- Menus of tray icons and tooltips are drawn by GTK; `eww.scss` styles them, since `* { all: unset }` would leave them as bare text.
 - The lock screen is plain `swaylock` (colours only); `swaylock-effects` is not packaged for Fedora 45.
 - Expose keeps the last thumbnail of windows it cannot capture, so a window on another workspace may show an older picture.
