@@ -1,6 +1,6 @@
 #!/bin/bash
-# Caffeine mode: no automatic lock and no screen blanking while it is on (a manual lock and the lock before a
-# suspend still work). It lasts until you turn it off or log out.
+# Caffeine mode: no automatic lock, no screen blanking and no automatic suspend while it is on (a manual lock, the
+# power menu, the power button and the lid still work, and the lock before a suspend too). It lasts until you turn it off or log out.
 #   caffeine run      start swayidle the normal way (sway runs this at login)
 #   caffeine on|off|toggle
 #   caffeine status   print true or false
@@ -18,12 +18,15 @@ normal() {   # lock after 5 minutes, blank the screens after 10
         resume 'swaymsg "output * power on"' before-sleep "$lock"
 }
 
-awake() {    # only the lock before a suspend
-    exec swayidle -w before-sleep "$(lock_cmd)"
+awake() {    # only the lock before a suspend; the logind inhibitor (idle and sleep) holds the system awake as long as
+             # swayidle runs, and goes away with it. It is a "block" inhibitor for idle and sleep only: the power
+             # button and the lid are not affected.
+    exec systemd-inhibit --what=idle --who=Caffeine --why="Caffeine mode" --mode=block \
+        swayidle -w before-sleep "$(lock_cmd)"
 }
 
 restart() {  # restart swayidle in the requested mode, detached
-    pkill -x swayidle
+    pkill -x swayidle   # (systemd-inhibit is its parent: it ends with it)
     setsid -f "$0" "$1" >/dev/null 2>&1
 }
 
