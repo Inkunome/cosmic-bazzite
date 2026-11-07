@@ -6,6 +6,8 @@
 here=$(readlink -f "$0")
 
 apply() {
+    # two layouts at once (a late one and a new one) would close each other's windows: run one at a time
+    exec 9>"${XDG_RUNTIME_DIR:-/tmp}/ink-screens.lock"; flock 9
     eww ping >/dev/null 2>&1 || { eww daemon; sleep 1; }
     "$(dirname "$here")/apps" dock-sync   # the dock list is a plain variable: fill it before a dock opens
     # close what we opened before (ids bar-N, strip-N, dock-N, clock-N and wsd-N)
@@ -22,8 +24,13 @@ apply() {
 case "${1:-apply}" in
     apply) apply ;;
     watch)
+        # An output that wakes up from sleep is destroyed and created again, and kanshi rotates it a moment later: wait
+        # until the events stop for a second and a half, then lay the screens out on their final shape, and once more a
+        # few seconds later in case something (a slow monitor, kanshi) was still moving.
         swaymsg -t subscribe -m '["output"]' | while read -r _; do
-            sleep 0.5; "$here" apply   # let the burst of events settle
+            while read -r -t 1.5 _; do :; done
+            "$here" apply
+            ( sleep 4; "$here" apply ) &
         done ;;
     *) echo "usage: screens apply|watch" >&2; exit 1 ;;
 esac

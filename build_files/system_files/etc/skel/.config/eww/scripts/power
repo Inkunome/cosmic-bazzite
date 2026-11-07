@@ -3,7 +3,7 @@
 # logout, reboot and poweroff need a second click within 4 seconds.
 act=${1:-}
 case $act in
-    lock) eww close quick; exec swaylock -f ;;
+    lock) eww close quick; exec ink-lock ;;
     suspend) eww close quick; exec systemctl suspend ;;
     logout|reboot|poweroff)
         if [[ $(eww get pwr_confirm) == "$act" ]]; then
