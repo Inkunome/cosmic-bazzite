@@ -9,6 +9,8 @@ set $moss    #5b4570
 set $spore   #f6eaf4
 set $glow    #c8a2f0
 set $feather #ff9ccf
+# pastel pink: the drop target shown while dragging a window
+set $blush   #ffc8e2
 set $amanita #e0566f
 
 # ── look (swayfx) ──────────────────────────────────────────
@@ -37,7 +39,7 @@ layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
 #                       border    bg       text    indicator child_border
-client.focused          $glow     $loam    $spore  $feather  $glow
+client.focused          $glow     $loam    $spore  $blush    $glow
 client.focused_inactive $moss     $loam    $spore  $moss     $moss
 client.unfocused        $moss     $loam    $spore  $moss     $moss
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
