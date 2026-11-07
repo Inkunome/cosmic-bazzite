@@ -1,0 +1,14 @@
+#!/bin/bash
+# Unlock your SSH key once per session: sway runs this at login. It starts the user's ssh-agent (a socket-activated
+# user service) and, when the agent holds no key yet, asks for the passphrase in a small dialog and adds ~/.ssh/id_*.
+# The key then stays unlocked until you log out (`ssh-add -l` lists it). Cancel the dialog to skip it.
+export SSH_AUTH_SOCK=${SSH_AUTH_SOCK:-${XDG_RUNTIME_DIR:?}/ssh-agent.socket}
+systemctl --user start ssh-agent.socket 2>/dev/null
+ssh-add -l >/dev/null 2>&1; rc=$?
+[[ $rc == 1 ]] || exit 0          # 0: a key is already loaded, 2: no agent to talk to
+keys=()
+for k in id_ed25519 id_ecdsa id_rsa; do [[ -f $HOME/.ssh/$k ]] && keys+=("$HOME/.ssh/$k"); done
+((${#keys[@]})) || exit 0
+askpass=/usr/libexec/openssh/gnome-ssh-askpass
+[[ -x $askpass ]] || exit 0
+SSH_ASKPASS=$askpass SSH_ASKPASS_REQUIRE=force ssh-add "${keys[@]}" </dev/null
