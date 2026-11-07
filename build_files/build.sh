@@ -152,7 +152,7 @@ systemctl enable nix-daemon.socket
 ## Default dotfiles live in /etc/skel for new users; `ink-sync` copies them into
 ## an existing home. Sway itself is selected from the GDM session menu.
 cp -a /ctx/system_files/. /
-chmod +x /usr/bin/ink-layout /usr/bin/ink-sync \
+chmod +x /usr/bin/ink-layout /usr/bin/ink-sync /usr/bin/ink-lock \
     /etc/skel/.config/eww/scripts/*
 
 # Bazzite's GNOME base already ships gdm; keep it as the greeter (it lists the

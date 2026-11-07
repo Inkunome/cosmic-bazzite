@@ -98,7 +98,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+Ctrl+S`, `Super+Alt+S` | screenshot: all screens, window |
 | `Super+Space` | next keyboard layout (qwerty, azerty, bépo) |
 | `Super+Ctrl+1/2/3` | set bépo / azerty / qwerty |
-| `Super+L` | lock the screen |
+| `Super+L` | lock the screen (with your wallpaper) |
 | `Super+Shift+E` | power menu |
 | `Super+Shift+C` | reload Sway |
 
@@ -133,13 +133,14 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
 | `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
 | `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
+| `/usr/bin/ink-lock` | Lock the screen with the wallpaper of each screen (what `Super+L`, the power menu and the idle timeout run) |
 | `/usr/bin/ink-sync` | Copy the default configuration into your home |
 | `/usr/share/backgrounds/ink/` | Wallpapers: `lilac-dusk` (default), `forest-night`, `ink-feathers`, `loam-moss` |
 
 ### Make it yours
 
 - **Your own settings**: put them in `~/.config/ink/sway.d/*.conf` (wallpapers, per-device input, extra keys). Sway reads them last, so they override the defaults, and `ink-sync` never touches them.
-- **Wallpaper**: in that folder, `output "<make> <model> <serial>" bg /path/to/image.png fill` (one line per screen; `swaymsg -t get_outputs` shows the names). Without it you get the default, set by the `output * bg …` line in the Sway config.
+- **Wallpaper**: in that folder, `output "<make> <model> <serial>" bg /path/to/image.png fill` (one line per screen; `swaymsg -t get_outputs` shows the names). Without it you get the default, set by the `output * bg …` line in the Sway config. The lock screen uses the same images, screen by screen.
 - **Keep a keyboard in qwerty**: `input "<identifier>" { xkb_layout "us"  xkb_variant "" }` in a file of that folder (identifiers: `swaymsg -t get_inputs`). That keyboard then ignores the layout switch.
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Dock apps** (both kinds of screen, small in the bottom strip on landscape ones): `~/.config/ink/dock`, one id per line, starting with `browser`, `terminal`, `files` and `settings`. Middle-click an app in the launcher to add it, right-click an icon in the dock to remove it.
@@ -165,5 +166,5 @@ GitHub Actions (`.github/workflows/build.yml`) builds the image on every pull re
 - The panels that open on hover sit at a fixed distance from the right edge of the bar; adjust the `:x` of each window in `eww.yuck` if one is off on your screen (the shortcut sheet is aligned with the keyboard layout pill, which moves left when the tray gets more icons).
 - This eww has no `poll` command: values that change on demand (the dock list, the launcher marks) are plain variables pushed by the scripts, the rest is polled.
 - Menus of tray icons and tooltips are drawn by GTK; `eww.scss` styles them, since `* { all: unset }` would leave them as bare text.
-- The lock screen is plain `swaylock` (colours only); `swaylock-effects` is not packaged for Fedora 45.
+- The lock screen is plain `swaylock` showing your wallpaper (`ink-lock` reads the `output … bg` lines of the Sway config and of `~/.config/ink/sway.d/`); `swaylock-effects` (blur, clock) is not packaged for Fedora 45.
 - Expose keeps the last thumbnail of windows it cannot capture, so a window on another workspace may show an older picture.
