@@ -115,6 +115,24 @@
   :namespace "ink-bar"
   (strip))
 
+;; Workspaces of a portrait screen (it has no bar), to the left of the dock and as tall as the dock. Only this screen's workspaces.
+(defwidget wsdock [out]
+  (box :class "wsdock" :orientation "h" :space-evenly false :halign "start" :valign "fill"
+    (for ws in workspaces
+      (button :timeout "10s" :visible {ws.output == out}
+              :class "ws ${ws.focused ? 'focused' : ws.visible ? 'visible' : ''} ${ws.urgent ? 'urgent' : ''}"
+              :onclick "swaymsg workspace ${ws.name}"
+        {ws.name}))))
+
+(defwindow ws-dock [mon out]
+  :monitor mon
+  ;; same height and bottom edge as the dock and the clock (y is negative for the same reason as the clock's)
+  :geometry (geometry :x "24px" :y "-76px" :height "76px" :anchor "bottom left")
+  :stacking "fg"
+  :exclusive false
+  :namespace "ink-dock"
+  (wsdock :out out))
+
 ;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
 (defwidget dock-app [app tip]
   (button :timeout "10s" :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
@@ -611,8 +629,14 @@
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll true :vexpand true
       (box :orientation "v" :space-evenly false :spacing 18
-        (for ws in expose
-          (expose-ws :name {ws.name} :focused {ws.focused} :scratch {ws.scratch} :windows {ws.windows}))))))
+        (for scr in expose
+          (box :orientation "v" :space-evenly false :spacing 10
+            ;; one section per screen; the minimised windows are in a last section of their own
+            (box :class "escreen" :space-evenly false :spacing 10 :halign "start"
+              (label :class "pop-title" :text {scr.output != "" ? "screen ${scr.output}" : "no screen"})
+              (label :class "dim" :text {scr.output != "" ? scr.size : "hidden"}))
+            (for ws in {scr.workspaces}
+              (expose-ws :name {ws.name} :focused {ws.focused} :scratch {ws.scratch} :windows {ws.windows}))))))))
 
 (defwindow expose [mon]
   :monitor mon
