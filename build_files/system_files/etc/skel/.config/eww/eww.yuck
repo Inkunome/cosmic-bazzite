@@ -674,7 +674,10 @@
             ;; one section per screen; the minimised windows are in a last section of their own
             (box :class "escreen" :space-evenly false :spacing 10 :halign "start"
               (label :class "pop-title" :text {scr.output != "" ? "screen ${scr.output}" : "no screen"})
-              (label :class "dim" :text {scr.output != "" ? scr.size : "hidden"}))
+              (label :class "dim" :text {scr.output != "" ? scr.size : "hidden"})
+              ;; a window is picked up: put it on a new workspace of this screen
+              (button :timeout "10s" :class "ews target" :visible {picked != "" && scr.output != ""}
+                      :onclick "~/.config/eww/scripts/expose newws ${scr.output}" "+ new workspace on ${scr.output}"))
             (for ws in {scr.workspaces}
               (expose-ws :name {ws.name} :focused {ws.focused} :scratch {ws.scratch} :windows {ws.windows}))))))))
 
