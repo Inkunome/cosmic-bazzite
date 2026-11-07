@@ -89,6 +89,33 @@
   :namespace "ink-bar"
   (bar :mon mon))
 
+;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left, the media player on the right.
+;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.
+(defwidget strip []
+  (box :orientation "v" :space-evenly false
+    (box :class "vine" :height 10 :style "background-size: auto 10px; background-image: url('${EWW_CONFIG_DIR}/icons/vine-bottom.svg');")
+    (box :class "strip" :orientation "h" :space-evenly false :height 26
+      (box :orientation "h" :space-evenly false :halign "start" :hexpand true :spacing 6
+        (label :class "dim" :visible {arraylength(scratch) == 0} :text "Alt+Esc minimises a window here")
+        (for w in scratch
+          (button :timeout "10s" :class "strip-win" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
+            (label :limit-width 24 :text "${w.initial}  ${w.name}"))))
+      (box :orientation "h" :space-evenly false :halign "end" :spacing 8
+        (label :class "strip-track" :limit-width 48
+               :text {media.title != "" ? (media.artist != "" ? "${media.artist} — ${media.title}" : media.title) : "nothing playing"})
+        (button :timeout "10s" :class "strip-btn" :onclick "playerctl previous" "‹")
+        (button :timeout "10s" :class "strip-btn" :onclick "playerctl play-pause" {media.status == "Playing" ? "❚❚" : "▶"})
+        (button :timeout "10s" :class "strip-btn" :onclick "playerctl next" "›")))))
+
+(defwindow strip [mon]
+  :monitor mon
+  ;; 36 px tall: 10 px of branch above a 26 px row
+  :geometry (geometry :x "0%" :y "6px" :width "98%" :height "36px" :anchor "bottom center")
+  :stacking "fg"
+  :exclusive true
+  :namespace "ink-bar"
+  (strip))
+
 ;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
 (defwidget dock-app [app tip]
   (button :timeout "10s" :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
