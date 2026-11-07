@@ -93,8 +93,7 @@
 ;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.
 (defwidget strip []
   (box :orientation "v" :space-evenly false
-    (box :class "vine" :height 10 :style "background-size: auto 10px; background-image: url('${EWW_CONFIG_DIR}/icons/vine-bottom.svg');")
-    (box :class "strip" :orientation "h" :space-evenly false :height 26
+    (box :class "strip" :orientation "h" :space-evenly false :height 36
       (box :orientation "h" :space-evenly false :halign "start" :hexpand true :spacing 6
         (label :class "dim" :visible {arraylength(scratch) == 0} :text "Alt+Esc minimises a window here")
         (for w in scratch
@@ -109,7 +108,7 @@
 
 (defwindow strip [mon]
   :monitor mon
-  ;; 36 px tall: 10 px of branch above a 26 px row
+  ;; 36 px tall
   :geometry (geometry :x "0%" :y "6px" :width "98%" :height "36px" :anchor "bottom center")
   :stacking "fg"
   :exclusive true
