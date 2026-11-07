@@ -114,6 +114,7 @@ Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varl
 | Screenshots | `grim`, `slurp`, `swappy` |
 | System | `brightnessctl`, `playerctl`, `pavucontrol`, `wlsunset`, `udiskie`, `network-manager-applet`, `nm-connection-editor`, `blueman`, `mate-polkit`, `system-config-printer` |
 | Apps and tools | `alacritty`, `zellij`, `thunar`, `fira-code-fonts`, `jq`, `socat`, `nix` |
+| Command-line tools | `ripgrep`, `fd-find`, `chafa`, `neovim` |
 
 Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, PipeWire / WirePlumber, `tuned-ppd` (power profiles), GNOME Settings, gvfs, udisks2.
 
