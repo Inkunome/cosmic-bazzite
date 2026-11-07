@@ -5,6 +5,7 @@ case "${1:-}" in
     terminal) exec alacritty ;;
     files)    exec thunar ;;
     dashboard) exec ~/.config/eww/scripts/dash toggle dashboard ;;
+    launcher)  exec ~/.config/eww/scripts/dash toggle launcher ;;
     settings) XDG_CURRENT_DESKTOP=GNOME exec gnome-control-center ;;
-    *) echo "usage: launch browser|terminal|files|dashboard|settings" >&2; exit 1 ;;
+    *) echo "usage: launch browser|terminal|files|dashboard|launcher|settings" >&2; exit 1 ;;
 esac

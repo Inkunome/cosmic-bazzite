@@ -169,3 +169,7 @@ tooltip * { color: $spore; }
 
 // Confirmation line of the launcher ("pinned Firefox to the launcher")
 .lmsg { color: $loam; background: $feather; border-radius: 12px; padding: 3px 12px; font-weight: bold; }
+
+// The dock on landscape screens, in the bottom strip next to the player
+.strip-dock { background-color: rgba(42, 29, 54, 0.66); border-radius: 14px; padding: 0 8px; margin: 5px 0; }
+.strip-dock .dock-icon { padding: 2px; margin: 1px 1px; border-radius: 9px; }

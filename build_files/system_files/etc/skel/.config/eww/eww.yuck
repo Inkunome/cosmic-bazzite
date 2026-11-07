@@ -91,7 +91,7 @@
   :namespace "ink-bar"
   (bar :mon mon :out out))
 
-;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left, the media player on the right.
+;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left; on the right the dock (small) and the media player.
 ;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.
 (defwidget strip []
   (box :orientation "v" :space-evenly false
@@ -101,12 +101,19 @@
         (for w in scratch
           (button :timeout "10s" :class "strip-win" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
             (label :limit-width 24 :text "${w.initial}  ${w.name}"))))
-      (box :class "strip-player" :orientation "h" :space-evenly false :halign "end" :spacing 8
-        (label :class "strip-track" :limit-width 48
-               :text {media.title != "" ? (media.artist != "" ? "${media.artist} — ${media.title}" : media.title) : "nothing playing"})
-        (button :timeout "10s" :class "strip-btn" :onclick "playerctl previous" "‹")
-        (button :timeout "10s" :class "strip-btn" :onclick "playerctl play-pause" {media.status == "Playing" ? "❚❚" : "▶"})
-        (button :timeout "10s" :class "strip-btn" :onclick "playerctl next" "›")))))
+      (box :orientation "h" :space-evenly false :halign "end" :spacing 8
+        ;; the dock of a landscape screen: the same apps as on a portrait screen, small, next to the player
+        (box :class "strip-dock" :orientation "h" :space-evenly false
+          (dock-app :app "launcher" :tip "App launcher" :size 20)
+          (dock-app :app "dashboard" :tip "Dashboard" :size 20)
+          (for a in dock_apps
+            (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 20)))
+        (box :class "strip-player" :orientation "h" :space-evenly false :spacing 8
+          (label :class "strip-track" :limit-width 48
+                 :text {media.title != "" ? (media.artist != "" ? "${media.artist} — ${media.title}" : media.title) : "nothing playing"})
+          (button :timeout "10s" :class "strip-btn" :onclick "playerctl previous" "‹")
+          (button :timeout "10s" :class "strip-btn" :onclick "playerctl play-pause" {media.status == "Playing" ? "❚❚" : "▶"})
+          (button :timeout "10s" :class "strip-btn" :onclick "playerctl next" "›"))))))
 
 (defwindow strip [mon]
   :monitor mon
@@ -136,18 +143,18 @@
   (wsdock :out out))
 
 ;; Dock — pinned apps. Shown only on portrait screens, centred at the bottom (landscape screens get the bar instead). Icons are Ink-styled SVGs in ~/.config/eww/icons.
-(defwidget dock-app [app tip]
+(defwidget dock-app [app tip size]
   (button :timeout "10s" :class "dock-icon" :tooltip tip :onclick "~/.config/eww/scripts/launch ${app} &"
-    (image :path "${EWW_CONFIG_DIR}/icons/${app}.svg" :image-width 44 :image-height 44)))
+    (image :path "${EWW_CONFIG_DIR}/icons/${app}.svg" :image-width size :image-height size)))
 
 ;; An application of the dock: click starts it, right-click removes it from the dock. Add one with a middle-click on it in
 ;; the launcher. The list is ~/.config/ink/dock.
-(defwidget dock-item [id name icon initial builtin]
+(defwidget dock-item [id name icon initial builtin size]
   (button :timeout "10s" :class "dock-icon" :tooltip "${name}  (right-click: remove from the dock)"
           :onclick {builtin ? "~/.config/eww/scripts/launch ${id}" : "~/.config/eww/scripts/apps launch ${id}"}
           :onrightclick "~/.config/eww/scripts/apps dock-toggle ${id}"
     (box
-      (image :visible {icon != ""} :path {icon} :image-width 44 :image-height 44)
+      (image :visible {icon != ""} :path {icon} :image-width size :image-height size)
       (label :visible {icon == ""} :class "app-initial" :text initial))))
 
 (defwidget dock []
@@ -158,9 +165,10 @@
         (button :timeout "10s" :class "dock-icon mini" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
           (label :text {w.initial})))
       (box :class "dock-sep" :width 2))
-    (dock-app :app "dashboard" :tip "Dashboard")
+    (dock-app :app "launcher" :tip "App launcher" :size 44)
+    (dock-app :app "dashboard" :tip "Dashboard" :size 44)
     (for a in dock_apps
-      (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin}))))
+      (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 44))))
 
 (defwidget bigclock []
   (box :class "bigclock" :valign "fill" :halign "fill"
