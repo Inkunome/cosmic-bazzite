@@ -166,3 +166,6 @@ tooltip * { color: $spore; }
 
 // An app that is in the dock gets a pink line under it in the launcher
 .app-tile.docked { border-bottom: 2px solid $feather; }
+
+// Confirmation line of the launcher ("pinned Firefox to the launcher")
+.lmsg { color: $loam; background: $feather; border-radius: 12px; padding: 3px 12px; font-weight: bold; }

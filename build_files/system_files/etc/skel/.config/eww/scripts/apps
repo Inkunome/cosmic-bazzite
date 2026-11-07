@@ -206,6 +206,28 @@ def launcher_items():
         return []
 
 
+def say(text):
+    """Show a short confirmation in the open launcher (variable lmsg), and clear it after a few seconds, unless a newer
+    message replaced it."""
+    eww(lmsg=text)
+    subprocess.Popen(["sh", "-c", 'sleep 2.5; [ "$(eww get lmsg)" = "$1" ] && eww update lmsg=""', "sh", text],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def app_name(apps, ident):
+    if canon(ident) in BUILTIN:
+        return BUILTIN[canon(ident)]
+    return next((a["name"] for a in apps if a["id"].lower() == ident.lower() or canon(a["id"]) == canon(ident)), ident)
+
+
+def refresh_launcher(apps):
+    """Re-push what the open launcher lists, so the pinned / dock marks follow a change."""
+    eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
+    q = eww_get("query")
+    if q.strip():
+        eww(results=json.dumps(search(apps, q), separators=(",", ":")))
+
+
 def eww(**kv):
     for k, v in kv.items():
         subprocess.run(["eww", "update", f"{k}={v}"], check=False)
@@ -261,14 +283,21 @@ def main(argv):
         arg = unquote(arg)
         cur = [p for p in pins()]
         low = [p.lower() for p in cur]
+        name = app_name(apps, arg)
         if arg.lower() in low:
             cur = [p for p in cur if p.lower() != arg.lower()]
+            msg = f"unpinned {name}"
+        elif len(resolve_pinned(apps)) >= MAX_PINNED:
+            say(f"the launcher holds {MAX_PINNED} pinned apps: unpin one first")
+            return 0
         else:
             cur = [a["id"] for a in resolve_pinned(apps)] + [arg]
+            msg = f"pinned {name} to the launcher"
         os.makedirs(os.path.dirname(PINS), exist_ok=True)
         with open(PINS, "w") as f:
             f.write("\n".join(cur) + "\n")
-        eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
+        refresh_launcher(apps)
+        say(msg)
     elif cmd == "dock":
         print(json.dumps(dock_items(apps), separators=(",", ":")))
     elif cmd == "dock-sync":
@@ -276,19 +305,20 @@ def main(argv):
     elif cmd == "dock-toggle":
         c = canon(unquote(arg))
         cur = [canon(i) for i in dock_ids()]
+        name = app_name(apps, c)
         if c.lower() in [i.lower() for i in cur]:
             cur = [i for i in cur if i.lower() != c.lower()]
+            msg = f"removed {name} from the dock"
         else:
             cur.append(c)
+            msg = f"added {name} to the dock"
         os.makedirs(os.path.dirname(DOCK), exist_ok=True)
         with open(DOCK, "w") as f:
             f.write("\n".join(cur) + "\n")
         eww(dock_apps=json.dumps(dock_items(apps), separators=(",", ":")))
-        # the open launcher shows which apps are in the dock: refresh what it lists
-        eww(pinned=json.dumps(resolve_pinned(apps), separators=(",", ":")))
-        q = eww_get("query")
-        if q.strip():
-            eww(results=json.dumps(search(apps, q), separators=(",", ":")))
+        # the open launcher shows which apps are pinned or in the dock: refresh what it lists, and confirm
+        refresh_launcher(apps)
+        say(msg)
     else:
         sys.stderr.write(__doc__)
         return 1

@@ -25,6 +25,7 @@
 (defvar sel 0)
 (defvar results "[]")
 (defvar pinned "[]")
+(defvar lmsg "")
 (defvar keys_pill false)
 (defvar keys_pop false)
 (defvar qs_pill false)
@@ -492,6 +493,8 @@
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+    ;; confirmation of a pin or dock change (set by `apps`, cleared after a few seconds)
+    (label :class "lmsg" :halign "start" :visible {lmsg != ""} :text lmsg)
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
         (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
@@ -511,6 +514,8 @@
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
+    ;; confirmation of a pin or dock change (set by `apps`, cleared after a few seconds)
+    (label :class "lmsg" :halign "start" :visible {lmsg != ""} :text lmsg)
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
         (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
