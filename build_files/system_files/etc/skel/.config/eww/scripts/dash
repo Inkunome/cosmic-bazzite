@@ -17,8 +17,11 @@ open_kind() {
         eww update query="" results="[]" sel=0
         "$here/apps" pinned >/dev/null
     fi
-    # monitor index among the active outputs (eww 0.6 takes an index, not sway's output name)
-    read -r idx w h < <(swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries | (map(select(.value.focused))[0] // .[0]) | "\(.key) \(.value.rect.width) \(.value.rect.height)"')
+    # the focused output, and the eww monitor index that lands on it (GDK does not always list the monitors in sway's order)
+    local out
+    read -r out w h < <(swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | (map(select(.focused))[0] // .[0]) | "\(.name) \(.rect.width) \(.rect.height)"')
+    idx=$("$here/screens" probe | awk -v o="$out" '$1 == o {print $2}')
+    [[ -n $idx ]] || idx=$(swaymsg -t get_outputs -r | jq -r --arg o "$out" '[.[] | select(.active) | .name] | index($o)')
     if [[ $kind == expose ]]; then "$here/expose" refresh; eww open expose --id expose --arg "mon=$idx"
     elif ((h > w)); then eww open "$kind-long" --id "$kind" --arg "mon=$idx"
     else eww open "$kind-wide" --id "$kind" --arg "mon=$idx"; fi
