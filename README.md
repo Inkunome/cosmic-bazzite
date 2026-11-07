@@ -18,7 +18,7 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
-| **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it |
+| **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it, right-click one then click a workspace to move it there (eww has no real drag and drop) |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
 | **Caffeine** | The cup in the bar (also a tile in the quick settings and the dashboard) keeps the screen awake: no automatic lock, no blanking, until you click it again or log out. The lock before a suspend stays |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
