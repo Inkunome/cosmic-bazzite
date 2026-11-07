@@ -134,6 +134,7 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 
 - **Your own settings**: put them in `~/.config/ink/sway.d/*.conf` (wallpapers, per-device input, extra keys). Sway reads them last, so they override the defaults, and `ink-sync` never touches them.
 - **Wallpaper**: in that folder, `output "<make> <model> <serial>" bg /path/to/image.png fill` (one line per screen; `swaymsg -t get_outputs` shows the names). Without it you get the default, set by the `output * bg …` line in the Sway config.
+- **Keep a keyboard in qwerty**: `input "<identifier>" { xkb_layout "us"  xkb_variant "" }` in a file of that folder (identifiers: `swaymsg -t get_inputs`). That keyboard then ignores the layout switch.
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
 - **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding by default; `ink-sync` leaves your terminal config alone).
