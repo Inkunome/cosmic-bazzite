@@ -14,7 +14,7 @@ open_kind() {
     [[ $kind == launcher || $kind == dashboard || $kind == expose ]] || { echo "usage: dash open launcher|dashboard|expose" >&2; return 1; }
     eww close dashboard launcher expose >/dev/null 2>&1
     if [[ $kind == launcher ]]; then
-        eww update query="" results="[]"
+        eww update query="" results="[]" sel=0
         "$here/apps" pinned >/dev/null
     fi
     # monitor index among the active outputs (eww 0.6 takes an index, not sway's output name)
@@ -22,7 +22,8 @@ open_kind() {
     if [[ $kind == expose ]]; then "$here/expose" refresh; eww open expose --id expose --arg "mon=$idx"
     elif ((h > w)); then eww open "$kind-long" --id "$kind" --arg "mon=$idx"
     else eww open "$kind-wide" --id "$kind" --arg "mon=$idx"; fi
-    swaymsg -q mode dash
+    # the launcher also owns Up, Down, Tab and Return (see the "launcher" mode in the sway config)
+    if [[ $kind == launcher ]]; then swaymsg -q mode launcher; else swaymsg -q mode dash; fi
 }
 # which kind is open right now (empty when none)
 current() { eww active-windows 2>/dev/null | sed -n 's/^\(dashboard\|launcher\|expose\): .*/\1/p' | head -1; }

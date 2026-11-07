@@ -185,6 +185,20 @@ exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
+# the launcher: Up/Down/Tab/Shift+Tab move the selection, Return launches it (typing still goes to the search field)
+mode "launcher" {
+    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
+    bindsym Mod1+space exec ~/.config/eww/scripts/dash close
+    bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
+    bindsym Down exec ~/.config/eww/scripts/apps nav next
+    bindsym Tab exec ~/.config/eww/scripts/apps nav next
+    bindsym Up exec ~/.config/eww/scripts/apps nav prev
+    bindsym Shift+Tab exec ~/.config/eww/scripts/apps nav prev
+    bindsym Return exec ~/.config/eww/scripts/apps accept
+    bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
+}
+
 mode "dash" {
     bindsym Escape exec ~/.config/eww/scripts/dash close
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
@@ -193,3 +207,7 @@ mode "dash" {
 }
 
 include /etc/sway/config.d/*
+
+# your own settings go in ~/.config/ink/sway.d/*.conf (wallpapers, per-device input, extra keys). They are read last, so
+# they override this file, and they are not touched by ink-sync.
+include ~/.config/ink/sway.d/*.conf

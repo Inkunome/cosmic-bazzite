@@ -18,6 +18,7 @@
 (defvar cal_pop false)
 (defvar expose "[]")
 (defvar query "")
+(defvar sel 0)
 (defvar results "[]")
 (defvar pinned "[]")
 (defvar keys_pill false)
@@ -370,8 +371,8 @@
       (button :timeout "10s" :class "app" :onclick "playerctl play-pause" {media.status == "Playing" ? "pause" : "play"})
       (button :timeout "10s" :class "app" :onclick "playerctl next" "next"))))
 
-(defwidget app-tile [id name icon initial]
-  (button :timeout "10s" :class "app-tile" :tooltip "${name}  (right-click: pin / unpin)"
+(defwidget app-tile [id name icon initial selected]
+  (button :timeout "10s" :class "app-tile ${selected ? 'selected' : ''}" :tooltip "${name}  (right-click: pin / unpin)"
           :onclick "~/.config/eww/scripts/apps launch ${id}"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
     (box :orientation "v" :space-evenly false :spacing 4
@@ -380,8 +381,8 @@
         (label :visible {icon == ""} :class "app-initial" :text initial))
       (label :class "dim" :limit-width 10 :text name))))
 
-(defwidget result-row [id name icon initial pinned]
-  (button :timeout "10s" :class "result" :onclick "~/.config/eww/scripts/apps launch ${id}"
+(defwidget result-row [id name icon initial pinned selected]
+  (button :timeout "10s" :class "result ${selected ? 'selected' : ''}" :onclick "~/.config/eww/scripts/apps launch ${id}"
           :onrightclick "~/.config/eww/scripts/apps toggle-pin ${id}"
     (box :space-evenly false :spacing 10
       (box :class "app-icon-sm"
@@ -399,38 +400,38 @@
     :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
     ;; search field first: it takes the keyboard focus when the launcher opens
     (box :space-evenly false :spacing 10
-      (input :class "search" :hexpand true :value query :timeout "2s"
+      (input :class "search" :hexpand true :timeout "5s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
-        (result-row :id {r.id} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned}))
+        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :selected {r.idx == sel}))
       (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
     (box :orientation "v" :space-evenly false :spacing 12 :visible {query == ""}
       (label :class "pop-title" :halign "start" :text "pinned")
       (box :spacing 6 :halign "start"
         (for a in pinned
-          (app-tile :id {a.id} :name {a.name} :icon {a.icon} :initial {a.initial})))
+          (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :selected {a.idx == sel})))
       (label :class "dim" :halign "start" :text "right-click an app to pin or unpin it"))))
 
 (defwidget launcher-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false :spacing 12
     :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
     (box :space-evenly false :spacing 10
-      (input :class "search" :hexpand true :value query :timeout "2s"
+      (input :class "search" :hexpand true :timeout "5s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
       (for r in results
-        (result-row :id {r.id} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned}))
+        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :selected {r.idx == sel}))
       (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
     (scroll :vscroll true :hscroll false :vexpand true :visible {query == ""}
       (box :orientation "v" :space-evenly false :spacing 2
         (label :class "pop-title" :halign "start" :text "pinned")
         (for a in pinned
-          (result-row :id {a.id} :name {a.name} :icon {a.icon} :initial {a.initial} :pinned false))))))
+          (result-row :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :pinned false :selected {a.idx == sel}))))))
 
 (defwindow launcher-wide [mon]
   :monitor mon

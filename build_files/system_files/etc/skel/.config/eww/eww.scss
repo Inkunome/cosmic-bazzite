@@ -116,3 +116,8 @@ calendar.highlight { color: $feather; font-weight: bold; }
 .ethumb { background: rgba($moss, 0.35); border-radius: 12px; }
 .ews { color: $feather; font-weight: bold; border-radius: 12px; padding: 2px 8px; }
 .ews.focused { color: $loam; background: $glow; }
+
+// Keyboard focus. `* { all: unset }` removes GTK's own ring, so draw one: Tab and the arrow keys now show where you are.
+button:focus { box-shadow: inset 0 0 0 2px rgba($glow, 0.85); }
+.result:focus, .app-tile:focus, .app:focus, .tile:focus, .pbtn:focus { background: rgba($glow, 0.28); }
+.result.selected, .app-tile.selected { background: rgba($glow, 0.28); box-shadow: inset 0 0 0 2px rgba($glow, 0.85); }   // the entry Enter launches
