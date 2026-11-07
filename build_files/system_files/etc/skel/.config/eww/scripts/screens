@@ -12,6 +12,21 @@ sig() {
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active) | "\(.name) \(.model) \(.rect.width)x\(.rect.height)"] | join(";")'
 }
 
+# Where does each eww monitor index land? Opens a small probe window on every index and sees which output gained a
+# surface. Prints "OUTPUT INDEX" lines.
+probe() {
+    local n i before o
+    count() { swaymsg -t get_outputs -r | jq -r '.[] | select(.active) | "\(.name) \([.layer_shell_surfaces[]? | select(.namespace == "ink-dock")] | length)"'; }
+    n=$(swaymsg -t get_outputs -r | jq '[.[] | select(.active)] | length')
+    for ((i = 0; i < n; i++)); do
+        before=$(count)
+        eww open clock-big --id probe --arg "mon=$i" >/dev/null 2>&1
+        o=$(diff <(echo "$before") <(count) | sed -n 's/^> \(.*\) [0-9]*$/\1/p' | head -n1)
+        eww close probe >/dev/null 2>&1
+        [[ -n $o ]] && echo "$o $i"
+    done
+}
+
 # Is every portrait screen carrying the dock and every landscape one the bar?
 placed() {
     swaymsg -t get_outputs -r | jq -e 'all(.[] | select(.active);
@@ -35,13 +50,7 @@ apply() {
     # a screen sleeps the portrait layout used to land on the wide screen): find out where each index really lands by
     # opening a small probe window on it and looking at which output received it.
     declare -A at   # output name -> eww monitor index
-    n=$(swaymsg -t get_outputs -r | jq '[.[] | select(.active)] | length')
-    for ((i = 0; i < n; i++)); do
-        eww open clock-big --id probe --arg "mon=$i" >/dev/null 2>&1
-        o=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.active and any(.layer_shell_surfaces[]?; .namespace == "ink-dock")) | .name' | head -n1)
-        eww close probe >/dev/null 2>&1
-        [[ -n $o && -z ${at[$o]:-} ]] && at[$o]=$i
-    done
+    while read -r o i; do at[$o]=$i; done < <(probe)
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries[] | "\(.key) \(.value.rect.width) \(.value.rect.height) \(.value.name)"' |
     while read -r idx w h name; do
         mon=${at[$name]:-$idx}   # (the probe failed: fall back on the position)
@@ -63,6 +72,7 @@ case "${1:-apply}" in
             "$here" apply --changed
             ( sleep 4; "$here" apply --changed ) &
         done ;;
-    *) echo "usage: screens apply|watch" >&2; exit 1 ;;
+    probe) probe ;;
+    *) echo "usage: screens apply|watch|probe" >&2; exit 1 ;;
 esac
 exit 0
