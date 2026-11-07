@@ -2,7 +2,7 @@
 
 A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in light purple and pink, with a thorny branch of flowers under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
-![Desktop: tabbed windows, bar with a thorny branch, lilac wallpaper](docs/img/desktop.webp)
+![Desktop: tabbed windows, bar with a thorny branch, bottom strip, lilac wallpaper](docs/img/desktop.webp)
 
 Everything lives in `build_files/`. The image is built by GitHub Actions and signed with cosign.
 
@@ -12,19 +12,19 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
 | **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, tray, quick-settings menu |
-| **eww strip** (landscape screens) | A 36 px strip at the bottom, no background except behind the player: minimised windows on the left (click to bring one back), media player on the right. Windows stop above it |
-| **eww dock** (portrait screens) | Pinned apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
-| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it |
+| **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
+| **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
+| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
-| **Minimise to the dock** | `Alt+Esc` sends a window away, `Alt+Tab` brings the next one back |
+| **Minimise** | `Alt+Esc` sends a window away (to the dock on a portrait screen, to the bottom strip on a landscape one), `Alt+Tab` brings the next one back |
 
 ### Launcher and expose
 
 ![App launcher with pinned applications](docs/img/launcher.webp)
-![Expose view: workspaces and window thumbnails](docs/img/expose.webp)
+![Expose view: workspaces and window thumbnails, grouped by screen](docs/img/expose.webp)
 
 ### Dashboard and menus
 
@@ -38,7 +38,7 @@ The bar is replaced by a dock, with that screen's workspaces at its left and a c
 
 | Dock | Dashboard |
 | :---: | :---: |
-| ![Portrait screen with the dock](docs/img/portrait.webp) | ![Portrait dashboard](docs/img/portrait-dashboard.webp) |
+| ![Portrait screen with workspaces, dock and clock](docs/img/portrait.webp) | ![Portrait dashboard](docs/img/portrait-dashboard.webp) |
 
 ## Install
 
@@ -87,7 +87,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+A`, `Super+Shift+A` | focus parent, child container |
 | `Super+Shift+Q` | close |
 | `Ctrl+Alt+F`, middle click on a tab | close the window, close that tab |
-| `Alt+Esc`, `Alt+Tab` | minimise to the dock, next minimised window |
+| `Alt+Esc`, `Alt+Tab` | minimise (dock or strip), next minimised window |
 | `Super+1…9`, `Super+Shift+1…9` | go to a workspace, send the window there |
 | `Super+PgUp/PgDn`, `Super+Ctrl+←/→` | previous / next workspace |
 | `Super+Alt+←/→` | move the workspace to another screen |
@@ -140,6 +140,7 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 - **Wallpaper**: in that folder, `output "<make> <model> <serial>" bg /path/to/image.png fill` (one line per screen; `swaymsg -t get_outputs` shows the names). Without it you get the default, set by the `output * bg …` line in the Sway config.
 - **Keep a keyboard in qwerty**: `input "<identifier>" { xkb_layout "us"  xkb_variant "" }` in a file of that folder (identifiers: `swaymsg -t get_inputs`). That keyboard then ignores the layout switch.
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
+- **Dock apps** (both kinds of screen, small in the bottom strip on landscape ones): `~/.config/ink/dock`, one id per line, starting with `browser`, `terminal`, `files` and `settings`. Middle-click an app in the launcher to add it, right-click an icon in the dock to remove it.
 - **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
 - **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding by default; `ink-sync` leaves your terminal config alone).
 - **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
@@ -159,6 +160,8 @@ GitHub Actions (`.github/workflows/build.yml`) builds the image on every pull re
 ## Notes
 
 - Built for eww 0.6: monitors are addressed by index, and `Ctrl+Space` is a global shortcut, so applications do not get it (editor autocompletion, input methods).
-- The panels that open on hover sit at a fixed distance from the right edge of the bar; adjust the `:x` of each window in `eww.yuck` if one is off on your screen.
+- The panels that open on hover sit at a fixed distance from the right edge of the bar; adjust the `:x` of each window in `eww.yuck` if one is off on your screen (the shortcut sheet is aligned with the keyboard layout pill, which moves left when the tray gets more icons).
+- This eww has no `poll` command: values that change on demand (the dock list, the launcher marks) are plain variables pushed by the scripts, the rest is polled.
+- Menus of tray icons and tooltips are drawn by GTK; `eww.scss` styles them, since `* { all: unset }` would leave them as bare text.
 - The lock screen is plain `swaylock` (colours only); `swaylock-effects` is not packaged for Fedora 45.
 - Expose keeps the last thumbnail of windows it cannot capture, so a window on another workspace may show an older picture.
