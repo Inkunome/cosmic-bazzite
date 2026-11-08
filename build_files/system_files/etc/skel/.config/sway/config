@@ -15,13 +15,15 @@ set $amanita #e0566f
 
 # ── look (swayfx) ──────────────────────────────────────────
 font pango:Fira Code 10
-default_border pixel 2
+default_border pixel 1
 # new windows open as tabs of the workspace by default (Super+E splits, Super+W re-tabs);
 # when a container is split, tile side by side on landscape screens and stacked on portrait ones
 workspace_layout tabbed
 default_orientation auto
 title_align center
 titlebar_padding 10 5
+# the frame of the content is thin, the one around the title is thick
+titlebar_border_thickness 3
 gaps inner 8
 gaps outer 4
 corner_radius 18
@@ -38,11 +40,11 @@ layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
-# windows that are not focused have no frame (the child_border is transparent) but keep the line between the title and the content
+# windows that are not focused have no frame (the child_border is transparent) and only a faint line around their title
 #                       border    bg       text    indicator child_border
 client.focused          $glow     $loam    $spore  $blush    $glow
-client.focused_inactive $moss     $loam    $spore  #00000000  #00000000
-client.unfocused        $moss     $loam    $spore  #00000000  #00000000
+client.focused_inactive #5b457044 $loam    $spore  #00000000  #00000000
+client.unfocused        #5b457044 $loam    $spore  #00000000  #00000000
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
