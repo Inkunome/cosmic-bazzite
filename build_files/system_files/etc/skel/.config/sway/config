@@ -40,7 +40,8 @@ default_dim_inactive 0.08
 dim_inactive_colors.unfocused #1c1424
 # no shadow on the dock, the clock and the workspaces of a portrait screen: the lilac aura is for the focused window
 layer_effects "ink-dock" blur enable; shadows disable; corner_radius 24
-layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
+# no shadow on the panels (launcher, dashboard, Super+G picker, flyouts) either: the aura is only for the focused window
+layer_effects "ink-pop" blur enable; shadows disable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
