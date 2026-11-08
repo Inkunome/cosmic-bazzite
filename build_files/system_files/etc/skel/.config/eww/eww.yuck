@@ -10,12 +10,6 @@
 (defvar dock_apps "[]")
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
-;; what the layout picker acts on: "ws" (the workspace of a screen, from the dock item) or "win" (the focused window's own group, Super+G)
-(defvar lay_scope "ws")
-;; the screen the open picker acts on
-(defvar lay_target "")
-;; layout of the visible workspace of each screen, by output name: {"DP-3":"t",...} (h, v, t or s; kept by scripts/wslayout watch)
-(defvar wslay "{}")
 (defvar vol_pill false)
 (defvar vol_pop false)
 (defvar nt_pill false)
@@ -100,7 +94,7 @@
 
 ;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left; on the right the dock (small) and the media player.
 ;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.
-(defwidget strip [mon out]
+(defwidget strip []
   (box :orientation "v" :space-evenly false
     (box :class "strip" :orientation "h" :space-evenly false :height 36
       (box :orientation "h" :space-evenly false :halign "start" :hexpand true :spacing 6
@@ -113,7 +107,6 @@
         (box :class "strip-dock" :orientation "h" :space-evenly false
           (dock-app :app "launcher" :tip "App launcher" :size 20)
           (dock-app :app "dashboard" :tip "Dashboard" :size 20)
-          (dock-lay :win "layoutpop-center" :size 20 :mon mon :out out)
           (for a in dock_apps
             (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 20)))
         (box :class "strip-player" :orientation "h" :space-evenly false :spacing 8
@@ -123,14 +116,14 @@
           (button :timeout "10s" :class "strip-btn" :onclick "playerctl play-pause" {media.status == "Playing" ? "❚❚" : "▶"})
           (button :timeout "10s" :class "strip-btn" :onclick "playerctl next" "›"))))))
 
-(defwindow strip [mon out]
+(defwindow strip [mon]
   :monitor mon
   ;; 36 px tall
   :geometry (geometry :x "0%" :y "6px" :width "98%" :height "36px" :anchor "bottom center")
   :stacking "fg"
   :exclusive true
   :namespace "ink-bar"
-  (strip :mon mon :out out))
+  (strip))
 
 ;; Workspaces of a portrait screen (it has no bar), to the left of the dock and as tall as the dock. Only this screen's workspaces.
 (defwidget wsdock [out]
@@ -165,14 +158,7 @@
       (image :visible {icon != ""} :path {icon} :image-width size :image-height size)
       (label :visible {icon == ""} :class "app-initial" :text initial))))
 
-;; The layout of the workspace: the third fixed item of a dock, after the launcher and the dashboard. It shows the layout of its
-;; screen; a click opens (or closes) the picker, like the launcher and the dashboard (win = the picker window that fits that dock).
-(defwidget dock-lay [win size mon out]
-  (button :timeout "10s" :class "dock-icon dock-lay" :tooltip "layout of the workspace (click)"
-          :onclick "~/.config/eww/scripts/wslayout panel ${out} ${win} ${mon} &"
-    (image :path "${EWW_CONFIG_DIR}/icons/lay-${wslay[out] ?: 'h'}.svg" :image-width size :image-height size)))
-
-(defwidget dock [mon out]
+(defwidget dock []
   (box :class "dock" :orientation "h" :space-evenly false
     ;; minimised windows (sway scratchpad): click to bring one back
     (box :orientation "h" :space-evenly false :visible {arraylength(scratch) > 0}
@@ -182,7 +168,6 @@
       (box :class "dock-sep" :width 2))
     (dock-app :app "launcher" :tip "App launcher" :size 44)
     (dock-app :app "dashboard" :tip "Dashboard" :size 44)
-    (dock-lay :win "layoutpop-center" :size 44 :mon mon :out out)
     (for a in dock_apps
       (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 44))))
 
@@ -203,13 +188,13 @@
   :namespace "ink-dock"
   (bigclock))
 
-(defwindow dock [mon out]
+(defwindow dock [mon]
   :monitor mon
   :geometry (geometry :x "0px" :y "16px" :anchor "bottom center")
   :stacking "fg"
   :exclusive true
   :namespace "ink-dock"
-  (dock :mon mon :out out))
+  (dock))
 
 ;; ── Flyouts ──────────────────────────────────────────────
 ;; Open on hover over their pill in the bar, close shortly after the pointer leaves both.
@@ -219,26 +204,6 @@
       (label :class "dim" :halign "start" :hexpand true :text label)
       (label :halign "end" :text "${round(value, 0)}%"))
     (progress :value value :class "bar-meter")))
-
-(defwidget lay-card [id name key desc out]
-  (button :timeout "10s" :class "lcard ${lay_scope == 'ws' && wslay[out] == id ? 'current' : ''}"
-          :onclick "~/.config/eww/scripts/wslayout apply ${out} ${id}; ~/.config/eww/scripts/wslayout close"
-    (box :orientation "v" :space-evenly false :spacing 4
-      (image :path "${EWW_CONFIG_DIR}/icons/lay-${id}.svg" :image-width 40 :image-height 40)
-      (label :class "lname" :text "${name}  ${key}")
-      (label :class "dim" :text desc)
-      (label :class "lcur" :visible {lay_scope == "ws" && wslay[out] == id} :text "current"))))
-
-(defwidget layoutpop [win out]
-  (box :class "pop" :orientation "v" :space-evenly false :spacing 10
-    :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
-    (label :class "pop-title" :halign "start" :text {lay_scope == "win" ? "layout of the focused window" : "layout of the workspace on ${out}"})
-    (box :spacing 8
-      (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side" :out out)
-      (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom" :out out)
-      (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row" :out out)
-      (lay-card :id "s" :name "Stacked" :key "S" :desc "title list" :out out))
-    (label :class "dim" :halign "start" :text {lay_scope == "win" ? "its own group, new windows open inside  ·  Super+G, then H V T S" : "H V T S to choose  ·  Esc to close"})))
 
 (defwidget slider-row [name kind data val]
   (box :class "meter" :orientation "v" :space-evenly false
@@ -268,14 +233,6 @@
       (devices :kind "sink" :items {adev.sinks})
       (slider-row :name "microphone" :kind "source" :data src :val vol_source_v)
       (devices :kind "source" :items {adev.sources}))))
-
-;; the picker opened by a click on the layout item of a dock: at the centre of the screen, like the launcher and the dashboard
-(defwindow layoutpop-center [mon out]
-  :monitor mon
-  :geometry (geometry :x "0px" :y "-60px" :width "600px" :anchor "center")
-  :stacking "overlay"
-  :namespace "ink-pop"
-  (layoutpop :win "layoutpop-center" :out out))
 
 (defwindow volpop [mon]
   :monitor mon
@@ -721,8 +678,28 @@
     (box :width {tw + 20} :hexpand false)
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›"))))
 
+;; ── Layout picker (Super+G): the focused window gets its own group with the layout you pick ──
+(defwidget lay-card [id name key desc]
+  (button :timeout "10s" :class "lcard"
+          :onclick "~/.config/eww/scripts/wslayout win ${id}; ~/.config/eww/scripts/wslayout close"
+    (box :orientation "v" :space-evenly false :spacing 4
+      (image :path "${EWW_CONFIG_DIR}/icons/lay-${id}.svg" :image-width 40 :image-height 40)
+      (label :class "lname" :text "${name}  ${key}")
+      (label :class "dim" :text desc))))
+
+(defwidget layoutpop []
+  (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+    :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
+    (label :class "pop-title" :halign "start" :text "layout of the focused window")
+    (box :spacing 8
+      (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side")
+      (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom")
+      (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row")
+      (lay-card :id "s" :name "Stacked" :key "S" :desc "title list"))
+    (label :class "dim" :halign "start" :text "its own group, new windows open inside  ·  H V T S, Esc to cancel")))
+
 ;; Where is the pointer? A transparent full-screen window that is there for a moment: the toolkit reports the position of the
-;; pointer when the window appears under it (scripts/wslayout pointer). The picker of Super+G opens under that point.
+;; pointer when the window appears under it (scripts/wslayout pointer). The picker opens under that point.
 (defwindow ptrprobe [mon]
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "100%" :height "100%" :anchor "top left")
@@ -732,10 +709,10 @@
   (eventbox :timeout "5s" :onhover "echo '{0} {1}' > $XDG_RUNTIME_DIR/ink-ptr"
     (box :class "ptrprobe" :hexpand true :vexpand true)))
 
-;; the picker opened by the keyboard: its position is given when it opens (--pos), under the pointer
-(defwindow layoutpop-ptr [mon out]
+;; the picker: its position is given when it opens (--pos), under the pointer
+(defwindow layoutpop-ptr [mon]
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "600px" :anchor "top left")
   :stacking "overlay"
   :namespace "ink-pop"
-  (layoutpop :win "layoutpop-ptr" :out out))
+  (layoutpop))

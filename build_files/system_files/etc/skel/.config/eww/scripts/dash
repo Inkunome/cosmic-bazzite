@@ -12,7 +12,7 @@ is_open() { eww active-windows 2>/dev/null | grep -q '^dashboard:\|^launcher:\|^
 open_kind() {
     local kind=$1 idx w h
     [[ $kind == launcher || $kind == dashboard || $kind == expose ]] || { echo "usage: dash open launcher|dashboard|expose" >&2; return 1; }
-    eww close dashboard launcher expose layoutpop-center layoutpop-ptr >/dev/null 2>&1
+    eww close dashboard launcher expose layoutpop-ptr >/dev/null 2>&1
     # no daemon (it crashed): bring the bar, strip and dock back first
     eww ping >/dev/null 2>&1 || "$here/screens" apply
     if [[ $kind == launcher ]]; then

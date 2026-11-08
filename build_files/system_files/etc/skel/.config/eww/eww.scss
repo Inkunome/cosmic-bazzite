@@ -186,13 +186,8 @@ tooltip * { color: $spore; }
 .wp-btn { color: #ffc8e2; font-weight: bold; font-size: 15px; border-radius: 10px; padding: 0 5px; }
 .wp-btn:hover { background: rgba(#ffc8e2, 0.25); }
 
-/* layout of the workspace: the cards of the picker */
+/* the cards of the layout picker (Super+G) */
 .lcard { padding: 10px 8px; border-radius: 18px; background: rgba($moss, 0.35); border: 2px solid transparent; }
 .lcard:hover { background: rgba($moss, 0.6); }
-.lcard.current { border-color: $glow; background: rgba($glow, 0.22); }
 .lname { font-weight: bold; color: $spore; }
-.lcur { font-size: 10px; color: $loam; background: $feather; border-radius: 8px; padding: 0 6px; }
-.dock-lay { padding: 4px; margin: 3px 0; border-radius: 14px; }
-.dock-lay:hover { background: rgba($glow, 0.18); }
-.strip-dock .dock-lay { padding: 2px; margin: 1px 1px; border-radius: 9px; }
 .ptrprobe { background: rgba(0, 0, 0, 0.004); }
