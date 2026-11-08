@@ -688,16 +688,25 @@
   :namespace "ink-pop"
   (expose-view))
 
-;; ── Pill on the title bar of the focused window: push it to the previous / next workspace, or a new one (`winpill`) ──
-(defwindow winpill [mon tw]
+;; ── Two small buttons on the title bar of the focused window, one each side of the title: ‹ pushes the window to the previous
+;; workspace, › to the next one (a new one at the first / last); a middle click on either closes the window. They are two
+;; separate small windows so that the title between them stays free: dragging it with the left button moves the window. ──
+(defwidget wp-button [glyph tip cmd]
+  (eventbox :timeout "10s" :onmiddleclick "~/.config/eww/scripts/winpill close"
+    (button :timeout "10s" :class "wp-btn" :tooltip "${tip}  (middle-click: close the window)" :onclick cmd glyph)))
+
+(defwindow winpill-l [mon]
   :monitor mon
-  :geometry (geometry :x "0px" :y "0px" :width "100px" :height "26px" :anchor "top left")
+  :geometry (geometry :x "0px" :y "0px" :width "28px" :height "26px" :anchor "top left")
   :stacking "fg"
   :exclusive false
   :namespace "ink-pill"
-  ;; an outline around the title text (the middle is empty: the title shows through)
-  (eventbox :timeout "10s" :onmiddleclick "~/.config/eww/scripts/winpill close"
-   (box :class "winpill" :space-evenly false :spacing 6 :tooltip "middle-click: close the window"
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace" :onclick "~/.config/eww/scripts/winpill prev" "‹")
-    (box :width {tw + 20} :hexpand false)
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›"))))
+  (wp-button :glyph "‹" :tip "move to the previous workspace" :cmd "~/.config/eww/scripts/winpill prev"))
+
+(defwindow winpill-r [mon]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "28px" :height "26px" :anchor "top left")
+  :stacking "fg"
+  :exclusive false
+  :namespace "ink-pill"
+  (wp-button :glyph "›" :tip "move to the next workspace" :cmd "~/.config/eww/scripts/winpill next"))

@@ -1,23 +1,24 @@
 #!/bin/bash
-# A small pill around the title text of the focused window (‹ before it, › after it): push the window to the previous or the next workspace
-# (a new one when there is none that way) (the window comes with you).
+# Two small buttons on the title bar of the focused window, ‹ before the title and › after it: push the window to the previous
+# or the next workspace (a new one when there is none that way) (the window comes with you). They are two separate windows so
+# that the title stays free: dragging it with the left button moves the window.
 #   winpill watch     keep the pill on the focused window (started by sway)
 #   winpill show      place it once
 #   winpill hide
 #   winpill prev|next   move the focused window to the previous / next workspace of its screen, or to a new one when
 #                       there is none that way (what the buttons run); `winpill new` always makes a new one
-#   winpill close       close the focused window (middle click on the pill)
+#   winpill close       close the focused window (middle click on a button)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
-GAP=12 H=26 CHAR=8 LEFT=38 RIGHT=38   # height of the pill, width of a letter, and what the pill adds on each side of the title
+GAP=12 H=26 CHAR=8 BW=28 SPACE=8   # height of a button, width of a letter, width of a button, space between a button and the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
 
-hide() { eww close winpill >/dev/null 2>&1; rm -f "$LAST"; }
+hide() { eww close winpill-l winpill-r >/dev/null 2>&1; rm -f "$LAST"; }
 
 # eww monitor index of an output (cached until the screens change)
 monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
 show() {
-    local info out ox oy cx top dh tw x y want mon
+    local info out ox oy cx top dh tw xl xr y want mon
     # the title is centred in the tab of the focused window: measure it (Fira Code is 8 px a letter at 10 pt)
     info=$(swaymsg -t get_tree -r | jq -r --argjson cw "$CHAR" '
         [.nodes[] | select(.type == "output") as $o | $o | .. | objects | select(.focused? == true and .pid? != null)
@@ -33,13 +34,14 @@ show() {
     # (the workspace rect starts one gap further in: outer 4 + inner 8 in the sway config)
     read -r ux uy < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.x) \(.y)"')
     ox=$((ux - GAP)); oy=$((uy - GAP))
-    x=$((cx - ox - tw / 2 - LEFT))
+    xl=$((cx - ox - tw / 2 - SPACE - BW)); xr=$((cx - ox + tw / 2 + SPACE))
     if ((dh > 0)); then y=$((top - dh - oy + (dh - H) / 2)); else y=$((top - oy + 6)); fi
-    want="$out $x $y $tw"
-    [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill:' && return
+    want="$out $xl $xr $y"
+    [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
     mon=$(monitor_of "$out"); [[ -n $mon ]] || return
-    eww close winpill >/dev/null 2>&1
-    eww open winpill --id winpill --arg "mon=$mon" --arg "tw=$tw" --pos "${x}x${y}" --size "$((LEFT + tw + RIGHT))x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
+    eww close winpill-l winpill-r >/dev/null 2>&1
+    eww open winpill-l --arg "mon=$mon" --pos "${xl}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 &&
+        eww open winpill-r --arg "mon=$mon" --pos "${xr}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
 }
 
 lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[].num'); while grep -qx "$n" <<<"$used"; do n=$((n + 1)); done; echo "$n"; }
