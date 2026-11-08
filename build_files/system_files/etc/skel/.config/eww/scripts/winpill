@@ -1,0 +1,55 @@
+#!/bin/bash
+# A small pill at the right end of the focused window's title bar: push the window to the previous or the next workspace,
+# or to a new one (the window comes with you).
+#   winpill watch     keep the pill on the focused window (started by sway)
+#   winpill show      place it once
+#   winpill hide
+#   winpill prev|next|new   move the focused window (what the buttons run)
+here=$(readlink -f "$0"); dir=$(dirname "$here")
+W=92 H=26   # size of the pill (the window `winpill` in eww.yuck)
+LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
+MAP="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.map"
+
+hide() { eww close winpill >/dev/null 2>&1; rm -f "$LAST"; }
+
+# eww monitor index of an output (cached until the screens change)
+monitor_of() {
+    local sig; sig=$(swaymsg -t get_outputs -r | jq -r '[.[] | select(.active) | "\(.name)\(.rect.width)"] | join(";")')
+    if [[ $(head -n1 "$MAP" 2>/dev/null) != "$sig" ]]; then { echo "$sig"; "$dir/screens" probe; } > "$MAP.tmp" && mv "$MAP.tmp" "$MAP"; fi
+    awk -v o="$1" 'NR > 1 && $1 == o {print $2}' "$MAP"
+}
+
+show() {
+    local info out x y want mon
+    info=$(swaymsg -t get_tree -r | jq -r '
+        [.nodes[] | select(.type == "output") as $o | $o | .. | objects | select(.focused? == true and .pid? != null)
+            | {out: $o.name, ox: $o.rect.x, oy: $o.rect.y, x: .rect.x, y: .rect.y, w: .rect.width, dh: (.deco_rect.height // 0), fs: .fullscreen_mode}][0]
+        | select(. != null and .fs == 0) | "\(.out) \(.ox) \(.oy) \(.x + .w) \(.y) \(.dh)"')
+    [[ -n $info ]] || { hide; return; }
+    read -r out ox oy right top dh <<<"$info"
+    x=$((right - ox - W - 8))
+    if ((dh > 0)); then y=$((top - dh - oy + (dh - H) / 2)); else y=$((top - oy + 6)); fi
+    want="$out $x $y"
+    [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill:' && return
+    mon=$(monitor_of "$out"); [[ -n $mon ]] || return
+    eww close winpill >/dev/null 2>&1
+    eww open winpill --id winpill --arg "mon=$mon" --pos "${x}x${y}" --size "${W}x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
+}
+
+lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[].num'); while grep -qx "$n" <<<"$used"; do n=$((n + 1)); done; echo "$n"; }
+
+case "${1:-watch}" in
+    watch)
+        show
+        swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
+            while read -r -t 0.15 _; do :; done   # let a burst of events settle
+            show
+        done ;;
+    show) show ;;
+    hide) hide ;;
+    prev) swaymsg -q "move container to workspace prev_on_output; workspace prev_on_output" ;;
+    next) swaymsg -q "move container to workspace next_on_output; workspace next_on_output" ;;
+    new)  n=$(lowest_free); swaymsg -q "move container to workspace number $n; workspace number $n" ;;
+    *) sed -n '2,8p' "$0" >&2; exit 1 ;;
+esac
+exit 0
