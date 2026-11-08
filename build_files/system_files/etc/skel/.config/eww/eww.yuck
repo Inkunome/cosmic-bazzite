@@ -750,7 +750,14 @@
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
       (label :class "pop-title" :halign "start" :text "battery")
       (for d in {bat.devices}
-        (bat-row :name {d.name} :kind {d.kind} :pct {d.pct} :state {d.state} :time {d.time} :icon {d.icon})))))
+        (bat-row :name {d.name} :kind {d.kind} :pct {d.pct} :state {d.state} :time {d.time} :icon {d.icon}))
+      ;; the screen backlight, when the machine has one (the same slider as in the quick settings)
+      (box :orientation "v" :space-evenly false :spacing 4 :visible {qs.bright >= 0}
+        (box :space-evenly false
+          (label :class "dim" :halign "start" :hexpand true :text "screen brightness")
+          (label :halign "end" :text "${qs.bright}%"))
+        (scale :timeout "10s" :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
+               :onchange "brightnessctl -q set {}%")))))
 
 (defwindow batpop [mon]
   :monitor mon
