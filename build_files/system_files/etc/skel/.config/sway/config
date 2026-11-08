@@ -22,8 +22,8 @@ workspace_layout tabbed
 default_orientation auto
 title_align center
 titlebar_padding 10 5
-# the frame of the content is thin, the one around the title is thick
-titlebar_border_thickness 3
+# thin frames: 1 px around the content and around the title (sway cannot set a thickness per focus state)
+titlebar_border_thickness 1
 gaps inner 8
 gaps outer 4
 corner_radius 18
