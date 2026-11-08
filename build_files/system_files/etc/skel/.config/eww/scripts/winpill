@@ -1,45 +1,58 @@
 #!/bin/bash
-# A small pill around the title text of the focused window (‹ before it, › after it): push the window to the previous or the next workspace
-# (a new one when there is none that way) (the window comes with you).
+# Two small buttons on the title bar of the focused window, ‹ before the title and › after it: push the window to the previous
+# or the next workspace (a new one when there is none that way) (the window comes with you). They are two separate windows so
+# that the title stays free: dragging it with the left button moves the window.
 #   winpill watch     keep the pill on the focused window (started by sway)
 #   winpill show      place it once
 #   winpill hide
 #   winpill prev|next   move the focused window to the previous / next workspace of its screen, or to a new one when
 #                       there is none that way (what the buttons run); `winpill new` always makes a new one
-#   winpill close       close the focused window (middle click on the pill)
+#   winpill close       close the focused window (middle click on a button)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
-GAP=12 H=26 CHAR=8 LEFT=38 RIGHT=38   # height of the pill, width of a letter, and what the pill adds on each side of the title
+GAP=12 H=26 CHAR=8 BW=28 SPACE=8   # height of a button, width of a letter, width of a button, space between a button and the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
 
-hide() { eww close winpill >/dev/null 2>&1; rm -f "$LAST"; }
+hide() { eww close winpill-l winpill-r >/dev/null 2>&1; rm -f "$LAST"; }
 
 # eww monitor index of an output (cached until the screens change)
 monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
 show() {
-    local info out ox oy cx top dh tw x y want mon
-    # the title is centred in the tab of the focused window: measure it (Fira Code is 8 px a letter at 10 pt)
+    local info out ox oy tx tw ty tl xl xr y want mon
+    # The buttons go on the TOP title bar of the focused window: with groups inside groups (a tabbed group in a tabbed
+    # group) there are several bars one under the other, and it is the first that counts. Walk down from the screen to the
+    # focused window, take the first tabbed / stacked container on the way and the tab of the next node in it.
     info=$(swaymsg -t get_tree -r | jq -r --argjson cw "$CHAR" '
-        [.nodes[] | select(.type == "output") as $o | $o | .. | objects | select(.focused? == true and .pid? != null)
-            | {out: $o.name, ox: $o.rect.x, oy: $o.rect.y, x: .rect.x, y: .rect.y, w: .rect.width, fs: .fullscreen_mode,
-               dx: (.deco_rect.x // 0), dw: (.deco_rect.width // .rect.width), dh: (.deco_rect.height // 0),
-               tw: ([((.name // "") | length) * $cw, ((.deco_rect.width // .rect.width) - 20)] | min)}][0]
-        | select(. != null and .fs == 0)
-        | "\(.out) \(.ox) \(.oy) \(.x + .dx + (.dw / 2) | floor) \(.y) \(.dh) \(.tw)"')
-    [[ -n $info ]] || { hide; return; }
-    read -r out ox oy cx top dh tw <<<"$info"
-    ((tw < 24)) && tw=24
+        # the title sway shows in the tab of a group: its layout letter and its windows, T[Alacritty] or H[Firefox T[Thunar]]
+        def gt: if (.pid? != null and .pid != null) then (.name // "")
+                else ((if .layout == "splith" then "H" elif .layout == "splitv" then "V" elif .layout == "tabbed" then "T" else "S" end)
+                      + "[" + ([.nodes[]? | if (.pid? != null and .pid != null) then (.app_id // .window_properties.class // "") else gt end] | join(" ")) + "]") end;
+        def chain: if (.pid? != null and .pid != null and .focused == true) then [.]
+                   else ((.nodes[]? | chain) as $c | [.] + $c) end;
+        [.nodes[] | select(.type == "output" and .name != "__i3") | chain][0] as $c
+        | select($c != null)
+        | $c[-1] as $leaf
+        | ([range(0; ($c | length) - 1) | select($c[.].layout == "tabbed" or $c[.].layout == "stacked")][0]) as $i
+        | select($i != null and $leaf.fullscreen_mode == 0)
+        | $c[$i] as $a | $c[$i + 1] as $t
+        | select(($t.deco_rect.height // 0) > 0)
+        | "\($c[0].name) \($c[0].rect.x) \($c[0].rect.y) \($a.rect.x + $t.deco_rect.x) \($t.deco_rect.width) \(if $a.layout == "stacked" then $a.rect.y + $t.deco_rect.y else $a.rect.y end) \(($t | gt | length) * $cw)"')
+    [[ -n $info ]] || { hide; return; }   # no title bar: no buttons
+    read -r out ox oy tx tw ty tl <<<"$info"
     # a layer surface is laid out inside the area the bar, strip and dock leave free: measure from the corner of that area
     # (the workspace rect starts one gap further in: outer 4 + inner 8 in the sway config)
     read -r ux uy < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.x) \(.y)"')
     ox=$((ux - GAP)); oy=$((uy - GAP))
-    x=$((cx - ox - tw / 2 - LEFT))
-    if ((dh > 0)); then y=$((top - dh - oy + (dh - H) / 2)); else y=$((top - oy + 6)); fi
-    want="$out $x $y $tw"
-    [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill:' && return
+    y=$((ty - oy + (28 - H) / 2))
+    # one button each side of the title shown in that tab, centred on the tab (the window's own title, or the group's)
+    ((tl > tw - 20)) && tl=$((tw - 20)); ((tl < 24)) && tl=24
+    xl=$((tx + tw / 2 - ox - tl / 2 - SPACE - BW)); xr=$((tx + tw / 2 - ox + tl / 2 + SPACE))
+    want="$out $xl $xr $y"
+    [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
     mon=$(monitor_of "$out"); [[ -n $mon ]] || return
-    eww close winpill >/dev/null 2>&1
-    eww open winpill --id winpill --arg "mon=$mon" --arg "tw=$tw" --pos "${x}x${y}" --size "$((LEFT + tw + RIGHT))x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
+    eww close winpill-l winpill-r >/dev/null 2>&1
+    eww open winpill-l --arg "mon=$mon" --pos "${xl}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 &&
+        eww open winpill-r --arg "mon=$mon" --pos "${xr}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
 }
 
 lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[].num'); while grep -qx "$n" <<<"$used"; do n=$((n + 1)); done; echo "$n"; }
@@ -47,6 +60,9 @@ lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[]
 case "${1:-watch}" in
     watch)
         show
+        # sway sends no event when a layout changes (split <-> tabbed), which is when a title bar appears or goes: look again
+        # once a second as well (nothing is redrawn unless the position changed)
+        ( while sleep 1; do show; done ) &
         swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
             while read -r -t 0.15 _; do :; done   # let a burst of events settle
             show
