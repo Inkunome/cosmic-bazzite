@@ -1,8 +1,8 @@
 #!/bin/bash
-# The layout of the whole workspace (horizontal, vertical, tabbed or stacked): the item in the bar and Super+Shift+G.
+# The layout of the whole workspace (horizontal, vertical, tabbed or stacked): the third fixed item of the dock (after the launcher and the dashboard) and Super+Shift+G.
 #   wslayout get          print h, v, t or s for the focused workspace
 #   wslayout set h|v|t|s  lay the focused workspace out that way (the focus stays on the window you were on)
-#   wslayout watch        keep the bar item current (started by sway)
+#   wslayout watch        keep the dock item current (started by sway)
 #   wslayout pop          open the picker on the focused screen with the keys H V T S (Super+Shift+G)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 
@@ -37,12 +37,18 @@ case "${1:-get}" in
             eww update wslay="$(get)" >/dev/null 2>&1
         done ;;
     pop)
-        out=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | .name')
+        # a portrait screen has the dock at the bottom centre, a landscape one the strip: open the picker above the one it has
+        read -r out w h < <(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | "\(.name) \(.rect.width) \(.rect.height)"')
         mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}')
+        if ((h > w)); then win=layoutpop-dock; else win=layoutpop-strip; fi
         eww update lay_pill=true >/dev/null 2>&1
-        eww open layoutpop --arg "mon=${mon:-0}" >/dev/null 2>&1 &&
-            eww active-windows | grep -q '^layoutpop:' && swaymsg -q mode wslayout ;;
-    close) eww update lay_pill=false lay_pop=false >/dev/null 2>&1; eww close layoutpop >/dev/null 2>&1; swaymsg -q mode default ;;
+        eww open "$win" --arg "mon=${mon:-0}" >/dev/null 2>&1
+        # the keys only if the picker really is there (it can take a moment to show)
+        for _ in 1 2 3 4 5 6 7 8; do
+            eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode wslayout; break; }
+            sleep 0.15
+        done ;;
+    close) eww update lay_pill=false lay_pop=false >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip >/dev/null 2>&1; swaymsg -q mode default ;;
     *) sed -n '2,7p' "$0" >&2; exit 1 ;;
 esac
 exit 0

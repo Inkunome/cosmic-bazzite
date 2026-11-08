@@ -192,3 +192,6 @@ tooltip * { color: $spore; }
 .lcard.current { border-color: $glow; background: rgba($glow, 0.22); }
 .lname { font-weight: bold; color: $spore; }
 .lcur { font-size: 10px; color: $loam; background: $feather; border-radius: 8px; padding: 0 6px; }
+.dock-lay { padding: 4px; margin: 3px 0; border-radius: 14px; }
+.dock-lay:hover { background: rgba($glow, 0.18); }
+.strip-dock .dock-lay { padding: 2px; margin: 1px 1px; border-radius: 9px; }

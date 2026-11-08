@@ -54,10 +54,6 @@
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
-      (eventbox :timeout "10s" :onhover "eww update lay_pill=true && eww open layoutpop --arg mon=${mon}"
-                :onhoverlost "eww update lay_pill=false && ~/.config/eww/scripts/popclose layoutpop lay"
-        (box :class "pill" :tooltip "layout of the workspace (Super+Shift+G)"
-          (image :path "${EWW_CONFIG_DIR}/icons/lay-${wslay}.svg" :image-width 18 :image-height 18)))
       (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}; ~/.config/eww/scripts/audio sync"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
@@ -102,7 +98,7 @@
 
 ;; Bottom strip — landscape screens only. Minimised windows (sway scratchpad) on the left; on the right the dock (small) and the media player.
 ;; It reserves its own height at the bottom edge, so windows stop above it instead of running to the bottom of the screen.
-(defwidget strip []
+(defwidget strip [mon]
   (box :orientation "v" :space-evenly false
     (box :class "strip" :orientation "h" :space-evenly false :height 36
       (box :orientation "h" :space-evenly false :halign "start" :hexpand true :spacing 6
@@ -115,6 +111,7 @@
         (box :class "strip-dock" :orientation "h" :space-evenly false
           (dock-app :app "launcher" :tip "App launcher" :size 20)
           (dock-app :app "dashboard" :tip "Dashboard" :size 20)
+          (dock-lay :win "layoutpop-strip" :size 20 :mon mon)
           (for a in dock_apps
             (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 20)))
         (box :class "strip-player" :orientation "h" :space-evenly false :spacing 8
@@ -131,7 +128,7 @@
   :stacking "fg"
   :exclusive true
   :namespace "ink-bar"
-  (strip))
+  (strip :mon mon))
 
 ;; Workspaces of a portrait screen (it has no bar), to the left of the dock and as tall as the dock. Only this screen's workspaces.
 (defwidget wsdock [out]
@@ -166,7 +163,15 @@
       (image :visible {icon != ""} :path {icon} :image-width size :image-height size)
       (label :visible {icon == ""} :class "app-initial" :text initial))))
 
-(defwidget dock []
+;; The layout of the workspace: the third fixed item of a dock, after the launcher and the dashboard. It shows the current layout; hover it for the picker (win = the
+;; picker window that fits that dock).
+(defwidget dock-lay [win size mon]
+  (eventbox :timeout "10s" :onhover "eww update lay_pill=true && eww open ${win} --arg mon=${mon}"
+            :onhoverlost "eww update lay_pill=false && ~/.config/eww/scripts/popclose ${win} lay"
+    (box :class "dock-icon dock-lay" :tooltip "layout of the workspace (Super+Shift+G)"
+      (image :path "${EWW_CONFIG_DIR}/icons/lay-${wslay}.svg" :image-width size :image-height size))))
+
+(defwidget dock [mon]
   (box :class "dock" :orientation "h" :space-evenly false
     ;; minimised windows (sway scratchpad): click to bring one back
     (box :orientation "h" :space-evenly false :visible {arraylength(scratch) > 0}
@@ -176,6 +181,7 @@
       (box :class "dock-sep" :width 2))
     (dock-app :app "launcher" :tip "App launcher" :size 44)
     (dock-app :app "dashboard" :tip "Dashboard" :size 44)
+    (dock-lay :win "layoutpop-dock" :size 44 :mon mon)
     (for a in dock_apps
       (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 44))))
 
@@ -202,7 +208,7 @@
   :stacking "fg"
   :exclusive true
   :namespace "ink-dock"
-  (dock))
+  (dock :mon mon))
 
 ;; ── Flyouts ──────────────────────────────────────────────
 ;; Open on hover over their pill in the bar, close shortly after the pointer leaves both.
@@ -222,9 +228,9 @@
       (label :class "dim" :text desc)
       (label :class "lcur" :visible {wslay == id} :text "current"))))
 
-(defwidget layoutpop []
+(defwidget layoutpop [win]
   (eventbox :timeout "10s" :onhover "eww update lay_pop=true"
-            :onhoverlost "eww update lay_pop=false && ~/.config/eww/scripts/popclose layoutpop lay"
+            :onhoverlost "eww update lay_pop=false && ~/.config/eww/scripts/popclose ${win} lay"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
       (label :class "pop-title" :halign "start" :text "layout of the whole workspace")
@@ -264,12 +270,20 @@
       (slider-row :name "microphone" :kind "source" :data src :val vol_source_v)
       (devices :kind "source" :items {adev.sources}))))
 
-(defwindow layoutpop [mon]
+;; the picker opens above the dock: centred on a portrait screen, at the right on a landscape one (above the strip)
+(defwindow layoutpop-dock [mon]
   :monitor mon
-  :geometry (geometry :x "170px" :y "4px" :width "600px" :anchor "top right")
+  :geometry (geometry :x "0px" :y "8px" :width "600px" :anchor "bottom center")
   :stacking "overlay"
   :namespace "ink-pop"
-  (layoutpop))
+  (layoutpop :win "layoutpop-dock"))
+
+(defwindow layoutpop-strip [mon]
+  :monitor mon
+  :geometry (geometry :x "40px" :y "8px" :width "600px" :anchor "bottom right")
+  :stacking "overlay"
+  :namespace "ink-pop"
+  (layoutpop :win "layoutpop-strip"))
 
 (defwindow volpop [mon]
   :monitor mon
