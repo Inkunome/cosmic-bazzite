@@ -38,10 +38,11 @@ layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
+# windows that are not focused have no frame (the child_border is transparent) but keep the line between the title and the content
 #                       border    bg       text    indicator child_border
 client.focused          $glow     $loam    $spore  $blush    $glow
-client.focused_inactive $moss     $loam    $spore  $moss     $moss
-client.unfocused        $moss     $loam    $spore  $moss     $moss
+client.focused_inactive $moss     $loam    $spore  #00000000  #00000000
+client.unfocused        $moss     $loam    $spore  #00000000  #00000000
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
