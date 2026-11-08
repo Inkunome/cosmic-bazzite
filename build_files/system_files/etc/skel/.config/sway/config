@@ -43,11 +43,11 @@ layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
-# every window has a lilac frame around its content; the line around the title is bright on the focused one and faint on the others
+# every window has a lilac frame around its content and around its title (1 px each)
 #                       border    bg       text    indicator child_border
 client.focused          $glow     $loam    $spore  $blush    #c8a2f0
-client.focused_inactive #5b457044 $loam    $spore  #00000000  #c8a2f0
-client.unfocused        #5b457044 $loam    $spore  #00000000  #c8a2f0
+client.focused_inactive #c8a2f0 $loam    $spore  #00000000  #c8a2f0
+client.unfocused        #c8a2f0 $loam    $spore  #00000000  #c8a2f0
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
