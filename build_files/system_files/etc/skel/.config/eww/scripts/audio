@@ -21,8 +21,12 @@ devices() {
         --argjson sinks "$(pactl -f json list sinks 2>/dev/null || echo '[]')" \
         --argjson sources "$(pactl -f json list sources 2>/dev/null || echo '[]')" \
         --arg ds "$ds" --arg dsrc "$dsrc" '
-        {sinks:   [$sinks[]   | {name, desc: .description, default: (.name == $ds)}],
-         sources: [$sources[] | select(.name | endswith(".monitor") | not) | {name, desc: .description, default: (.name == $dsrc)}]}'
+        # PipeWire sometimes reports the description "(null)" (a webcam microphone does): fall back on the other names it has
+        def nicename: if (.description // "") != "" and .description != "(null)" then .description
+                   else (.properties["device.description"] // .properties["device.product.name"] // .properties["device.nick"]
+                         // .properties["node.nick"] // .properties["alsa.card_name"] // .name) end;
+        {sinks:   [$sinks[]   | {name, desc: nicename, default: (.name == $ds)}],
+         sources: [$sources[] | select(.name | endswith(".monitor") | not) | {name, desc: nicename, default: (.name == $dsrc)}]}'
 }
 sync() {
     local o i
