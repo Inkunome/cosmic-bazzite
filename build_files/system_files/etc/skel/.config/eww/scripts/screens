@@ -27,6 +27,22 @@ probe() {
     done
 }
 
+# The same, without opening windows when nothing changed: the answer is kept until the screens differ. (Opening and closing
+# windows right before the launcher opens is the kind of churn that has made the eww daemon crash.)
+MAP="${XDG_RUNTIME_DIR:-/tmp}/ink-eww-monitors"
+screens_key() { swaymsg -t get_outputs -r | jq -r '[.[] | select(.active) | "\(.name) \(.rect.width)x\(.rect.height)"] | join(";")'; }
+map() {
+    local key; key=$(screens_key)
+    if [[ $(head -n1 "$MAP" 2>/dev/null) != "$key" ]]; then
+        # one probe at a time (they share a window id); whoever waited finds the answer already there
+        (
+            flock 8
+            [[ $(head -n1 "$MAP" 2>/dev/null) == "$key" ]] || { { echo "$key"; probe; } > "$MAP.tmp" && mv "$MAP.tmp" "$MAP"; }
+        ) 8>"${MAP}.lock"
+    fi
+    tail -n +2 "$MAP"
+}
+
 # Is every portrait screen carrying the dock and every landscape one the bar?
 placed() {
     swaymsg -t get_outputs -r | jq -e 'all(.[] | select(.active);
@@ -50,7 +66,8 @@ apply() {
     # a screen sleeps the portrait layout used to land on the wide screen): find out where each index really lands by
     # opening a small probe window on it and looking at which output received it.
     declare -A at   # output name -> eww monitor index
-    while read -r o i; do at[$o]=$i; done < <(probe)
+    rm -f "$MAP"   # (the monitors may have been reordered: probe again)
+    while read -r o i; do at[$o]=$i; done < <(map)
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries[] | "\(.key) \(.value.rect.width) \(.value.rect.height) \(.value.name)"' |
     while read -r idx w h name; do
         mon=${at[$name]:-$idx}   # (the probe failed: fall back on the position)
@@ -73,6 +90,7 @@ case "${1:-apply}" in
             ( sleep 4; "$here" apply --changed ) &
         done ;;
     probe) probe ;;
-    *) echo "usage: screens apply|watch|probe" >&2; exit 1 ;;
+    map) map ;;
+    *) echo "usage: screens apply|watch|probe|map" >&2; exit 1 ;;
 esac
 exit 0

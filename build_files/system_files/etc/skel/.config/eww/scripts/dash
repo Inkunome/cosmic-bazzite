@@ -13,6 +13,8 @@ open_kind() {
     local kind=$1 idx w h
     [[ $kind == launcher || $kind == dashboard || $kind == expose ]] || { echo "usage: dash open launcher|dashboard|expose" >&2; return 1; }
     eww close dashboard launcher expose >/dev/null 2>&1
+    # no daemon (it crashed): bring the bar, strip and dock back first
+    eww ping >/dev/null 2>&1 || "$here/screens" apply
     if [[ $kind == launcher ]]; then
         eww update query="" results="[]" sel=0
         "$here/apps" pinned >/dev/null
@@ -20,11 +22,13 @@ open_kind() {
     # the focused output, and the eww monitor index that lands on it (GDK does not always list the monitors in sway's order)
     local out
     read -r out w h < <(swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | (map(select(.focused))[0] // .[0]) | "\(.name) \(.rect.width) \(.rect.height)"')
-    idx=$("$here/screens" probe | awk -v o="$out" '$1 == o {print $2}')
+    idx=$("$here/screens" map | awk -v o="$out" '$1 == o {print $2}')
     [[ -n $idx ]] || idx=$(swaymsg -t get_outputs -r | jq -r --arg o "$out" '[.[] | select(.active) | .name] | index($o)')
     if [[ $kind == expose ]]; then eww update picked=""; "$here/expose" refresh; eww open expose --id expose --arg "mon=$idx"
     elif ((h > w)); then eww open "$kind-long" --id "$kind" --arg "mon=$idx"
     else eww open "$kind-wide" --id "$kind" --arg "mon=$idx"; fi
+    # the binding mode only if the panel really opened: a mode without its panel would eat the keyboard
+    if ! eww active-windows 2>/dev/null | grep -q "^$kind:"; then swaymsg -q mode default; return 1; fi
     # the launcher also owns Up, Down, Tab and Return (see the "launcher" mode in the sway config)
     if [[ $kind == launcher ]]; then swaymsg -q mode launcher-pinned; else swaymsg -q mode dash; fi
 }

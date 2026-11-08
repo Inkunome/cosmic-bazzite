@@ -10,16 +10,11 @@
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 GAP=12 H=26 CHAR=8 LEFT=38 RIGHT=38   # height of the pill, width of a letter, and what the pill adds on each side of the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
-MAP="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.map"
 
 hide() { eww close winpill >/dev/null 2>&1; rm -f "$LAST"; }
 
 # eww monitor index of an output (cached until the screens change)
-monitor_of() {
-    local sig; sig=$(swaymsg -t get_outputs -r | jq -r '[.[] | select(.active) | "\(.name)\(.rect.width)"] | join(";")')
-    if [[ $(head -n1 "$MAP" 2>/dev/null) != "$sig" ]]; then { echo "$sig"; "$dir/screens" probe; } > "$MAP.tmp" && mv "$MAP.tmp" "$MAP"; fi
-    awk -v o="$1" 'NR > 1 && $1 == o {print $2}' "$MAP"
-}
+monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
 show() {
     local info out ox oy cx top dh tw x y want mon
