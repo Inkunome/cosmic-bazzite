@@ -1,21 +1,30 @@
 #!/bin/bash
 # The layout of the whole workspace (horizontal, vertical, tabbed or stacked): the third fixed item of the dock (after the launcher and the dashboard) and Super+Shift+G.
-#   wslayout get          print h, v, t or s for the focused workspace
-#   wslayout set h|v|t|s  lay the focused workspace out that way (the focus stays on the window you were on)
+#   wslayout get [OUTPUT] print h, v, t or s for the visible workspace of a screen (default: the first one)
+#   wslayout all          the layout of every screen, as JSON
+#   wslayout set OUTPUT h|v|t|s   lay the visible workspace of that screen out that way (the focus stays where it was);
+#                         OUTPUT can be . for the screen with the focus
 #   wslayout watch        keep the dock item current (started by sway)
 #   wslayout pop          open the picker on the focused screen with the keys H V T S (Super+Shift+G)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 
-get() {
-    swaymsg -t get_tree -r | jq -r '[.. | objects | select(.type? == "workspace") | select([.. | objects | select(.focused? == true)] | length > 0)][0].layout
-        | if . == "splith" then "h" elif . == "splitv" then "v" elif . == "tabbed" then "t" elif . == "stacked" then "s" else "h" end'
+# every screen's layout: {"HDMI-A-1":"h","DP-3":"t"} (the visible workspace of each screen)
+all() {
+    swaymsg -t get_tree -r | jq -c '[.nodes[] | select(.type == "output" and .name != "__i3") | . as $o
+        | {($o.name): ([$o.nodes[]? | select(.type == "workspace" and .name == $o.current_workspace)][0].layout // "splith"
+            | if . == "splith" then "h" elif . == "splitv" then "v" elif . == "tabbed" then "t" elif . == "stacked" then "s" else "h" end)}] | add'
 }
 
+get() { all | jq -r --arg o "${1:-}" 'if $o != "" then .[$o] // "h" else (to_entries[0].value) end'; }
+
+# lay the visible workspace of a screen out: go to that screen, climb to the container of the workspace itself, set its
+# layout, and come back to the window that had the focus
 set_layout() {
-    local cmd id n type
-    case $1 in h) cmd=splith ;; v) cmd=splitv ;; t) cmd=tabbed ;; s) cmd=stacking ;; *) echo "usage: wslayout set h|v|t|s" >&2; return 1 ;; esac
+    local out=$1 cmd id n type
+    [[ $out == . ]] && out=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | .name')   # "." = the screen with the focus
+    case $2 in h) cmd=splith ;; v) cmd=splitv ;; t) cmd=tabbed ;; s) cmd=stacking ;; *) echo "usage: wslayout set OUTPUT h|v|t|s" >&2; return 1 ;; esac
     id=$(swaymsg -t get_tree -r | jq '[.. | objects | select(.focused? == true)][0].id')
-    # climb to the container of the workspace itself, set its layout, then come back to the window
+    swaymsg -q "focus output $out"
     for n in 1 2 3 4 5 6 7 8; do
         type=$(swaymsg -t get_tree -r | jq -r '[.. | objects | select(.focused? == true)][0].type')
         [[ $type == workspace ]] && break
@@ -23,18 +32,18 @@ set_layout() {
     done
     swaymsg -q "layout $cmd"
     [[ -n $id && $id != null ]] && swaymsg -q "[con_id=$id] focus"
-    eww update wslay="$1" >/dev/null 2>&1
+    eww update wslay="$(all)" >/dev/null 2>&1
 }
 
 case "${1:-get}" in
-    get) get ;;
-    set) set_layout "${2:-}"; "$here" watch-once ;;
-    watch-once) eww update wslay="$(get)" ;;
+    get) get "${2:-}" ;;
+    all) all ;;
+    set) set_layout "${2:-}" "${3:-}" ;;
     watch)
-        eww update wslay="$(get)" >/dev/null 2>&1
-        swaymsg -t subscribe -m '["window","workspace"]' | while read -r _; do
+        eww update wslay="$(all)" >/dev/null 2>&1
+        swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
             while read -r -t 0.3 _; do :; done
-            eww update wslay="$(get)" >/dev/null 2>&1
+            eww update wslay="$(all)" >/dev/null 2>&1
         done ;;
     pop)
         # a portrait screen has the dock at the bottom centre, a landscape one the strip: open the picker above the one it has
@@ -42,7 +51,7 @@ case "${1:-get}" in
         mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}')
         if ((h > w)); then win=layoutpop-dock; else win=layoutpop-strip; fi
         eww update lay_pill=true >/dev/null 2>&1
-        eww open "$win" --arg "mon=${mon:-0}" >/dev/null 2>&1
+        eww open "$win" --arg "mon=${mon:-0}" --arg "out=$out" >/dev/null 2>&1
         # the keys only if the picker really is there (it can take a moment to show)
         for _ in 1 2 3 4 5 6 7 8; do
             eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode wslayout; break; }

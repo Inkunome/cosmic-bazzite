@@ -227,10 +227,10 @@ mode "launcher-pinned" {
 
 # Super+Shift+G opens the layout picker of the workspace; H V T S choose, Escape cancels
 mode "wslayout" {
-    bindsym h exec ~/.config/eww/scripts/wslayout set h; exec ~/.config/eww/scripts/wslayout close
-    bindsym v exec ~/.config/eww/scripts/wslayout set v; exec ~/.config/eww/scripts/wslayout close
-    bindsym t exec ~/.config/eww/scripts/wslayout set t; exec ~/.config/eww/scripts/wslayout close
-    bindsym s exec ~/.config/eww/scripts/wslayout set s; exec ~/.config/eww/scripts/wslayout close
+    bindsym h exec ~/.config/eww/scripts/wslayout set . h; exec ~/.config/eww/scripts/wslayout close
+    bindsym v exec ~/.config/eww/scripts/wslayout set . v; exec ~/.config/eww/scripts/wslayout close
+    bindsym t exec ~/.config/eww/scripts/wslayout set . t; exec ~/.config/eww/scripts/wslayout close
+    bindsym s exec ~/.config/eww/scripts/wslayout set . s; exec ~/.config/eww/scripts/wslayout close
     bindsym Escape exec ~/.config/eww/scripts/wslayout close
     bindsym Return exec ~/.config/eww/scripts/wslayout close
 }

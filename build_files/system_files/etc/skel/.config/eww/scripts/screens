@@ -71,8 +71,8 @@ apply() {
     swaymsg -t get_outputs -r | jq -r '[.[] | select(.active)] | to_entries[] | "\(.key) \(.value.rect.width) \(.value.rect.height) \(.value.name)"' |
     while read -r idx w h name; do
         mon=${at[$name]:-$idx}   # (the probe failed: fall back on the position)
-        if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$mon"; eww open clock-big --id "clock-$idx" --arg "mon=$mon"; eww open ws-dock --id "wsd-$idx" --arg "mon=$mon" --arg "out=$name"
-        else eww open bar --id "bar-$idx" --arg "mon=$mon" --arg "out=$name"; eww open strip --id "strip-$idx" --arg "mon=$mon"; fi
+        if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$mon" --arg "out=$name"; eww open clock-big --id "clock-$idx" --arg "mon=$mon"; eww open ws-dock --id "wsd-$idx" --arg "mon=$mon" --arg "out=$name"
+        else eww open bar --id "bar-$idx" --arg "mon=$mon" --arg "out=$name"; eww open strip --id "strip-$idx" --arg "mon=$mon" --arg "out=$name"; fi
     done
     sig > "$SIG"
     [[ -n ${INK_SCREENS_LOG:-} ]] && echo "layout $(date +%T)" >> "$INK_SCREENS_LOG"
