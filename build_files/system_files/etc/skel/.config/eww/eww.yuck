@@ -78,9 +78,6 @@
         (box :class "pill caf ${qs.caffeine ? 'on' : ''}" :tooltip {qs.caffeine ? "caffeine: the screen stays awake (click to stop)" : "caffeine: keep the screen awake"}
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (qs.caffeine ? "coffee-on" : "coffee") + ".svg"}
                  :image-width 18 :image-height 18)))
-      (label :class "pill bat ${EWW_BATTERY == '' ? '' : 'show'}"
-             :visible {EWW_BATTERY != ""}
-             :text "bat ${EWW_BATTERY == '' ? '' : EWW_BATTERY.total_avg}%")
       (systray :class "pill" :icon-size 16 :spacing 6)
       (eventbox :timeout "10s" :onhover "eww update qs_pill=true && eww open quick --arg mon=${mon}"
                 :onhoverlost "eww update qs_pill=false && ~/.config/eww/scripts/popclose quick qs"
