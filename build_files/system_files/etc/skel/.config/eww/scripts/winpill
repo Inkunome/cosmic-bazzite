@@ -6,7 +6,7 @@
 #   winpill hide
 #   winpill prev|next|new   move the focused window (what the buttons run)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
-H=26 CHAR=8 LEFT=32 RIGHT=58   # height of the pill, width of a letter, and what the pill adds on each side of the title
+GAP=12 H=26 CHAR=8 LEFT=32 RIGHT=58   # height of the pill, width of a letter, and what the pill adds on each side of the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
 MAP="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.map"
 
@@ -32,6 +32,10 @@ show() {
     [[ -n $info ]] || { hide; return; }
     read -r out ox oy cx top dh tw <<<"$info"
     ((tw < 24)) && tw=24
+    # a layer surface is laid out inside the area the bar, strip and dock leave free: measure from the corner of that area
+    # (the workspace rect starts one gap further in: outer 4 + inner 8 in the sway config)
+    read -r ux uy < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.x) \(.y)"')
+    ox=$((ux - GAP)); oy=$((uy - GAP))
     x=$((cx - ox - tw / 2 - LEFT))
     if ((dh > 0)); then y=$((top - dh - oy + (dh - H) / 2)); else y=$((top - oy + 6)); fi
     want="$out $x $y $tw"
