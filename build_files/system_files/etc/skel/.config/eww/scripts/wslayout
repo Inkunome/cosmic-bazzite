@@ -5,7 +5,9 @@
 #   wslayout set OUTPUT h|v|t|s   lay the visible workspace of that screen out that way (the focus stays where it was);
 #                         OUTPUT can be . for the screen with the focus
 #   wslayout watch        keep the dock item current (started by sway)
-#   wslayout pop          open the picker on the focused screen with the keys H V T S (Super+Shift+G)
+#   wslayout win h|v|t|s  the focused window gets its own group with that layout (new windows open inside it)
+#   wslayout pop [win]    open the picker on the focused screen with the keys H V T S: for the workspace (Super+Shift+G)
+#                         or, with `win`, for the focused window (Super+G)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 
 # every screen's layout: {"HDMI-A-1":"h","DP-3":"t"} (the visible workspace of each screen)
@@ -35,6 +37,18 @@ set_layout() {
     eww update wslay="$(all)" >/dev/null 2>&1
 }
 
+# the layout of the focused window itself: it goes into its own group with that layout, so only this window is affected
+# and the next windows opened from it land inside the group (sway has no layout for a single window: a split wraps it)
+win_layout() {
+    case $1 in
+        h) swaymsg -q "splith" ;;
+        v) swaymsg -q "splitv" ;;
+        t) swaymsg -q "splith; layout tabbed" ;;
+        s) swaymsg -q "splith; layout stacking" ;;
+        *) echo "usage: wslayout win h|v|t|s" >&2; return 1 ;;
+    esac
+}
+
 case "${1:-get}" in
     get) get "${2:-}" ;;
     all) all ;;
@@ -45,19 +59,23 @@ case "${1:-get}" in
             while read -r -t 0.3 _; do :; done
             eww update wslay="$(all)" >/dev/null 2>&1
         done ;;
+    win) win_layout "${2:-}"; eww update wslay="$(all)" >/dev/null 2>&1 ;;
+    apply) if [[ $(eww get lay_scope) == win ]]; then win_layout "${3:-}"; eww update wslay="$(all)" >/dev/null 2>&1; else set_layout "${2:-}" "${3:-}"; fi ;;
     pop)
         # a portrait screen has the dock at the bottom centre, a landscape one the strip: open the picker above the one it has
         read -r out w h < <(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | "\(.name) \(.rect.width) \(.rect.height)"')
         mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}')
         if ((h > w)); then win=layoutpop-dock; else win=layoutpop-strip; fi
-        eww update lay_pill=true >/dev/null 2>&1
+        # `wslayout pop win` (Super+G) is for the focused window, plain `pop` (Super+Shift+G) for the workspace of the screen
+        scope=ws; mode=wslayout; [[ ${2:-} == win ]] && { scope=win; mode=winlayout; }
+        eww update lay_pill=true lay_scope=$scope >/dev/null 2>&1
         eww open "$win" --arg "mon=${mon:-0}" --arg "out=$out" >/dev/null 2>&1
         # the keys only if the picker really is there (it can take a moment to show)
         for _ in 1 2 3 4 5 6 7 8; do
-            eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode wslayout; break; }
+            eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode "$mode"; break; }
             sleep 0.15
         done ;;
-    close) eww update lay_pill=false lay_pop=false >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip >/dev/null 2>&1; swaymsg -q mode default ;;
+    close) eww update lay_pill=false lay_pop=false lay_scope=ws >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip >/dev/null 2>&1; swaymsg -q mode default ;;
     *) sed -n '2,7p' "$0" >&2; exit 1 ;;
 esac
 exit 0

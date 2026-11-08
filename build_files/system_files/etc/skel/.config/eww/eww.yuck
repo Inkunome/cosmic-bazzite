@@ -12,6 +12,8 @@
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
 (defvar lay_pill false)
 (defvar lay_pop false)
+;; what the layout picker acts on: "ws" (the workspace of a screen, Super+Shift+G or the dock item) or "win" (the focused window's own group, Super+G)
+(defvar lay_scope "ws")
 ;; layout of the visible workspace of each screen, by output name: {"DP-3":"t",...} (h, v, t or s; kept by scripts/wslayout watch)
 (defvar wslay "{}")
 (defvar vol_pill false)
@@ -166,7 +168,7 @@
 ;; The layout of the workspace: the third fixed item of a dock, after the launcher and the dashboard. It shows the current layout; hover it for the picker (win = the
 ;; picker window that fits that dock).
 (defwidget dock-lay [win size mon out]
-  (eventbox :timeout "10s" :onhover "eww update lay_pill=true && eww open ${win} --arg mon=${mon} --arg out=${out}"
+  (eventbox :timeout "10s" :onhover "eww update lay_pill=true lay_scope=ws && eww open ${win} --arg mon=${mon} --arg out=${out}"
             :onhoverlost "eww update lay_pill=false && ~/.config/eww/scripts/popclose ${win} lay"
     (box :class "dock-icon dock-lay" :tooltip "layout of the workspace (Super+Shift+G)"
       (image :path "${EWW_CONFIG_DIR}/icons/lay-${wslay[out] ?: 'h'}.svg" :image-width size :image-height size))))
@@ -220,26 +222,26 @@
     (progress :value value :class "bar-meter")))
 
 (defwidget lay-card [id name key desc out]
-  (button :timeout "10s" :class "lcard ${wslay[out] == id ? 'current' : ''}"
-          :onclick "~/.config/eww/scripts/wslayout set ${out} ${id}; ~/.config/eww/scripts/wslayout close"
+  (button :timeout "10s" :class "lcard ${lay_scope == 'ws' && wslay[out] == id ? 'current' : ''}"
+          :onclick "~/.config/eww/scripts/wslayout apply ${out} ${id}; ~/.config/eww/scripts/wslayout close"
     (box :orientation "v" :space-evenly false :spacing 4
       (image :path "${EWW_CONFIG_DIR}/icons/lay-${id}.svg" :image-width 40 :image-height 40)
       (label :class "lname" :text "${name}  ${key}")
       (label :class "dim" :text desc)
-      (label :class "lcur" :visible {wslay[out] == id} :text "current"))))
+      (label :class "lcur" :visible {lay_scope == "ws" && wslay[out] == id} :text "current"))))
 
 (defwidget layoutpop [win out]
   (eventbox :timeout "10s" :onhover "eww update lay_pop=true"
             :onhoverlost "eww update lay_pop=false && ~/.config/eww/scripts/popclose ${win} lay"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
-      (label :class "pop-title" :halign "start" :text "layout of the workspace on ${out}")
+      (label :class "pop-title" :halign "start" :text {lay_scope == "win" ? "layout of the focused window" : "layout of the workspace on ${out}"})
       (box :spacing 8
         (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side" :out out)
         (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom" :out out)
         (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row" :out out)
         (lay-card :id "s" :name "Stacked" :key "S" :desc "title list" :out out))
-      (label :class "dim" :halign "start" :text "all windows follow  ·  Super+Shift+G, then H V T S"))))
+      (label :class "dim" :halign "start" :text {lay_scope == "win" ? "its own group, new windows open inside  ·  Super+G, then H V T S" : "all windows follow  ·  Super+Shift+G, then H V T S"}))))
 
 (defwidget slider-row [name kind data val]
   (box :class "meter" :orientation "v" :space-evenly false
