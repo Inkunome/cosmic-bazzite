@@ -7,6 +7,7 @@
 #   wslayout watch        keep the dock item current (started by sway)
 #   wslayout win h|v|t|s  the focused window gets its own group with that layout (new windows open inside it)
 #   wslayout pop          open the picker under the pointer with the keys H V T S for the focused window (Super+G)
+#   wslayout panel OUTPUT WINDOW MONITOR   click on the layout item of a dock: open (or close) the picker of that screen
 #   wslayout reapply [OUTPUT]   take every window of the screen's workspace out of its groups and lay them out again with
 #                         the screen's layout (Super+Shift+G; . = the screen with the focus)
 #   wslayout pointer OUTPUT MONITOR   print the pointer position (x y) in the coordinates of that screen's free area
@@ -120,14 +121,31 @@ case "${1:-get}" in
         [[ -n $px && -n $py ]] || { px=$((aw / 2)); py=$((ah / 2 - PH / 2)); }
         x=$((px - PW / 2)); ((x < 8)) && x=8; ((x > aw - PW - 8)) && x=$((aw - PW - 8))
         y=$((py + 14)); ((y + PH > ah - 8)) && y=$((py - PH - 14)); ((y < 8)) && y=8
-        eww update lay_pill=true lay_scope=$scope >/dev/null 2>&1
+        eww update lay_scope=$scope >/dev/null 2>&1
         eww open layoutpop-ptr --arg "mon=$mon" --arg "out=$out" --pos "${x}x${y}" >/dev/null 2>&1
         # the keys only if the picker really is there (it can take a moment to show)
         for _ in 1 2 3 4 5 6 7 8; do
             eww active-windows 2>/dev/null | grep -q "^layoutpop-ptr:" && { swaymsg -q mode "$mode"; break; }
             sleep 0.15
         done ;;
-    close) eww update lay_pill=false lay_pop=false lay_scope=ws >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip layoutpop-ptr >/dev/null 2>&1; swaymsg -q mode default ;;
+    panel)
+        # a click on the layout item of a dock: open the picker of that screen above the dock, or close it if it is open
+        out=${2:?output}; win=${3:?window}; mon=${4:-0}
+        if eww active-windows 2>/dev/null | grep -q "^$win:"; then "$here" close; exit 0; fi
+        eww close layoutpop-dock layoutpop-strip layoutpop-ptr >/dev/null 2>&1
+        "$dir/dash" close >/dev/null 2>&1   # (only one panel at a time)
+        eww update lay_scope=ws lay_target="$out" >/dev/null 2>&1
+        eww open "$win" --arg "mon=$mon" --arg "out=$out" >/dev/null 2>&1
+        # the keys only if the picker really is there
+        for _ in 1 2 3 4 5 6 7 8; do
+            eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode wslayout; break; }
+            sleep 0.15
+        done ;;
+    panelkey)
+        # H V T S in the mode of the open panel: apply to the screen it was opened for, then close
+        t=$(eww get lay_target); [[ -n $t ]] || t=.
+        "$here" set "$t" "${2:?h|v|t|s}"; "$here" close ;;
+    close) eww update lay_scope=ws lay_target= >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip layoutpop-ptr >/dev/null 2>&1; swaymsg -q mode default ;;
     *) sed -n '2,7p' "$0" >&2; exit 1 ;;
 esac
 exit 0

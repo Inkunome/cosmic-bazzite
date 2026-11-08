@@ -226,6 +226,16 @@ mode "launcher-pinned" {
     bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
 }
 
+# the layout item of a dock (click) opens the picker of its screen: H V T S choose, Escape closes
+mode "wslayout" {
+    bindsym h exec ~/.config/eww/scripts/wslayout panelkey h
+    bindsym v exec ~/.config/eww/scripts/wslayout panelkey v
+    bindsym t exec ~/.config/eww/scripts/wslayout panelkey t
+    bindsym s exec ~/.config/eww/scripts/wslayout panelkey s
+    bindsym Escape exec ~/.config/eww/scripts/wslayout close
+    bindsym Return exec ~/.config/eww/scripts/wslayout close
+}
+
 # Super+G opens the layout picker under the mouse for the focused window itself: H V T S give it its own group with that layout
 mode "winlayout" {
     bindsym h exec ~/.config/eww/scripts/wslayout win h; exec ~/.config/eww/scripts/wslayout close
