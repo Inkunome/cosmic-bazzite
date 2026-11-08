@@ -18,7 +18,7 @@ hide() { eww close winpill-l winpill-r >/dev/null 2>&1; rm -f "$LAST"; }
 monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
 show() {
-    local info out ox oy cx top dh tw right xl xr y want mon
+    local info out ox oy cx top dh tw xl xr y want mon
     # the title is centred in the tab of the focused window: measure it (Fira Code is 8 px a letter at 10 pt)
     info=$(swaymsg -t get_tree -r | jq -r --argjson cw "$CHAR" '
         [.nodes[] | select(.type == "output") as $o | $o | .. | objects | select(.focused? == true and .pid? != null)
@@ -28,7 +28,7 @@ show() {
         | select(. != null and .fs == 0)
         | "\(.out) \(.ox) \(.oy) \(.x + .dx + (.dw / 2) | floor) \(.y) \(.dh) \(.tw) \(.x + .w)"')
     [[ -n $info ]] || { hide; return; }
-    read -r out ox oy cx top dh tw right <<<"$info"
+    read -r out ox oy cx top dh tw _ <<<"$info"
     ((tw < 24)) && tw=24
     # a layer surface is laid out inside the area the bar, strip and dock leave free: measure from the corner of that area
     # (the workspace rect starts one gap further in: outer 4 + inner 8 in the sway config)
@@ -38,8 +38,8 @@ show() {
         # a title bar (tabbed or stacked, or a window with its own title): one button each side of the title
         xl=$((cx - ox - tw / 2 - SPACE - BW)); xr=$((cx - ox + tw / 2 + SPACE)); y=$((top - dh - oy + (dh - H) / 2))
     else
-        # no title bar (split layouts): both buttons in the top right corner of the window, on its content
-        xr=$((right - ox - BW - 8)); xl=$((xr - BW - 2)); y=$((top - oy + 4))
+        # no title bar (split layouts): nothing to put the buttons beside, so no buttons
+        hide; return
     fi
     want="$out $xl $xr $y"
     [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
@@ -54,6 +54,9 @@ lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[]
 case "${1:-watch}" in
     watch)
         show
+        # sway sends no event when a layout changes (split <-> tabbed), which is when a title bar appears or goes: look again
+        # once a second as well (nothing is redrawn unless the position changed)
+        ( while sleep 1; do show; done ) &
         swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
             while read -r -t 0.15 _; do :; done   # let a burst of events settle
             show
