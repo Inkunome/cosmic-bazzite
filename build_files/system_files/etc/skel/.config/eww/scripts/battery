@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Batteries as JSON for the bar: the laptop battery if there is one, else the weakest device UPower knows (a headset, a
+mouse, a keyboard...). {"has": false} when there is none.
+  main:    {pct, state, icon}  what the bar item shows (icon = a file name in ~/.config/eww/icons)
+  devices: [{name, kind, pct, state, time}]  every battery, for the flyout"""
+import json, re, subprocess
+
+def run(*a):
+    try:
+        return subprocess.run(a, capture_output=True, text=True, timeout=5).stdout
+    except Exception:
+        return ""
+
+def info(path):
+    out = run("upower", "-i", path)
+    d = {"path": path, "kind": "", "state": "unknown", "pct": None, "time": "", "name": "", "supply": False}
+    for line in out.splitlines():
+        s = line.strip()
+        if re.match(r"^[a-z-]+$", s) and not d["kind"]:
+            d["kind"] = s                                    # the line with the device type (battery, headset, mouse...)
+        elif s.startswith("model:"): d["name"] = s.split(":", 1)[1].strip()
+        elif s.startswith("state:"): d["state"] = s.split(":", 1)[1].strip()
+        elif s.startswith("power supply:"): d["supply"] = s.endswith("yes")
+        elif s.startswith("percentage:"):
+            m = re.search(r"(\d+)", s)
+            d["pct"] = int(m.group(1)) if m else None
+        elif s.startswith("time to empty:") or s.startswith("time to full:"):
+            d["time"] = s.split(":", 1)[1].strip()
+            d["time_kind"] = "empty" if "empty" in s else "full"
+    return d
+
+def icon(pct, state):
+    bucket = 0 if pct < 10 else 20 if pct < 30 else 40 if pct < 50 else 60 if pct < 70 else 80 if pct < 90 else 100
+    if state in ("charging", "pending-charge"): return f"battery-{bucket}-charging"
+    return f"battery-{bucket}"
+
+devs = []
+for path in run("upower", "-e").split():
+    if path.endswith("DisplayDevice") or "line_power" in path: continue
+    d = info(path)
+    if d["pct"] is None or d["kind"] in ("line-power", "unknown", ""): continue
+    devs.append(d)
+
+if not devs:
+    print(json.dumps({"has": False, "pct": 0, "state": "", "icon": "battery-unknown", "devices": []}))
+else:
+    laptop = [d for d in devs if d["supply"] and d["kind"] == "battery"]
+    main = laptop[0] if laptop else min(devs, key=lambda d: d["pct"])
+    state = main["state"]
+    print(json.dumps({
+        "has": True, "pct": main["pct"], "state": state, "icon": icon(main["pct"], state),
+        "devices": [{"name": d["name"] or d["kind"], "kind": d["kind"], "pct": d["pct"], "state": d["state"],
+                     "time": (("empty in " if d.get("time_kind") == "empty" else "full in ") + d["time"]) if d["time"] else "",
+                     "icon": icon(d["pct"], d["state"])} for d in sorted(devs, key=lambda d: (not d["supply"], d["pct"]))],
+    }, ensure_ascii=False, separators=(",", ":")))
