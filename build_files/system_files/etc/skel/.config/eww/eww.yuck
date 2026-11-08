@@ -688,7 +688,7 @@
   :namespace "ink-pop"
   (expose-view))
 
-;; ── Pill on the title bar of the focused window: push it to the previous / next / a new workspace (`winpill`) ──
+;; ── Pill on the title bar of the focused window: push it to the previous / next workspace, or a new one (`winpill`) ──
 (defwindow winpill [mon tw]
   :monitor mon
   :geometry (geometry :x "0px" :y "0px" :width "100px" :height "26px" :anchor "top left")
@@ -696,8 +696,7 @@
   :exclusive false
   :namespace "ink-pill"
   ;; an outline around the title text (the middle is empty: the title shows through)
-  (box :class "winpill" :space-evenly false :spacing 2
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace" :onclick "~/.config/eww/scripts/winpill prev" "‹")
-    (box :width {tw + 10} :hexpand false)
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›")
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to a new workspace" :onclick "~/.config/eww/scripts/winpill new" "+")))
+  (box :class "winpill" :space-evenly false :spacing 6
+    (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace (a new one at the first)" :onclick "~/.config/eww/scripts/winpill prev" "‹")
+    (box :width {tw + 20} :hexpand false)
+    (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace (a new one at the last)" :onclick "~/.config/eww/scripts/winpill next" "›")))
