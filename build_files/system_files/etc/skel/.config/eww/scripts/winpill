@@ -18,29 +18,35 @@ hide() { eww close winpill-l winpill-r >/dev/null 2>&1; rm -f "$LAST"; }
 monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
 show() {
-    local info out ox oy cx top dh tw xl xr y want mon
-    # the title is centred in the tab of the focused window: measure it (Fira Code is 8 px a letter at 10 pt)
+    local info out ox oy tx tw ty tl xl xr y want mon
+    # The buttons go on the TOP title bar of the focused window: with groups inside groups (a tabbed group in a tabbed
+    # group) there are several bars one under the other, and it is the first that counts. Walk down from the screen to the
+    # focused window, take the first tabbed / stacked container on the way and the tab of the next node in it.
     info=$(swaymsg -t get_tree -r | jq -r --argjson cw "$CHAR" '
-        [.nodes[] | select(.type == "output") as $o | $o | .. | objects | select(.focused? == true and .pid? != null)
-            | {out: $o.name, ox: $o.rect.x, oy: $o.rect.y, x: .rect.x, y: .rect.y, w: .rect.width, fs: .fullscreen_mode,
-               dx: (.deco_rect.x // 0), dw: (.deco_rect.width // .rect.width), dh: (.deco_rect.height // 0),
-               tw: ([((.name // "") | length) * $cw, ((.deco_rect.width // .rect.width) - 20)] | min)}][0]
-        | select(. != null and .fs == 0)
-        | "\(.out) \(.ox) \(.oy) \(.x + .dx + (.dw / 2) | floor) \(.y) \(.dh) \(.tw) \(.x + .w)"')
-    [[ -n $info ]] || { hide; return; }
-    read -r out ox oy cx top dh tw _ <<<"$info"
-    ((tw < 24)) && tw=24
+        # the title sway shows in the tab of a group: its layout letter and its windows, T[Alacritty] or H[Firefox T[Thunar]]
+        def gt: if (.pid? != null and .pid != null) then (.name // "")
+                else ((if .layout == "splith" then "H" elif .layout == "splitv" then "V" elif .layout == "tabbed" then "T" else "S" end)
+                      + "[" + ([.nodes[]? | if (.pid? != null and .pid != null) then (.app_id // .window_properties.class // "") else gt end] | join(" ")) + "]") end;
+        def chain: if (.pid? != null and .pid != null and .focused == true) then [.]
+                   else ((.nodes[]? | chain) as $c | [.] + $c) end;
+        [.nodes[] | select(.type == "output" and .name != "__i3") | chain][0] as $c
+        | select($c != null)
+        | $c[-1] as $leaf
+        | ([range(0; ($c | length) - 1) | select($c[.].layout == "tabbed" or $c[.].layout == "stacked")][0]) as $i
+        | select($i != null and $leaf.fullscreen_mode == 0)
+        | $c[$i] as $a | $c[$i + 1] as $t
+        | select(($t.deco_rect.height // 0) > 0)
+        | "\($c[0].name) \($c[0].rect.x) \($c[0].rect.y) \($a.rect.x + $t.deco_rect.x) \($t.deco_rect.width) \(if $a.layout == "stacked" then $a.rect.y + $t.deco_rect.y else $a.rect.y end) \(($t | gt | length) * $cw)"')
+    [[ -n $info ]] || { hide; return; }   # no title bar: no buttons
+    read -r out ox oy tx tw ty tl <<<"$info"
     # a layer surface is laid out inside the area the bar, strip and dock leave free: measure from the corner of that area
     # (the workspace rect starts one gap further in: outer 4 + inner 8 in the sway config)
     read -r ux uy < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.x) \(.y)"')
     ox=$((ux - GAP)); oy=$((uy - GAP))
-    if ((dh > 0)); then
-        # a title bar (tabbed or stacked, or a window with its own title): one button each side of the title
-        xl=$((cx - ox - tw / 2 - SPACE - BW)); xr=$((cx - ox + tw / 2 + SPACE)); y=$((top - dh - oy + (dh - H) / 2))
-    else
-        # no title bar (split layouts): nothing to put the buttons beside, so no buttons
-        hide; return
-    fi
+    y=$((ty - oy + (28 - H) / 2))
+    # one button each side of the title shown in that tab, centred on the tab (the window's own title, or the group's)
+    ((tl > tw - 20)) && tl=$((tw - 20)); ((tl < 24)) && tl=24
+    xl=$((tx + tw / 2 - ox - tl / 2 - SPACE - BW)); xr=$((tx + tw / 2 - ox + tl / 2 + SPACE))
     want="$out $xl $xr $y"
     [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
     mon=$(monitor_of "$out"); [[ -n $mon ]] || return
