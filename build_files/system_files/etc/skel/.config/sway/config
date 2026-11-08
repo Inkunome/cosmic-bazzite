@@ -190,6 +190,7 @@ exec_always sh -c 'test -f ~/.config/kanshi/config && pgrep -x kanshi >/dev/null
 exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
+exec ~/.config/eww/scripts/winpill watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
 # the launcher: Up/Down/Tab/Shift+Tab move the selection (Left/Right too while the search is empty, see below), Return launches it (typing still goes to the search field)
