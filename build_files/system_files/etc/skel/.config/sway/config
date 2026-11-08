@@ -15,13 +15,15 @@ set $amanita #e0566f
 
 # ── look (swayfx) ──────────────────────────────────────────
 font pango:Fira Code 10
-default_border pixel 2
+default_border pixel 1
 # new windows open as tabs of the workspace by default (Super+E splits, Super+W re-tabs);
 # when a container is split, tile side by side on landscape screens and stacked on portrait ones
 workspace_layout tabbed
 default_orientation auto
 title_align center
 titlebar_padding 10 5
+# thin frames: 1 px around the content and around the title (sway cannot set a thickness per focus state)
+titlebar_border_thickness 1
 gaps inner 8
 gaps outer 4
 corner_radius 18
@@ -29,19 +31,26 @@ blur enable
 blur_passes 3
 blur_radius 5
 shadows enable
-shadow_blur_radius 24
-shadow_color #1c142499
+# an aura: a very soft lilac glow around the focused window only
+shadow_blur_radius 20
+shadow_color #c8a2f033
+shadow_inactive_color #1c142400
+shadow_offset 0 0
 default_dim_inactive 0.08
 dim_inactive_colors.unfocused #1c1424
-layer_effects "ink-dock" blur enable; shadows enable; corner_radius 24
-layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
+# no shadow on the dock, the clock and the workspaces of a portrait screen: the lilac aura is for the focused window
+layer_effects "ink-dock" blur enable; shadows disable; corner_radius 24
+# no shadow on the panels (launcher, dashboard, Super+G picker, flyouts) either: the aura is only for the focused window
+layer_effects "ink-pop" blur enable; shadows disable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
+# every window has a lilac frame around its content and around its title (1 px each); the focused one is a brighter, lighter lilac
+# and the others are a softer, half-transparent one
 #                       border    bg       text    indicator child_border
-client.focused          $glow     $loam    $spore  $blush    $glow
-client.focused_inactive $moss     $loam    $spore  $moss     $moss
-client.unfocused        $moss     $loam    $spore  $moss     $moss
+client.focused          #f0d4ff   $loam    $spore  $blush    #f0d4ff
+client.focused_inactive #c8a2f088 $loam    $spore  #00000000  #c8a2f088
+client.unfocused        #c8a2f088 $loam    $spore  #00000000  #c8a2f088
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
