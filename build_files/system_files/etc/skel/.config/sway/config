@@ -98,6 +98,7 @@ bindcode $mod+41 fullscreen                       # F
 bindcode $mod+Shift+41 floating toggle            # F
 bindcode $mod+26 layout toggle split              # E
 bindcode $mod+25 layout tabbed                    # W
+bindcode $mod+42 exec ~/.config/eww/scripts/wslayout pop     # G: layout of the focused window (its own group), picker under the mouse
 
 # minimise to the dock (scratchpad): Alt+Esc sends the focused window away, Alt+Tab cycles through them
 bindsym Mod1+Escape exec ink-scratch minimize
@@ -230,6 +231,16 @@ mode "launcher-pinned" {
     bindsym Left exec ~/.config/eww/scripts/apps nav left
     bindsym Return exec ~/.config/eww/scripts/apps accept
     bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
+}
+
+# Super+G opens the layout picker under the mouse for the focused window itself: H V T S give it its own group with that layout
+mode "winlayout" {
+    bindsym h exec ~/.config/eww/scripts/wslayout win h; exec ~/.config/eww/scripts/wslayout close
+    bindsym v exec ~/.config/eww/scripts/wslayout win v; exec ~/.config/eww/scripts/wslayout close
+    bindsym t exec ~/.config/eww/scripts/wslayout win t; exec ~/.config/eww/scripts/wslayout close
+    bindsym s exec ~/.config/eww/scripts/wslayout win s; exec ~/.config/eww/scripts/wslayout close
+    bindsym Escape exec ~/.config/eww/scripts/wslayout close
+    bindsym Return exec ~/.config/eww/scripts/wslayout close
 }
 
 mode "dash" {

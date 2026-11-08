@@ -185,3 +185,9 @@ tooltip * { color: $spore; }
 .winpill { background: transparent; border: 1px solid rgba(#ffc8e2, 0.75); border-radius: 13px; padding: 0 6px; }
 .wp-btn { color: #ffc8e2; font-weight: bold; font-size: 15px; border-radius: 10px; padding: 0 5px; }
 .wp-btn:hover { background: rgba(#ffc8e2, 0.25); }
+
+/* the cards of the layout picker (Super+G) */
+.lcard { padding: 10px 8px; border-radius: 18px; background: rgba($moss, 0.35); border: 2px solid transparent; }
+.lcard:hover { background: rgba($moss, 0.6); }
+.lname { font-weight: bold; color: $spore; }
+.ptrprobe { background: rgba(0, 0, 0, 0.004); }

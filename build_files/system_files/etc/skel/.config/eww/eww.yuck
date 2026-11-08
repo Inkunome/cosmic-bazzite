@@ -10,8 +10,6 @@
 (defvar dock_apps "[]")
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
-(defvar sys_pill false)
-(defvar sys_pop false)
 (defvar vol_pill false)
 (defvar vol_pop false)
 (defvar nt_pill false)
@@ -52,10 +50,6 @@
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
-      (eventbox :timeout "10s" :onhover "eww update sys_pill=true && eww open sysinfo --arg mon=${mon}"
-                :onhoverlost "eww update sys_pill=false && ~/.config/eww/scripts/popclose sysinfo sys"
-        (box :class "pill" :tooltip "cpu ${round(EWW_CPU.avg, 0)}% · ram ${round(EWW_RAM.used_mem_perc, 0)}%"
-          (image :path "${EWW_CONFIG_DIR}/icons/cpu.svg" :image-width 18 :image-height 18)))
       (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}; ~/.config/eww/scripts/audio sync"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
@@ -211,17 +205,6 @@
       (label :halign "end" :text "${round(value, 0)}%"))
     (progress :value value :class "bar-meter")))
 
-(defwidget sysinfo []
-  (eventbox :timeout "10s" :onhover "eww update sys_pop=true"
-            :onhoverlost "eww update sys_pop=false && ~/.config/eww/scripts/popclose sysinfo sys"
-    (box :class "pop" :orientation "v" :space-evenly false :spacing 10
-      :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
-      (label :class "pop-title" :halign "start" :text "system")
-      (meter :label "cpu" :value {EWW_CPU.avg})
-      (meter :label "ram  ${round(EWW_RAM.used_mem / 1073741824, 1)} / ${round(EWW_RAM.total_mem / 1073741824, 1)} GB" :value {EWW_RAM.used_mem_perc})
-      (meter :label "disk /" :value {EWW_DISK["/"].used_perc})
-      (label :class "dim" :halign "start" :text "up ${uptime}"))))
-
 (defwidget slider-row [name kind data val]
   (box :class "meter" :orientation "v" :space-evenly false
     (box :space-evenly false
@@ -250,13 +233,6 @@
       (devices :kind "sink" :items {adev.sinks})
       (slider-row :name "microphone" :kind "source" :data src :val vol_source_v)
       (devices :kind "source" :items {adev.sources}))))
-
-(defwindow sysinfo [mon]
-  :monitor mon
-  :geometry (geometry :x "260px" :y "4px" :width "280px" :anchor "top right")
-  :stacking "overlay"
-  :namespace "ink-pop"
-  (sysinfo))
 
 (defwindow volpop [mon]
   :monitor mon
@@ -701,3 +677,42 @@
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace" :onclick "~/.config/eww/scripts/winpill prev" "‹")
     (box :width {tw + 20} :hexpand false)
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›"))))
+
+;; ── Layout picker (Super+G): the focused window gets its own group with the layout you pick ──
+(defwidget lay-card [id name key desc]
+  (button :timeout "10s" :class "lcard"
+          :onclick "~/.config/eww/scripts/wslayout win ${id}; ~/.config/eww/scripts/wslayout close"
+    (box :orientation "v" :space-evenly false :spacing 4
+      (image :path "${EWW_CONFIG_DIR}/icons/lay-${id}.svg" :image-width 40 :image-height 40)
+      (label :class "lname" :text "${name}  ${key}")
+      (label :class "dim" :text desc))))
+
+(defwidget layoutpop []
+  (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+    :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
+    (label :class "pop-title" :halign "start" :text "layout of the focused window")
+    (box :spacing 8
+      (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side")
+      (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom")
+      (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row")
+      (lay-card :id "s" :name "Stacked" :key "S" :desc "title list"))
+    (label :class "dim" :halign "start" :text "its own group, new windows open inside  ·  H V T S, Esc to cancel")))
+
+;; Where is the pointer? A transparent full-screen window that is there for a moment: the toolkit reports the position of the
+;; pointer when the window appears under it (scripts/wslayout pointer). The picker opens under that point.
+(defwindow ptrprobe [mon]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "100%" :height "100%" :anchor "top left")
+  :stacking "overlay"
+  :exclusive false
+  :namespace "ink-ptr"
+  (eventbox :timeout "5s" :onhover "echo '{0} {1}' > $XDG_RUNTIME_DIR/ink-ptr"
+    (box :class "ptrprobe" :hexpand true :vexpand true)))
+
+;; the picker: its position is given when it opens (--pos), under the pointer
+(defwindow layoutpop-ptr [mon]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "600px" :anchor "top left")
+  :stacking "overlay"
+  :namespace "ink-pop"
+  (layoutpop))

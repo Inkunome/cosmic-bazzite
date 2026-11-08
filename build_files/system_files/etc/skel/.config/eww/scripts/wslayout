@@ -1,0 +1,54 @@
+#!/bin/bash
+# The layout of the focused window: Super+G opens a picker under the mouse, H V T S give the window its own group with that
+# layout (sway has no layout for a single window: a split wraps it), so the next windows opened from it land inside the group.
+#   wslayout pop          open the picker under the pointer, with the keys H V T S (Super+G)
+#   wslayout win h|v|t|s  the focused window gets its own group with that layout
+#   wslayout pointer OUTPUT MONITOR   print the pointer position (x y) in the coordinates of that screen's free area
+#   wslayout close        close the picker
+here=$(readlink -f "$0"); dir=$(dirname "$here")
+
+win_layout() {
+    case $1 in
+        h) swaymsg -q "splith" ;;
+        v) swaymsg -q "splitv" ;;
+        t) swaymsg -q "splith; layout tabbed" ;;
+        s) swaymsg -q "splith; layout stacking" ;;
+        *) echo "usage: wslayout win h|v|t|s" >&2; return 1 ;;
+    esac
+}
+
+case "${1:-pop}" in
+    win) win_layout "${2:-}" ;;
+    pointer)
+        # where the pointer is, in the coordinates of the free area of screen $2 (eww monitor $3): "x y", or nothing
+        rm -f "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr"
+        eww open ptrprobe --arg "mon=${3:-0}" >/dev/null 2>&1
+        # a surface that appears under a motionless pointer is not told about it: move the pointer one pixel and back
+        sleep 0.15
+        if [[ ! -s ${XDG_RUNTIME_DIR:-/tmp}/ink-ptr ]]; then swaymsg -q -- seat - cursor move 1 0; swaymsg -q -- seat - cursor move -1 0; fi
+        for _ in 1 2 3 4 5 6 7 8; do [[ -s ${XDG_RUNTIME_DIR:-/tmp}/ink-ptr ]] && break; sleep 0.06; done
+        eww close ptrprobe >/dev/null 2>&1
+        cat "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr" 2>/dev/null ;;
+    pop)
+        # the picker opens under the pointer (centred on it, kept on the screen)
+        read -r out w h < <(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | "\(.name) \(.rect.width) \(.rect.height)"')
+        mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}'); mon=${mon:-0}
+        read -r px py < <("$here" pointer "$out" "$mon")
+        # the size of the free area (what the bar, strip and dock leave): the workspace rect plus its gaps
+        read -r aw ah < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.width + 24) \(.height + 24)"')
+        aw=${aw:-$w}; ah=${ah:-$h}
+        PW=600 PH=240
+        px=${px%.*}; py=${py%.*}
+        [[ -n $px && -n $py ]] || { px=$((aw / 2)); py=$((ah / 2 - PH / 2)); }
+        x=$((px - PW / 2)); ((x < 8)) && x=8; ((x > aw - PW - 8)) && x=$((aw - PW - 8))
+        y=$((py + 14)); ((y + PH > ah - 8)) && y=$((py - PH - 14)); ((y < 8)) && y=8
+        eww open layoutpop-ptr --arg "mon=$mon" --pos "${x}x${y}" >/dev/null 2>&1
+        # the keys only if the picker really is there (it can take a moment to show)
+        for _ in 1 2 3 4 5 6 7 8; do
+            eww active-windows 2>/dev/null | grep -q "^layoutpop-ptr:" && { swaymsg -q mode winlayout; break; }
+            sleep 0.15
+        done ;;
+    close) eww close layoutpop-ptr >/dev/null 2>&1; swaymsg -q mode default ;;
+    *) sed -n '2,8p' "$0" >&2; exit 1 ;;
+esac
+exit 0

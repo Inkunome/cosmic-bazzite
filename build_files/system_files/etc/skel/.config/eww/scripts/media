@@ -1,10 +1,26 @@
 #!/bin/bash
 # Stream the current media player state as JSON ({status, artist, title}); idle JSON when no player runs.
+#
+# Some MPRIS players have no Metadata property (a Bluetooth headset does that): `playerctl metadata` then aborts with a core
+# dump. Left to retry every 3 seconds, that is a core dump every 3 seconds for as long as the session lasts. So: no core
+# files for playerctl, players that cannot give metadata are left out, and the retry delay grows when playerctl keeps failing.
+ulimit -c 0
 idle='{"status":"Stopped","artist":"","title":""}'
+delay=3
 while true; do
     echo "$idle"
-    playerctl -F metadata --format '{{status}}|{{artist}}|{{title}}' 2>/dev/null | while IFS='|' read -r st ar ti; do
+    ignore=""
+    for p in $(playerctl -l 2>/dev/null); do
+        playerctl -p "$p" metadata >/dev/null 2>&1 || ignore="${ignore:+$ignore,}$p"
+    done
+    start=$SECONDS
+    playerctl ${ignore:+--ignore-player "$ignore"} -F metadata --format '{{status}}|{{artist}}|{{title}}' 2>/dev/null | while IFS='|' read -r st ar ti; do
         jq -nc --arg s "$st" --arg a "$ar" --arg t "$ti" '{status:$s,artist:$a,title:$t}'
     done
-    sleep 3
+    # no player at all is normal: look again in 3 seconds. Players that exist but whose follow ended at once are failing:
+    # wait longer each time, up to 30 seconds; a long run resets the delay
+    if [[ -z $(playerctl -l 2>/dev/null) ]]; then delay=3
+    elif ((SECONDS - start < 5)); then delay=$((delay < 30 ? delay * 2 : 30))
+    else delay=3; fi
+    sleep "$delay"
 done
