@@ -696,7 +696,8 @@
   :exclusive false
   :namespace "ink-pill"
   ;; an outline around the title text (the middle is empty: the title shows through)
-  (box :class "winpill" :space-evenly false :spacing 6
+  (eventbox :timeout "10s" :onmiddleclick "~/.config/eww/scripts/winpill close"
+   (box :class "winpill" :space-evenly false :spacing 6 :tooltip "middle-click: close the window"
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace" :onclick "~/.config/eww/scripts/winpill prev" "‹")
     (box :width {tw + 20} :hexpand false)
-    (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›")))
+    (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›"))))

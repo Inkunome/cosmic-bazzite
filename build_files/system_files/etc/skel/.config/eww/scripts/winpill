@@ -6,6 +6,7 @@
 #   winpill hide
 #   winpill prev|next   move the focused window to the previous / next workspace of its screen, or to a new one when
 #                       there is none that way (what the buttons run); `winpill new` always makes a new one
+#   winpill close       close the focused window (middle click on the pill)
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 GAP=12 H=26 CHAR=8 LEFT=38 RIGHT=38   # height of the pill, width of a letter, and what the pill adds on each side of the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
@@ -65,7 +66,8 @@ case "${1:-watch}" in
             | if $d == "prev" then (if $i > 0 then $l[$i - 1] else empty end) else $l[$i + 1] // empty end')
         [[ -n $n ]] || n=$(lowest_free)
         swaymsg -q "move container to workspace number $n; workspace number $n" ;;
+    close) swaymsg -q kill ;;
     new)  n=$(lowest_free); swaymsg -q "move container to workspace number $n; workspace number $n" ;;
-    *) sed -n '2,9p' "$0" >&2; exit 1 ;;
+    *) sed -n '2,10p' "$0" >&2; exit 1 ;;
 esac
 exit 0
