@@ -89,14 +89,16 @@ case "${1:-get}" in
     all) all ;;
     set) set_layout "${2:-}" "${3:-}" ;;
     watch)
-        eww update wslay="$(all)" >/dev/null 2>&1
+        # sway sends no event when a layout changes (Super+W, Super+E, the picker...), so besides the window / workspace /
+        # output events the layouts are looked at once a second; eww is only told when they differ from the last time
+        # (compared with what eww holds, so a restarted eww gets the layouts again at once)
+        refresh() { local n; n=$(all); [[ $n == "$(eww get wslay 2>/dev/null)" ]] || eww update wslay="$n" >/dev/null 2>&1; }
+        refresh
+        ( while sleep 1; do refresh; done ) &
         swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
             while read -r -t 0.3 _; do :; done
-            eww update wslay="$(all)" >/dev/null 2>&1
+            refresh
         done ;;
-    reapply) reapply "${2:-.}" ;;
-    win) win_layout "${2:-}"; eww update wslay="$(all)" >/dev/null 2>&1 ;;
-    apply) if [[ $(eww get lay_scope) == win ]]; then win_layout "${3:-}"; eww update wslay="$(all)" >/dev/null 2>&1; else set_layout "${2:-}" "${3:-}"; fi ;;
     pointer)
         # where the pointer is, in the coordinates of the free area of screen $2 (eww monitor $3): "x y", or nothing
         rm -f "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr"
