@@ -40,11 +40,11 @@ layer_effects "ink-pop" blur enable; shadows enable; corner_radius 22
 layer_effects "launcher" blur enable; corner_radius 18
 layer_effects "notifications" blur enable; corner_radius 18
 
-# every window has a fuchsia frame around its content; the line around the title is bright on the focused one and faint on the others
+# every window has a pastel pink-violet frame around its content; the line around the title is bright on the focused one and faint on the others
 #                       border    bg       text    indicator child_border
-client.focused          $glow     $loam    $spore  $blush    #ff3fd0
-client.focused_inactive #5b457044 $loam    $spore  #00000000  #ff3fd0
-client.unfocused        #5b457044 $loam    $spore  #00000000  #ff3fd0
+client.focused          $glow     $loam    $spore  $blush    #e2a9f1
+client.focused_inactive #5b457044 $loam    $spore  #00000000  #e2a9f1
+client.unfocused        #5b457044 $loam    $spore  #00000000  #e2a9f1
 client.urgent           $amanita  $loam    $spore  $amanita  $amanita
 
 output * bg $loam solid_color
