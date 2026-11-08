@@ -9,6 +9,10 @@
 (defpoll nt :interval "2s" :initial "{\"dnd\":false,\"count\":0,\"items\":[]}" "~/.config/eww/scripts/notifs")
 (defvar dock_apps "[]")
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
+;; batteries (the laptop's, or the weakest device UPower knows): scripts/battery
+(defpoll bat :interval "30s" :initial "{\"has\":false,\"pct\":0,\"state\":\"\",\"icon\":\"battery-unknown\",\"devices\":[]}" "~/.config/eww/scripts/battery")
+(defvar bat_pill false)
+(defvar bat_pop false)
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
 (defvar vol_pill false)
 (defvar vol_pop false)
@@ -50,6 +54,12 @@
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
+      ;; the battery: its icon follows the charge and the charging state, hover for every battery
+      (eventbox :timeout "10s" :visible {bat.has}
+                :onhover "eww update bat_pill=true && eww open batpop --arg mon=${mon}"
+                :onhoverlost "eww update bat_pill=false && ~/.config/eww/scripts/popclose batpop bat"
+        (box :class "pill" :tooltip "battery ${bat.pct}%${bat.state == 'charging' ? ', charging' : ''}"
+          (image :path "${EWW_CONFIG_DIR}/icons/${bat.icon}.svg" :image-width 20 :image-height 20)))
       (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}; ~/.config/eww/scripts/audio sync"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
@@ -725,3 +735,29 @@
   :stacking "overlay"
   :namespace "ink-pop"
   (layoutpop))
+
+;; ── Battery flyout: every battery with its charge, its state and the time left ──
+(defwidget bat-row [name kind pct state time icon]
+  (box :orientation "v" :space-evenly false :spacing 4
+    (box :space-evenly false :spacing 8
+      (image :path "${EWW_CONFIG_DIR}/icons/${icon}.svg" :image-width 20 :image-height 20)
+      (label :class "bat-name" :halign "start" :hexpand true :limit-width 28 :text name)
+      (label :halign "end" :text "${pct}%"))
+    (progress :value pct :class "bar-meter")
+    (label :class "dim" :halign "start" :text "${kind}  ·  ${state == 'unknown' ? 'state not reported' : replace(state, '-', ' ')}${time != '' ? '  ·  ' + time : ''}")))
+
+(defwidget batpop []
+  (eventbox :timeout "10s" :onhover "eww update bat_pop=true"
+            :onhoverlost "eww update bat_pop=false && ~/.config/eww/scripts/popclose batpop bat"
+    (box :class "pop" :orientation "v" :space-evenly false :spacing 12
+      :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
+      (label :class "pop-title" :halign "start" :text "battery")
+      (for d in {bat.devices}
+        (bat-row :name {d.name} :kind {d.kind} :pct {d.pct} :state {d.state} :time {d.time} :icon {d.icon})))))
+
+(defwindow batpop [mon]
+  :monitor mon
+  :geometry (geometry :x "255px" :y "4px" :width "320px" :anchor "top right")
+  :stacking "overlay"
+  :namespace "ink-pop"
+  (batpop))
