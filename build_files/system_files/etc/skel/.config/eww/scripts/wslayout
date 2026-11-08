@@ -6,35 +6,68 @@
 #                         OUTPUT can be . for the screen with the focus
 #   wslayout watch        keep the dock item current (started by sway)
 #   wslayout win h|v|t|s  the focused window gets its own group with that layout (new windows open inside it)
-#   wslayout pop [win]    open the picker under the pointer with the keys H V T S: for the workspace (Super+Shift+G)
-#                         or, with `win`, for the focused window (Super+G)
+#   wslayout pop          open the picker under the pointer with the keys H V T S for the focused window (Super+G)
+#   wslayout reapply [OUTPUT]   take every window of the screen's workspace out of its groups and lay them out again with
+#                         the screen's layout (Super+Shift+G; . = the screen with the focus)
 #   wslayout pointer OUTPUT MONITOR   print the pointer position (x y) in the coordinates of that screen's free area
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 
+# The layout of a screen is the layout of the container that holds its windows: sway puts them in one container under the
+# workspace (a tabbed one with workspace_layout tabbed), and that is the one we read and set. A workspace whose windows sit
+# directly in it (or in several groups side by side) uses the workspace's own layout.
 # every screen's layout: {"HDMI-A-1":"h","DP-3":"t"} (the visible workspace of each screen)
 all() {
     swaymsg -t get_tree -r | jq -c '[.nodes[] | select(.type == "output" and .name != "__i3") | . as $o
-        | {($o.name): ([$o.nodes[]? | select(.type == "workspace" and .name == $o.current_workspace)][0].layout // "splith"
-            | if . == "splith" then "h" elif . == "splitv" then "v" elif . == "tabbed" then "t" elif . == "stacked" then "s" else "h" end)}] | add'
+        | ([$o.nodes[]? | select(.type == "workspace" and .name == $o.current_workspace)][0]) as $ws
+        | (if ($ws.nodes | length) == 1 and ($ws.nodes[0].pid == null) then $ws.nodes[0] else $ws end).layout as $l
+        | {($o.name): ($l // "splith" | if . == "splith" then "h" elif . == "splitv" then "v" elif . == "tabbed" then "t" elif . == "stacked" then "s" else "h" end)}] | add'
 }
 
 get() { all | jq -r --arg o "${1:-}" 'if $o != "" then .[$o] // "h" else (to_entries[0].value) end'; }
 
-# lay the visible workspace of a screen out: go to that screen, climb to the container of the workspace itself, set its
-# layout, and come back to the window that had the focus
+# Lay the visible workspace of a screen out. sway's `layout` acts on the PARENT of the focused node, so to set the layout of
+# the container that holds the windows we focus its first child (a window or a group) and run `layout`, then give the focus
+# back to the window that had it.
 set_layout() {
-    local out=$1 cmd id n type
+    local out=$1 cmd id child
     [[ $out == . ]] && out=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | .name')   # "." = the screen with the focus
     case $2 in h) cmd=splith ;; v) cmd=splitv ;; t) cmd=tabbed ;; s) cmd=stacking ;; *) echo "usage: wslayout set OUTPUT h|v|t|s" >&2; return 1 ;; esac
     id=$(swaymsg -t get_tree -r | jq '[.. | objects | select(.focused? == true)][0].id')
-    swaymsg -q "focus output $out"
-    for n in 1 2 3 4 5 6 7 8; do
-        type=$(swaymsg -t get_tree -r | jq -r '[.. | objects | select(.focused? == true)][0].type')
-        [[ $type == workspace ]] && break
-        swaymsg -q focus parent
-    done
-    swaymsg -q "layout $cmd"
+    child=$(swaymsg -t get_tree -r | jq -r --arg o "$out" '
+        .nodes[] | select(.type == "output" and .name == $o) | . as $o
+        | [$o.nodes[]? | select(.type == "workspace" and .name == $o.current_workspace)][0] as $ws
+        | (if ($ws.nodes | length) == 1 and ($ws.nodes[0].pid == null) then $ws.nodes[0] else $ws end) | .nodes[0].id // empty')
+    if [[ -n $child ]]; then
+        swaymsg -q "[con_id=$child] focus"
+        swaymsg -q "layout $cmd"
+    else
+        swaymsg -q "focus output $out"; swaymsg -q "layout $cmd"   # an empty workspace
+    fi
     [[ -n $id && $id != null ]] && swaymsg -q "[con_id=$id] focus"
+    eww update wslay="$(all)" >/dev/null 2>&1
+}
+
+# Re-apply the global layout of a screen: take every window of its visible workspace out of whatever groups they were in,
+# put them back one after the other in the same order, and lay the workspace out again with the layout the screen has.
+# Windows come out of their nested groups by a trip through a hidden workspace (sway has no command to flatten).
+reapply() {
+    local out=$1 layout ws ids id focus tmp=ink-reflow
+    [[ $out == . ]] && out=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | .name')
+    layout=$(get "$out")
+    ws=$(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '.[] | select(.output == $o and .visible) | .name')
+    [[ -n $ws ]] || return 1
+    # the tiled windows of that workspace in tree order (floating ones stay where they are)
+    mapfile -t ids < <(swaymsg -t get_tree -r | jq -r --arg w "$ws" '
+        def leaves: if (.pid? != null and .pid != null) then .id else (.nodes[]? | leaves) end;
+        [.. | objects | select(.type? == "workspace" and .name == $w)][0] | .nodes[]? | leaves')
+    ((${#ids[@]} > 1)) || { set_layout "$out" "$layout"; return; }
+    focus=$(swaymsg -t get_tree -r | jq '[.. | objects | select(.focused? == true)][0].id')
+    swaymsg -q "focus output $out"
+    for id in "${ids[@]}"; do swaymsg -q "[con_id=$id] move container to workspace $tmp"; done
+    # a window lands next to the active one of the workspace: focus each as it arrives, so they keep their order
+    for id in "${ids[@]}"; do swaymsg -q "[con_id=$id] move container to workspace \"$ws\""; swaymsg -q "[con_id=$id] focus"; done
+    set_layout "$out" "$layout"
+    [[ -n $focus && $focus != null ]] && swaymsg -q "[con_id=$focus] focus"
     eww update wslay="$(all)" >/dev/null 2>&1
 }
 
@@ -60,6 +93,7 @@ case "${1:-get}" in
             while read -r -t 0.3 _; do :; done
             eww update wslay="$(all)" >/dev/null 2>&1
         done ;;
+    reapply) reapply "${2:-.}" ;;
     win) win_layout "${2:-}"; eww update wslay="$(all)" >/dev/null 2>&1 ;;
     apply) if [[ $(eww get lay_scope) == win ]]; then win_layout "${3:-}"; eww update wslay="$(all)" >/dev/null 2>&1; else set_layout "${2:-}" "${3:-}"; fi ;;
     pointer)
@@ -73,11 +107,10 @@ case "${1:-get}" in
         eww close ptrprobe >/dev/null 2>&1
         cat "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr" 2>/dev/null ;;
     pop)
-        # the picker opens under the pointer (centred on it, kept on the screen); `pop win` (Super+G) is for the focused
-        # window, plain `pop` (Super+Shift+G) for the workspace of the screen with the pointer
+        # the picker of Super+G opens under the pointer (centred on it, kept on the screen); it is for the focused window
         read -r out w h < <(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | "\(.name) \(.rect.width) \(.rect.height)"')
         mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}'); mon=${mon:-0}
-        scope=ws; mode=wslayout; [[ ${2:-} == win ]] && { scope=win; mode=winlayout; }
+        scope=win; mode=winlayout
         read -r px py < <("$here" pointer "$out" "$mon")
         # the size of the free area (what the bar, strip and dock leave): the workspace rect plus its gaps
         read -r aw ah < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.width + 24) \(.height + 24)"')
