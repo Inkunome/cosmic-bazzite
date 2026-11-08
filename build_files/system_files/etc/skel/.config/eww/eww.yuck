@@ -10,8 +10,10 @@
 (defvar dock_apps "[]")
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
-(defvar sys_pill false)
-(defvar sys_pop false)
+(defvar lay_pill false)
+(defvar lay_pop false)
+;; layout of the focused workspace: h, v, t or s (kept by scripts/wslayout watch)
+(defvar wslay "t")
 (defvar vol_pill false)
 (defvar vol_pop false)
 (defvar nt_pill false)
@@ -52,10 +54,10 @@
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
-      (eventbox :timeout "10s" :onhover "eww update sys_pill=true && eww open sysinfo --arg mon=${mon}"
-                :onhoverlost "eww update sys_pill=false && ~/.config/eww/scripts/popclose sysinfo sys"
-        (box :class "pill" :tooltip "cpu ${round(EWW_CPU.avg, 0)}% · ram ${round(EWW_RAM.used_mem_perc, 0)}%"
-          (image :path "${EWW_CONFIG_DIR}/icons/cpu.svg" :image-width 18 :image-height 18)))
+      (eventbox :timeout "10s" :onhover "eww update lay_pill=true && eww open layoutpop --arg mon=${mon}"
+                :onhoverlost "eww update lay_pill=false && ~/.config/eww/scripts/popclose layoutpop lay"
+        (box :class "pill" :tooltip "layout of the workspace (Super+Shift+G)"
+          (image :path "${EWW_CONFIG_DIR}/icons/lay-${wslay}.svg" :image-width 18 :image-height 18)))
       (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}; ~/.config/eww/scripts/audio sync"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
@@ -211,16 +213,27 @@
       (label :halign "end" :text "${round(value, 0)}%"))
     (progress :value value :class "bar-meter")))
 
-(defwidget sysinfo []
-  (eventbox :timeout "10s" :onhover "eww update sys_pop=true"
-            :onhoverlost "eww update sys_pop=false && ~/.config/eww/scripts/popclose sysinfo sys"
+(defwidget lay-card [id name key desc]
+  (button :timeout "10s" :class "lcard ${wslay == id ? 'current' : ''}"
+          :onclick "~/.config/eww/scripts/wslayout set ${id}; ~/.config/eww/scripts/wslayout close"
+    (box :orientation "v" :space-evenly false :spacing 4
+      (image :path "${EWW_CONFIG_DIR}/icons/lay-${id}.svg" :image-width 40 :image-height 40)
+      (label :class "lname" :text "${name}  ${key}")
+      (label :class "dim" :text desc)
+      (label :class "lcur" :visible {wslay == id} :text "current"))))
+
+(defwidget layoutpop []
+  (eventbox :timeout "10s" :onhover "eww update lay_pop=true"
+            :onhoverlost "eww update lay_pop=false && ~/.config/eww/scripts/popclose layoutpop lay"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       :style "background-image: url('${EWW_CONFIG_DIR}/icons/fur.svg');"
-      (label :class "pop-title" :halign "start" :text "system")
-      (meter :label "cpu" :value {EWW_CPU.avg})
-      (meter :label "ram  ${round(EWW_RAM.used_mem / 1073741824, 1)} / ${round(EWW_RAM.total_mem / 1073741824, 1)} GB" :value {EWW_RAM.used_mem_perc})
-      (meter :label "disk /" :value {EWW_DISK["/"].used_perc})
-      (label :class "dim" :halign "start" :text "up ${uptime}"))))
+      (label :class "pop-title" :halign "start" :text "layout of the whole workspace")
+      (box :spacing 8
+        (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side")
+        (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom")
+        (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row")
+        (lay-card :id "s" :name "Stacked" :key "S" :desc "title list"))
+      (label :class "dim" :halign "start" :text "all windows follow  ·  Super+Shift+G, then H V T S"))))
 
 (defwidget slider-row [name kind data val]
   (box :class "meter" :orientation "v" :space-evenly false
@@ -251,12 +264,12 @@
       (slider-row :name "microphone" :kind "source" :data src :val vol_source_v)
       (devices :kind "source" :items {adev.sources}))))
 
-(defwindow sysinfo [mon]
+(defwindow layoutpop [mon]
   :monitor mon
-  :geometry (geometry :x "260px" :y "4px" :width "280px" :anchor "top right")
+  :geometry (geometry :x "170px" :y "4px" :width "600px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
-  (sysinfo))
+  (layoutpop))
 
 (defwindow volpop [mon]
   :monitor mon

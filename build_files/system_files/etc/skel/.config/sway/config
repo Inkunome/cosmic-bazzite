@@ -89,6 +89,7 @@ bindcode $mod+41 fullscreen                       # F
 bindcode $mod+Shift+41 floating toggle            # F
 bindcode $mod+26 layout toggle split              # E
 bindcode $mod+25 layout tabbed                    # W
+bindcode $mod+Shift+42 exec ~/.config/eww/scripts/wslayout pop   # G: layout of the whole workspace
 
 # minimise to the dock (scratchpad): Alt+Esc sends the focused window away, Alt+Tab cycles through them
 bindsym Mod1+Escape exec ink-scratch minimize
@@ -190,6 +191,7 @@ exec_always sh -c 'test -f ~/.config/kanshi/config && pgrep -x kanshi >/dev/null
 exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
+exec ~/.config/eww/scripts/wslayout watch
 exec ~/.config/eww/scripts/winpill watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
@@ -221,6 +223,16 @@ mode "launcher-pinned" {
     bindsym Left exec ~/.config/eww/scripts/apps nav left
     bindsym Return exec ~/.config/eww/scripts/apps accept
     bindsym KP_Enter exec ~/.config/eww/scripts/apps accept
+}
+
+# Super+Shift+G opens the layout picker of the workspace; H V T S choose, Escape cancels
+mode "wslayout" {
+    bindsym h exec ~/.config/eww/scripts/wslayout set h; exec ~/.config/eww/scripts/wslayout close
+    bindsym v exec ~/.config/eww/scripts/wslayout set v; exec ~/.config/eww/scripts/wslayout close
+    bindsym t exec ~/.config/eww/scripts/wslayout set t; exec ~/.config/eww/scripts/wslayout close
+    bindsym s exec ~/.config/eww/scripts/wslayout set s; exec ~/.config/eww/scripts/wslayout close
+    bindsym Escape exec ~/.config/eww/scripts/wslayout close
+    bindsym Return exec ~/.config/eww/scripts/wslayout close
 }
 
 mode "dash" {

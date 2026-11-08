@@ -185,3 +185,10 @@ tooltip * { color: $spore; }
 .winpill { background: transparent; border: 1px solid rgba(#ffc8e2, 0.75); border-radius: 13px; padding: 0 6px; }
 .wp-btn { color: #ffc8e2; font-weight: bold; font-size: 15px; border-radius: 10px; padding: 0 5px; }
 .wp-btn:hover { background: rgba(#ffc8e2, 0.25); }
+
+/* layout of the workspace: the cards of the picker */
+.lcard { padding: 10px 8px; border-radius: 18px; background: rgba($moss, 0.35); border: 2px solid transparent; }
+.lcard:hover { background: rgba($moss, 0.6); }
+.lcard.current { border-color: $glow; background: rgba($glow, 0.22); }
+.lname { font-weight: bold; color: $spore; }
+.lcur { font-size: 10px; color: $loam; background: $feather; border-radius: 8px; padding: 0 6px; }
