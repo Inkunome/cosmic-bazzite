@@ -6,8 +6,9 @@
 #                         OUTPUT can be . for the screen with the focus
 #   wslayout watch        keep the dock item current (started by sway)
 #   wslayout win h|v|t|s  the focused window gets its own group with that layout (new windows open inside it)
-#   wslayout pop [win]    open the picker on the focused screen with the keys H V T S: for the workspace (Super+Shift+G)
+#   wslayout pop [win]    open the picker under the pointer with the keys H V T S: for the workspace (Super+Shift+G)
 #                         or, with `win`, for the focused window (Super+G)
+#   wslayout pointer OUTPUT MONITOR   print the pointer position (x y) in the coordinates of that screen's free area
 here=$(readlink -f "$0"); dir=$(dirname "$here")
 
 # every screen's layout: {"HDMI-A-1":"h","DP-3":"t"} (the visible workspace of each screen)
@@ -61,21 +62,39 @@ case "${1:-get}" in
         done ;;
     win) win_layout "${2:-}"; eww update wslay="$(all)" >/dev/null 2>&1 ;;
     apply) if [[ $(eww get lay_scope) == win ]]; then win_layout "${3:-}"; eww update wslay="$(all)" >/dev/null 2>&1; else set_layout "${2:-}" "${3:-}"; fi ;;
+    pointer)
+        # where the pointer is, in the coordinates of the free area of screen $2 (eww monitor $3): "x y", or nothing
+        rm -f "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr"
+        eww open ptrprobe --arg "mon=${3:-0}" >/dev/null 2>&1
+        # a surface that appears under a motionless pointer is not told about it: move the pointer one pixel and back
+        sleep 0.15
+        if [[ ! -s ${XDG_RUNTIME_DIR:-/tmp}/ink-ptr ]]; then swaymsg -q -- seat - cursor move 1 0; swaymsg -q -- seat - cursor move -1 0; fi
+        for _ in 1 2 3 4 5 6 7 8; do [[ -s ${XDG_RUNTIME_DIR:-/tmp}/ink-ptr ]] && break; sleep 0.06; done
+        eww close ptrprobe >/dev/null 2>&1
+        cat "${XDG_RUNTIME_DIR:-/tmp}/ink-ptr" 2>/dev/null ;;
     pop)
-        # a portrait screen has the dock at the bottom centre, a landscape one the strip: open the picker above the one it has
+        # the picker opens under the pointer (centred on it, kept on the screen); `pop win` (Super+G) is for the focused
+        # window, plain `pop` (Super+Shift+G) for the workspace of the screen with the pointer
         read -r out w h < <(swaymsg -t get_outputs -r | jq -r '.[] | select(.focused) | "\(.name) \(.rect.width) \(.rect.height)"')
-        mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}')
-        if ((h > w)); then win=layoutpop-dock; else win=layoutpop-strip; fi
-        # `wslayout pop win` (Super+G) is for the focused window, plain `pop` (Super+Shift+G) for the workspace of the screen
+        mon=$("$dir/screens" map | awk -v o="$out" '$1 == o {print $2}'); mon=${mon:-0}
         scope=ws; mode=wslayout; [[ ${2:-} == win ]] && { scope=win; mode=winlayout; }
+        read -r px py < <("$here" pointer "$out" "$mon")
+        # the size of the free area (what the bar, strip and dock leave): the workspace rect plus its gaps
+        read -r aw ah < <(swaymsg -t get_workspaces -r | jq -r --arg o "$out" '[.[] | select(.output == $o and .visible)][0].rect | "\(.width + 24) \(.height + 24)"')
+        aw=${aw:-$w}; ah=${ah:-$h}
+        PW=600 PH=240
+        px=${px%.*}; py=${py%.*}
+        [[ -n $px && -n $py ]] || { px=$((aw / 2)); py=$((ah / 2 - PH / 2)); }
+        x=$((px - PW / 2)); ((x < 8)) && x=8; ((x > aw - PW - 8)) && x=$((aw - PW - 8))
+        y=$((py + 14)); ((y + PH > ah - 8)) && y=$((py - PH - 14)); ((y < 8)) && y=8
         eww update lay_pill=true lay_scope=$scope >/dev/null 2>&1
-        eww open "$win" --arg "mon=${mon:-0}" --arg "out=$out" >/dev/null 2>&1
+        eww open layoutpop-ptr --arg "mon=$mon" --arg "out=$out" --pos "${x}x${y}" >/dev/null 2>&1
         # the keys only if the picker really is there (it can take a moment to show)
         for _ in 1 2 3 4 5 6 7 8; do
-            eww active-windows 2>/dev/null | grep -q "^$win:" && { swaymsg -q mode "$mode"; break; }
+            eww active-windows 2>/dev/null | grep -q "^layoutpop-ptr:" && { swaymsg -q mode "$mode"; break; }
             sleep 0.15
         done ;;
-    close) eww update lay_pill=false lay_pop=false lay_scope=ws >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip >/dev/null 2>&1; swaymsg -q mode default ;;
+    close) eww update lay_pill=false lay_pop=false lay_scope=ws >/dev/null 2>&1; eww close layoutpop-dock layoutpop-strip layoutpop-ptr >/dev/null 2>&1; swaymsg -q mode default ;;
     *) sed -n '2,7p' "$0" >&2; exit 1 ;;
 esac
 exit 0

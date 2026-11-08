@@ -730,3 +730,22 @@
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the previous workspace" :onclick "~/.config/eww/scripts/winpill prev" "‹")
     (box :width {tw + 20} :hexpand false)
     (button :timeout "10s" :class "wp-btn" :tooltip "move to the next workspace" :onclick "~/.config/eww/scripts/winpill next" "›"))))
+
+;; Where is the pointer? A transparent full-screen window that is there for a moment: the toolkit reports the position of the
+;; pointer when the window appears under it (scripts/wslayout pointer). The picker of Super+G opens under that point.
+(defwindow ptrprobe [mon]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "100%" :height "100%" :anchor "top left")
+  :stacking "overlay"
+  :exclusive false
+  :namespace "ink-ptr"
+  (eventbox :timeout "5s" :onhover "echo '{0} {1}' > $XDG_RUNTIME_DIR/ink-ptr"
+    (box :class "ptrprobe" :hexpand true :vexpand true)))
+
+;; the picker opened by the keyboard: its position is given when it opens (--pos), under the pointer
+(defwindow layoutpop-ptr [mon out]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "600px" :anchor "top left")
+  :stacking "overlay"
+  :namespace "ink-pop"
+  (layoutpop :win "layoutpop-ptr" :out out))
