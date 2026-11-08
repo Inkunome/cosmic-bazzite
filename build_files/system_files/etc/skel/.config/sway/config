@@ -31,9 +31,9 @@ blur enable
 blur_passes 3
 blur_radius 5
 shadows enable
-# an aura: a lilac glow around the focused window only
-shadow_blur_radius 64
-shadow_color #c8a2f0ee
+# an aura: a very soft lilac glow around the focused window only
+shadow_blur_radius 20
+shadow_color #c8a2f033
 shadow_inactive_color #1c142400
 shadow_offset 0 0
 default_dim_inactive 0.08
