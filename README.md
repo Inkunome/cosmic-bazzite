@@ -13,13 +13,14 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 | Piece | What it does |
 | --- | --- |
 | **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, system chip, volume (sliders and output / input pickers), notifications, caffeine button (no auto-lock, no screen blanking, no idle suspend), tray, quick-settings menu |
+| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, volume (sliders and output / input pickers), notifications, caffeine button (no auto-lock, no screen blanking, no idle suspend), tray, quick-settings menu |
 | **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
 | **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
 | **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
 | **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it, right-click one then click a workspace, or "+ new workspace" of a screen, to move it there (eww has no real drag and drop) |
 | **Title buttons** | Two small buttons on the title bar of the focused window, `‹` before the title and `›` after it: push the window to the previous / next workspace of its screen (a new one at the first / last; it follows you). A middle click on a button closes the window. The title between them is free: drag it with the left button to move the window |
+| **Window layout** (`Super+G`) | A picker opens under the mouse: the focused window gets its own group (horizontal, vertical, tabbed or stacked) and the windows you open next land inside it. `H` `V` `T` `S` choose, `Esc` cancels. The system chip is gone from the bar: cpu, ram and disk are in the dashboard |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
 | **Caffeine** | The cup in the bar (also a tile in the quick settings and the dashboard) keeps the screen awake: no automatic lock, no blanking, until you click it again or log out. The lock before a suspend stays |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
@@ -88,6 +89,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+Return`, `Super+F` | fullscreen |
 | `Super+Shift+F` | floating |
 | `Super+W`, `Super+E` | tabs, split |
+| `Super+G` | picker under the mouse: layout of the focused window itself (its own group, new windows open inside it), then `H` `V` `T` `S`, `Esc` cancels |
 | `Super+A`, `Super+Shift+A` | focus parent, child container |
 | `Super+Shift+Q` | close |
 | `Ctrl+Alt+F`, middle click on a tab | close the window, close that tab |

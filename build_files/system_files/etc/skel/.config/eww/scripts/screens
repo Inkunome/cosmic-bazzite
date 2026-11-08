@@ -74,6 +74,8 @@ apply() {
         if ((h > w)); then eww open dock --id "dock-$idx" --arg "mon=$mon"; eww open clock-big --id "clock-$idx" --arg "mon=$mon"; eww open ws-dock --id "wsd-$idx" --arg "mon=$mon" --arg "out=$name"
         else eww open bar --id "bar-$idx" --arg "mon=$mon" --arg "out=$name"; eww open strip --id "strip-$idx" --arg "mon=$mon"; fi
     done
+    # the pill on the focused window is closed with the daemon: put it back
+    [[ -x "$(dirname "$here")/winpill" ]] && "$(dirname "$here")/winpill" show >/dev/null 2>&1 &
     sig > "$SIG"
     [[ -n ${INK_SCREENS_LOG:-} ]] && echo "layout $(date +%T)" >> "$INK_SCREENS_LOG"
 }
