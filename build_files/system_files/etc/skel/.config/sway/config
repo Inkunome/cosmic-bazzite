@@ -89,7 +89,6 @@ bindcode $mod+41 fullscreen                       # F
 bindcode $mod+Shift+41 floating toggle            # F
 bindcode $mod+26 layout toggle split              # E
 bindcode $mod+25 layout tabbed                    # W
-bindcode $mod+Shift+42 exec ~/.config/eww/scripts/wslayout reapply .   # G: lay the windows of the screen out again with its layout
 bindcode $mod+42 exec ~/.config/eww/scripts/wslayout pop     # G: layout of the focused window (its own group), picker under the mouse
 
 # minimise to the dock (scratchpad): Alt+Esc sends the focused window away, Alt+Tab cycles through them
