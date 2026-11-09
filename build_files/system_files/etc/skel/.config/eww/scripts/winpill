@@ -4,7 +4,7 @@
 # that the title stays free: dragging it with the left button moves the window.
 #   winpill watch     keep the pill on the focused window (started by sway)
 #   winpill show      place it once
-#   winpill hide
+#   winpill hide        take the buttons away (they also go by themselves when there is no title bar or no window)
 #   winpill prev|next   move the focused window to the previous / next workspace of its screen, or to a new one when
 #                       there is none that way (what the buttons run); `winpill new` always makes a new one
 #   winpill close       close the focused window (middle click on a button)
@@ -12,12 +12,17 @@ here=$(readlink -f "$0"); dir=$(dirname "$here")
 GAP=12 H=26 CHAR=8 BW=28 SPACE=8   # height of a button, width of a letter, width of a button, space between a button and the title
 LAST="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.last"
 
-hide() { eww close winpill-l winpill-r >/dev/null 2>&1; rm -f "$LAST"; }
+LOCK="${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.lock"
+hide() { eww close winpill-l winpill-r 9>&- >/dev/null 2>&1; rm -f "$LAST"; }
 
 # eww monitor index of an output (cached until the screens change)
 monitor_of() { "$dir/screens" map | awk -v o="$1" '$1 == o {print $2}'; }
 
-show() {
+# one `show` at a time: the event loop and the once-a-second loop used to run it together, and one could open the buttons
+# just after the other had closed them, leaving buttons for a window that was gone
+show() { ( flock -w 3 9 || exit 0; show_now ) 9>"$LOCK"; }
+
+show_now() {
     local info out ox oy tx tw ty tl xl xr y want mon
     # The buttons go on the TOP title bar of the focused window: with groups inside groups (a tabbed group in a tabbed
     # group) there are several bars one under the other, and it is the first that counts. Walk down from the screen to the
@@ -50,23 +55,36 @@ show() {
     want="$out $xl $xr $y"
     [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
     mon=$(monitor_of "$out"); [[ -n $mon ]] || return
-    eww close winpill-l winpill-r >/dev/null 2>&1
-    eww open winpill-l --arg "mon=$mon" --pos "${xl}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 &&
-        eww open winpill-r --arg "mon=$mon" --pos "${xr}x${y}" --size "${BW}x${H}" >/dev/null 2>&1 && echo "$want" > "$LAST"
+    eww close winpill-l winpill-r 9>&- >/dev/null 2>&1
+    eww open winpill-l --arg "mon=$mon" --pos "${xl}x${y}" --size "${BW}x${H}" 9>&- >/dev/null 2>&1 &&
+        eww open winpill-r --arg "mon=$mon" --pos "${xr}x${y}" --size "${BW}x${H}" 9>&- >/dev/null 2>&1 && echo "$want" > "$LAST"
 }
 
 lowest_free() { local n=1 used; used=$(swaymsg -t get_workspaces -r | jq -r '.[].num'); while grep -qx "$n" <<<"$used"; do n=$((n + 1)); done; echo "$n"; }
 
 case "${1:-watch}" in
     watch)
+        # a single watcher per session (a second one would only fight the first)
+        exec 8>"${XDG_RUNTIME_DIR:-/tmp}/ink-winpill.watch"; flock -n 8 || exit 0
+        poll= sub=
+        cleanup() { kill $poll 2>/dev/null; pkill -P "${sub:-0}" 2>/dev/null; kill $sub 2>/dev/null; hide; }
+        trap cleanup EXIT
+        trap 'exit 0' TERM INT HUP
         show
         # sway sends no event when a layout changes (split <-> tabbed), which is when a title bar appears or goes: look again
-        # once a second as well (nothing is redrawn unless the position changed)
-        ( while sleep 1; do show; done ) &
-        swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
-            while read -r -t 0.15 _; do :; done   # let a burst of events settle
-            show
-        done ;;
+        # once a second as well (nothing is redrawn unless the position changed). It ends with the watcher.
+        ( while kill -0 $$ 2>/dev/null; do sleep 1; show; done ) 8>&- &
+        poll=$!
+        # the events of sway; if the subscription drops, take it up again rather than leave the buttons where they were
+        ( while kill -0 $$ 2>/dev/null; do
+              swaymsg -t subscribe -m '["window","workspace","output"]' | while read -r _; do
+                  while read -r -t 0.15 _; do :; done   # let a burst of events settle
+                  show
+              done
+              hide; sleep 2
+          done ) 8>&- &
+        sub=$!
+        wait ;;
     show) show ;;
     hide) hide ;;
     prev|next)
