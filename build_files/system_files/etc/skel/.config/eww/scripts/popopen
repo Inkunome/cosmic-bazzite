@@ -1,0 +1,21 @@
+#!/bin/bash
+# popopen <window> <prefix> <monitor> [command]: open a flyout of the top bar only when the pointer has stayed on its pill
+# for HOVER_MS (850 ms), so that crossing the bar quickly does not make panels flash. Run `popclose` when the pointer leaves.
+#
+# eww kills a hover handler after 200 ms, so (as popclose does) re-launch in a new session and return at once. Every hover
+# takes a ticket; a copy that finds a newer ticket after waiting gives up, and so does one whose pill is no longer hovered
+# (<prefix>_pill is set to false by the pill's hoverlost handler).
+if [[ -z ${INK_POPOPEN_DETACHED:-} ]]; then
+    eww update "$2_pill=true" >/dev/null 2>&1
+    INK_POPOPEN_DETACHED=1 setsid -f "$0" "$@" >/dev/null 2>&1
+    exit 0
+fi
+HOVER_MS=${HOVER_MS:-850}
+ticket="${XDG_RUNTIME_DIR:-/tmp}/ink-popopen-$2"
+me="$$-$RANDOM"; echo "$me" > "$ticket"
+sleep "$(awk "BEGIN{print $HOVER_MS/1000}")"
+[[ $(cat "$ticket" 2>/dev/null) == "$me" ]] || exit 0            # a newer hover started
+[[ $(eww get "$2_pill" 2>/dev/null) == true ]] || exit 0         # the pointer has left
+eww active-windows 2>/dev/null | grep -q "^$1:" || eww open "$1" --arg "mon=$3" >/dev/null 2>&1
+[[ -n ${4:-} ]] && eval "$4"
+exit 0
