@@ -190,3 +190,9 @@ tooltip * { color: $spore; }
 .lcard:hover { background: rgba($moss, 0.6); }
 .lname { font-weight: bold; color: $spore; }
 .ptrprobe { background: rgba(0, 0, 0, 0.004); }
+
+/* the power profile buttons of the battery flyout, and the privacy pill */
+.profbtn { padding: 3px 3px; border-radius: 12px; background: rgba($moss, 0.4); }
+.profbtn:hover { background: rgba($moss, 0.7); }
+.profbtn.on { background: rgba($glow, 0.28); border: 1px solid rgba($glow, 0.7); }
+.privacy { background: rgba($loam, 0.88); border: 1px solid rgba(#ffb347, 0.75); padding: 3px 10px; }

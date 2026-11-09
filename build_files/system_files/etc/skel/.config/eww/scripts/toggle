@@ -13,6 +13,8 @@ case "${1:-}" in
         cur=$(busctl get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile | awk -F'"' '{print $2}')
         case $cur in power-saver) next=balanced ;; balanced) next=performance ;; *) next=power-saver ;; esac
         busctl set-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile s "$next" ;;
-    *) echo "usage: toggle wifi|bluetooth|dnd|night|caffeine|profile" >&2; exit 1 ;;
+    profile-set)   # toggle profile-set power-saver|balanced|performance
+        busctl set-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile s "${2:?profile}" ;;
+    *) echo "usage: toggle wifi|bluetooth|dnd|night|caffeine|profile|profile-set NAME" >&2; exit 1 ;;
 esac
 exit 0

@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Who is using the microphone, the camera or a screen share right now, from PipeWire:
+{"mic": "Firefox, Discord", "cam": "", "screen": ""}  (an empty string = nobody)
+  mic:    audio capture streams that are running
+  cam:    the applications reading a camera (V4L2) source that is running
+  screen: video streams of a screen share (a portal or wlroots stream), running"""
+import json, subprocess
+
+def dump():
+    try:
+        return json.loads(subprocess.run(["pw-dump"], capture_output=True, text=True, timeout=5).stdout or "[]")
+    except Exception:
+        return []
+
+def name(n):
+    p = n.get("info", {}).get("props", {})
+    return p.get("application.name") or p.get("application.process.binary") or p.get("node.description") or p.get("node.name") or "?"
+
+nodes = [o for o in dump() if o.get("type") == "PipeWire:Interface:Node"]
+def running(n): return n.get("info", {}).get("state") == "running"
+def cls(n): return n.get("info", {}).get("props", {}).get("media.class", "") or ""
+
+mic = [name(n) for n in nodes if cls(n) == "Stream/Input/Audio" and running(n)]
+cam_on = any(cls(n) == "Video/Source" and running(n) and "v4l2" in (n["info"]["props"].get("node.name", "")) for n in nodes)
+cam = [name(n) for n in nodes if cam_on and cls(n) == "Stream/Input/Video" and running(n)]
+screen = [name(n) for n in nodes if cls(n) == "Stream/Output/Video" and running(n)]
+uniq = lambda l: ", ".join(dict.fromkeys(l))
+print(json.dumps({"mic": uniq(mic), "cam": uniq(cam) or ("a camera" if cam_on else ""), "screen": uniq(screen)}, ensure_ascii=False, separators=(",", ":")))

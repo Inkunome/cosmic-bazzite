@@ -11,6 +11,8 @@
 (defpoll uptime :interval "60s" "uptime -p | sed 's/^up //'")
 ;; batteries (the laptop's, or the weakest device UPower knows): scripts/battery
 (defpoll bat :interval "30s" :initial "{\"has\":false,\"pct\":0,\"state\":\"\",\"icon\":\"battery-unknown\",\"devices\":[]}" "~/.config/eww/scripts/battery")
+;; who is using the microphone, the camera or a screen share: scripts/privacy
+(defpoll priv :interval "2s" :initial "{\"mic\":\"\",\"cam\":\"\",\"screen\":\"\"}" "~/.config/eww/scripts/privacy")
 (defvar bat_pill false)
 (defvar bat_pop false)
 ;; hover state for the flyouts (a flyout closes only when neither its pill nor itself is hovered)
@@ -50,6 +52,11 @@
                 :onhoverlost "eww update cal_pill=false && ~/.config/eww/scripts/popclose cal cal"
         (label :class "pill clock" :text clock)))
     (box :halign "end" :space-evenly false
+      ;; privacy: something is using the microphone, the camera or a screen share (the tooltip says who)
+      (box :class "pill privacy" :space-evenly false :spacing 6 :visible {priv.mic != "" || priv.cam != "" || priv.screen != ""}
+        (image :visible {priv.mic != ""} :tooltip "microphone in use: ${priv.mic}" :path "${EWW_CONFIG_DIR}/icons/privacy-mic.svg" :image-width 16 :image-height 16)
+        (image :visible {priv.cam != ""} :tooltip "camera in use: ${priv.cam}" :path "${EWW_CONFIG_DIR}/icons/privacy-cam.svg" :image-width 16 :image-height 16)
+        (image :visible {priv.screen != ""} :tooltip "screen shared: ${priv.screen}" :path "${EWW_CONFIG_DIR}/icons/privacy-screen.svg" :image-width 16 :image-height 16))
       (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen keys keys ${mon}"
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
@@ -757,11 +764,21 @@
           (label :class "dim" :halign "start" :hexpand true :text "screen brightness")
           (label :halign "end" :text "${qs.bright}%"))
         (scale :timeout "10s" :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
-               :onchange "brightnessctl -q set {}%")))))
+               :onchange "brightnessctl -q set {}%"))
+      ;; the power profile (when power-profiles-daemon is there): click one to switch
+      (box :orientation "v" :space-evenly false :spacing 4 :visible {qs.profile != "unknown"}
+        (label :class "dim" :halign "start" :text "power profile")
+        (box :spacing 6
+          (button :timeout "10s" :class "pop-btn profbtn ${qs.profile == 'power-saver' ? 'on' : ''}"
+                  :onclick "~/.config/eww/scripts/toggle profile-set power-saver; ~/.config/eww/scripts/qs push" "saver")
+          (button :timeout "10s" :class "pop-btn profbtn ${qs.profile == 'balanced' ? 'on' : ''}"
+                  :onclick "~/.config/eww/scripts/toggle profile-set balanced; ~/.config/eww/scripts/qs push" "balanced")
+          (button :timeout "10s" :class "pop-btn profbtn ${qs.profile == 'performance' ? 'on' : ''}"
+                  :onclick "~/.config/eww/scripts/toggle profile-set performance; ~/.config/eww/scripts/qs push" "performance"))))))
 
 (defwindow batpop [mon]
   :monitor mon
-  :geometry (geometry :x "255px" :y "4px" :width "320px" :anchor "top right")
+  :geometry (geometry :x "255px" :y "4px" :width "360px" :anchor "top right")
   :stacking "overlay"
   :namespace "ink-pop"
   (batpop))
