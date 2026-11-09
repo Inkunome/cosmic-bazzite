@@ -46,28 +46,28 @@
                 :onclick "swaymsg workspace ${ws.name}"
           {ws.focused ? "◉ ${ws.name}" : "○ ${ws.name}"})))
     (box :halign "center"
-      (eventbox :timeout "10s" :onhover "eww update cal_pill=true && eww open cal --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen cal cal ${mon}"
                 :onhoverlost "eww update cal_pill=false && ~/.config/eww/scripts/popclose cal cal"
         (label :class "pill clock" :text clock)))
     (box :halign "end" :space-evenly false
-      (eventbox :timeout "10s" :onhover "eww update keys_pill=true && eww open keys --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen keys keys ${mon}"
                 :onhoverlost "eww update keys_pill=false && ~/.config/eww/scripts/popclose keys keys"
         (button :timeout "10s" :class "pill layout" :onclick "ink-layout next" :onrightclick "ink-layout prev"
           {"⌨ ${layout == 'bepo' ? 'BÉPO' : layout == 'azerty' ? 'AZERTY' : 'QWERTY'}"}))
       ;; the battery: its icon follows the charge and the charging state, hover for every battery
       (eventbox :timeout "10s" :visible {bat.has}
-                :onhover "eww update bat_pill=true && eww open batpop --arg mon=${mon}"
+                :onhover "~/.config/eww/scripts/popopen batpop bat ${mon}"
                 :onhoverlost "eww update bat_pill=false && ~/.config/eww/scripts/popclose batpop bat"
         (box :class "pill" :tooltip "battery ${bat.pct}%${bat.state == 'charging' ? ', charging' : ''}"
           (image :path "${EWW_CONFIG_DIR}/icons/${bat.icon}.svg" :image-width 20 :image-height 20)))
-      (eventbox :timeout "10s" :onhover "eww update vol_pill=true && eww open volpop --arg mon=${mon}; ~/.config/eww/scripts/audio sync"
+      (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen volpop vol ${mon} '~/.config/eww/scripts/audio sync'"
                 :onhoverlost "eww update vol_pill=false && ~/.config/eww/scripts/popclose volpop vol"
                 :onscroll "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%{}"
                 :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         (box :class "pill vol ${sink.muted ? 'muted' : ''}" :tooltip {sink.muted ? "muted" : "volume ${sink.vol}%"}
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (sink.muted ? "vol-muted" : sink.vol < 34 ? "vol-low" : "vol-high") + ".svg"}
                  :image-width 18 :image-height 18)))
-      (eventbox :timeout "10s" :onhover "eww update nt_pill=true && eww open notifs --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen notifs nt ${mon}"
                 :onhoverlost "eww update nt_pill=false && ~/.config/eww/scripts/popclose notifs nt"
                 :onclick "makoctl mode -t do-not-disturb; ~/.config/eww/scripts/notifs push"
         (box :class "pill" :tooltip {nt.dnd ? "do not disturb" : nt.count > 0 ? "${nt.count} notification(s)" : "no notifications"}
@@ -79,7 +79,7 @@
           (image :path {"${EWW_CONFIG_DIR}/icons/" + (qs.caffeine ? "coffee-on" : "coffee") + ".svg"}
                  :image-width 18 :image-height 18)))
       (systray :class "pill" :icon-size 16 :spacing 6)
-      (eventbox :timeout "10s" :onhover "eww update qs_pill=true && eww open quick --arg mon=${mon}"
+      (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen quick qs ${mon}"
                 :onhoverlost "eww update qs_pill=false && ~/.config/eww/scripts/popclose quick qs"
         (box :class "pill qs" (image :path "${EWW_CONFIG_DIR}/icons/paw.svg" :image-width 18 :image-height 18))))))
 
