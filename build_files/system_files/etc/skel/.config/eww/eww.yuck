@@ -271,7 +271,9 @@
 (defwidget pbtn [label action]
   (button :timeout "10s" :class "pbtn ${pwr_confirm == action ? 'confirm' : ''}"
           :onclick "~/.config/eww/scripts/power ${action}"
-    {pwr_confirm == action ? "sure?" : label}))
+    (box :orientation "v" :space-evenly false :spacing 3 :halign "center"
+      (image :path "${EWW_CONFIG_DIR}/icons/power-${action}.svg" :image-width 22 :image-height 22)
+      (label :text {pwr_confirm == action ? "sure?" : label}))))
 
 (defwidget quick []
   (eventbox :timeout "10s" :onhover "eww update qs_pop=true"
