@@ -190,6 +190,10 @@ exec nm-applet --indicator
 exec blueman-applet
 exec wl-paste --watch cliphist store
 exec wl-clip-persist --clipboard regular
+# never lock or blank the screen while a window is fullscreen (a video, a game): the window keeps the session awake as long as
+# it is fullscreen. Wayland windows have an app_id, XWayland ones (games under Wine, Steam) a class.
+for_window [app_id=".*"] inhibit_idle fullscreen
+for_window [class=".*"] inhibit_idle fullscreen
 # idle: lock after 5 minutes, blank the screens after 10; the caffeine button of the bar turns it off
 exec ~/.config/eww/scripts/caffeine run
 # bar on landscape screens, dock on portrait screens: re-evaluated at every reload and whenever outputs change
