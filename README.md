@@ -86,7 +86,7 @@ cosign verify --key cosign.pub ghcr.io/inkunome/cosmic-bazzite
 | `Super+Tab` | expose |
 | `Super+C` | clipboard history |
 | `Super+←↑↓→` / `Super+Shift+←↑↓→` | focus / move a window |
-| `Super+Return`, `Super+F` | fullscreen |
+| `Super+Return`, `Super+F` | fullscreen (while a window is fullscreen, Ctrl+Space, Alt+Space, Alt+Tab, Alt+Esc and Ctrl+Alt+F are off so a game gets them; the Super shortcuts keep working) |
 | `Super+Shift+F` | floating |
 | `Super+W`, `Super+E` | tabs, split |
 | `Super+G` | picker under the mouse: layout of the focused window itself (its own group, new windows open inside it), then `H` `V` `T` `S`, `Esc` cancels |
