@@ -16,6 +16,7 @@ me="$$-$RANDOM"; echo "$me" > "$ticket"
 sleep "$(awk "BEGIN{print $HOVER_MS/1000}")"
 [[ $(cat "$ticket" 2>/dev/null) == "$me" ]] || exit 0            # a newer hover started
 [[ $(eww get "$2_pill" 2>/dev/null) == true ]] || exit 0         # the pointer has left
+timeout 3 eww ping >/dev/null 2>&1 || exit 0   # never let `eww open` start a second daemon
 eww active-windows 2>/dev/null | grep -q "^$1:" || eww open "$1" --arg "mon=$3" >/dev/null 2>&1
 [[ -n ${4:-} ]] && eval "$4"
 exit 0

@@ -16,7 +16,7 @@ open_kind() {
     # `eww open` starts a second daemon when the first one does not answer in time (disk stall, busy): that copy then owns
     # the launcher while every close goes to the other one, and the panel stays stuck. So only start one when none runs.
     if ! timeout 3 eww ping >/dev/null 2>&1; then
-        if pgrep -f '^/usr/bin/eww-wayland daemon' >/dev/null; then
+        if pgrep -x eww-wayland >/dev/null; then
             sleep 2; timeout 3 eww ping >/dev/null 2>&1 || { swaymsg -q mode default; return 1; }   # busy: try again, never open
         else
             "$here/screens" apply
