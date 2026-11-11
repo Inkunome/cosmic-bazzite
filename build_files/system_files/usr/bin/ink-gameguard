@@ -47,7 +47,7 @@ case "${1:-watch}" in
                 # a title change (a terminal, a browser tab) is the most frequent event and cannot change anything here
                 [[ $ev == *'"change": "title"'* || $ev == *'"change":"title"'* ]] && continue
                 sync
-            done < <(swaymsg -t subscribe -m '["window","workspace","mode"]' 2>/dev/null)
+            done < <(swaymsg -t subscribe -m '["window","workspace","mode"]' 2>/dev/null 8>&-)
             sleep 2
         done ;;
     off) off ;;
