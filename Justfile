@@ -14,14 +14,15 @@ default:
 [group('Just')]
 check:
     #!/usr/bin/bash
-    set -e
+    status=0
     find . -type f -name "*.just" | while read -r file; do
     	echo "Checking syntax: $file"
     	just --unstable --fmt --check -f $file
     done
     echo "Checking syntax: Justfile"
-    just --unstable --fmt --check -f Justfile
-    bash build_files/tools/check-look.sh
+    just --unstable --fmt --check -f Justfile || status=1
+    bash build_files/tools/check-look.sh || status=1
+    exit $status
 
 # Fix Just Syntax
 [group('Just')]
