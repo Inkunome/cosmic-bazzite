@@ -19,7 +19,8 @@ binding() {
         END { if (line) print line }' "${files[@]}" 2>/dev/null
 }
 fullscreen_focused() {
-    swaymsg -t get_tree 2>/dev/null | jq -e '[recurse(.nodes[]?, .floating_nodes[]?) | select(.focused)][0].fullscreen_mode // 0 | . > 0' >/dev/null
+    # a window only: on an empty workspace the focus is on the workspace itself, which sway reports as fullscreen_mode 1
+    swaymsg -t get_tree 2>/dev/null | jq -e '([recurse(.nodes[]?, .floating_nodes[]?) | select(.focused and (.type == "con" or .type == "floating_con"))][0].fullscreen_mode // 0) > 0' >/dev/null
 }
 off() { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "un${line%% *} $k" 2>/dev/null; done; }
 on()  { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "$line" 2>/dev/null; done; }
