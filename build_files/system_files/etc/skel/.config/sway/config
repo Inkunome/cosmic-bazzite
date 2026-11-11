@@ -30,9 +30,10 @@ gaps outer 4
 # square corners, nothing translucent
 corner_radius 0
 blur disable
-# a hard shadow under the focused window only: 4 px right and down, no softening, in the line colour
+# a hard shadow under the focused window only: 4 px right and down, in the line colour. The radius is the shader's sigma
+# and it divides by it, so 0 is undefined: 1 is the smallest defined value, the least softening swayfx can draw
 shadows enable
-shadow_blur_radius 0
+shadow_blur_radius 1
 shadow_offset 4 4
 shadow_color #4A3B7AFF
 shadow_inactive_color #4A3B7A00

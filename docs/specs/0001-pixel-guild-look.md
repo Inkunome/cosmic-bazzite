@@ -171,7 +171,7 @@ Only the palette and the look sections change.
 - `font pango:IBM Plex Mono 10`.
 - `default_border pixel 3`, `titlebar_border_thickness 3`, `corner_radius 0`.
 - `blur disable`; the `blur_passes` and `blur_radius` lines go.
-- `shadows enable`, `shadow_blur_radius 0`, `shadow_offset 4 4`, `shadow_color` `line` (opaque), `shadow_inactive_color` fully transparent: a hard shadow under the focused window only.
+- `shadows enable`, `shadow_blur_radius 1`, `shadow_offset 4 4`, `shadow_color` `line` (opaque), `shadow_inactive_color` fully transparent: a hard shadow under the focused window only.
 - `default_dim_inactive 0`; the `dim_inactive_colors` line goes.
 - The four `layer_effects` lines go (no blur, no rounded corners, no shadows on panels: eww draws its own).
 - Colours:
@@ -185,7 +185,7 @@ Only the palette and the look sections change.
 
 - `output * bg` uses `bg` as the solid colour and the new wallpaper with `fill`.
 
-Whether swayfx draws a shadow with a zero blur radius as a hard offset is not known from the documentation at hand: it is checked on the host (see "What cannot be checked here"). If it does not, the fallback is `shadows disable`.
+In swayfx 0.6 the shadow radius is the blur sigma of the shader, which divides by it: `shadow_blur_radius 0` is undefined, so the configuration uses 1, the smallest defined value and the closest to a hard offset. How hard the result looks is checked on the host (see "What cannot be checked here"). If it reads as a soft glow, the fallback is `shadows disable`.
 
 ## The other files
 
@@ -214,7 +214,7 @@ A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on 
 3. `_tokens.scss` holds exactly the table's values.
 4. `eww.yuck`: parentheses and strings balanced; every widget used is defined and every defined widget is used; every icon path it can produce exists (including the names built from data: the battery icons that `scripts/battery` can print, `launcher` and `dashboard`, the built-in dock ids, `lay-h|v|t|s`, `power-lock|suspend|logout|reboot|poweroff`); every icon file is referenced.
 5. Every SVG is well-formed, on its grid, with whole coordinates and token colours only.
-6. The sway configuration's `bindsym`, `bindcode` and `mode` lines are identical to `main`'s; it contains no `blur`, no `corner_radius` other than 0, no `layer_effects`.
+6. The sway configuration's `bindsym`, `bindcode` and `mode` lines are identical to `main`'s; it contains no `blur` setting other than `blur disable`, no `corner_radius` other than 0, no `layer_effects`, and a `shadow_blur_radius` of at least 1 (0 is undefined in swayfx).
 7. No file under `etc/skel/.config` contains an old palette value (`1c1424`, `2a1d36`, `5b4570`, `f6eaf4`, `b9a3c4`, `c8a2f0`, `ff9ccf`, `ff8fc4`, `e0566f`, `ffd1e6`, `f0d4ff`, `ffc8e2`, any case).
 8. The wallpaper script run twice gives the same bytes as the committed PNG, which is 3840×2160.
 9. `fc-scan` reads each shipped font file; the package names in `build.sh` exist in Fedora's repositories.

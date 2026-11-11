@@ -593,8 +593,15 @@ def cmd_sway(root, base):
                 err(f"sway:{n}: corner_radius {m.group(1)}")
     if not blur_disable:
         err("sway: no 'blur disable'")
+    # swayfx divides by the shadow radius (the blur sigma): 0 is undefined, 1 is the smallest defined value
+    radii = re.findall(r"^\s*shadow_blur_radius\s+(\S+)", cur, flags=re.M)
+    if not radii:
+        err("sway: no shadow_blur_radius")
+    for r in radii:
+        if not re.fullmatch(r"\d+", r) or int(r) < 1:
+            err(f"sway: shadow_blur_radius {r} (swayfx divides by it: use 1 or more)")
     finish(f"sway: {len(b)} bindsym/bindcode/mode lines identical to {base}; blur disabled, corners square, "
-           "no layer effects")
+           "no layer effects, shadow radius at least 1")
 
 
 # ── 7. palette ──
