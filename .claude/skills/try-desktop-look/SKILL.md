@@ -25,7 +25,7 @@ Read the branch's specification under `docs/specs/` and the report of whoever im
 
 ## 1. A headless session (nothing here touches the live desktop)
 
-The goal is a second, invisible sway with its own home and its own runtime directory, so that its eww daemon, its locks and its sockets are not the live ones. (`scripts/ewwguard` restarts eww when it sees two daemons on one runtime directory; a separate `XDG_RUNTIME_DIR` is what keeps the live bar safe.)
+The goal is a second, invisible sway with its own home and its own runtime directory, so that its eww daemon, its locks and its sockets are not the live ones. A separate home and runtime directory are **not enough**. `scripts/ewwguard` counts every eww daemon it can list on the machine (`ss -xlp`, any socket named `eww-server_*`), whatever directory it is in: as soon as a second daemon exists, the live session's guard runs `panic`, which kills every `eww-wayland` of the user and restarts the live bar, and the copy's own guard does the same to the live one. So the headless session also runs in its own user, network and process namespaces (`unshare`, below): the live guard cannot list its sockets, and nothing inside can see or signal a live process. Check it before going further: outside the session, `ss -xlpH | grep -c eww-server_` must still say 1.
 
 ```
 T=$(mktemp -d /tmp/ink-try.XXXXXX); mkdir -p "$T/home/.config" "$T/run" "$T/shots"; chmod 700 "$T/run"
@@ -34,19 +34,21 @@ cp -a build_files/system_files/etc/skel/.config/. "$T/home/.config/"
 
 Things the running image does not have yet, and how the headless home gets them:
 
+- **Fonts must be TrueType or OpenType files** (`.ttf`, `.otf`): GTK's text renderer does not load `.woff2`, although `fc-list` shows it; `pango-list | grep <family>` is the test that counts.
 - **Fonts** the branch adds: copy the font files the branch ships (look under `build_files/system_files/usr/share/fonts/`) into `$T/home/.local/share/fonts/`. For a family the branch installs as a package (see `build_files/build.sh`) and that `fc-list` does not show on this machine, take the files from the `dist/fonts/` folder of the design system's repository if you have it, into the same folder. Then `HOME=$T/home fc-cache -f`. If a family cannot be found, say which: the screenshots would show a fallback font and must not be committed.
 - **Wallpaper** and other files the branch adds under `usr/share`: the sway configuration names their installed path, and sway refuses the whole file when it is missing. In the headless copy only, rewrite that path to the checkout: `sed -i "s#/usr/share/backgrounds/ink/#$PWD/build_files/system_files/usr/share/backgrounds/ink/#" $T/home/.config/sway/config` (a `90-try.conf` line is too late: the error comes first).
 
 Start it (verified 2026-11-11). Three things matter: `XDG_SESSION_TYPE=wayland` (`/usr/bin/eww` runs the X11 build without it and every `eww open` fails with "Failed to get x11 window"), a clean environment (your shell's `DISPLAY` and `DBUS_SESSION_BUS_ADDRESS` would make eww read the live session's media player and tray: it showed the owner's playing track), and `WLR_RENDERER=gles2`.
 
 ```
-env -i HOME="$T/home" XDG_RUNTIME_DIR="$T/run" PATH="$PATH" LANG="${LANG:-C.UTF-8}" XDG_SESSION_TYPE=wayland \
+unshare --user --map-current-user --net --pid --fork --mount-proc \
+  env -i HOME="$T/home" XDG_RUNTIME_DIR="$T/run" PATH="$PATH" LANG="${LANG:-C.UTF-8}" XDG_SESSION_TYPE=wayland \
     XDG_CONFIG_HOME="$T/home/.config" XDG_CACHE_HOME="$T/home/.cache" \
     WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=gles2 \
     dbus-run-session sway -c "$T/home/.config/sway/config" >"$T/sway.log" 2>&1 </dev/null &
 ```
 
-After ten seconds the bar and the strip are open by themselves (autostart). For every later command take the session's own environment: `SWAYSOCK=$(ls $T/run/sway-ipc*.sock)`, `WAYLAND_DISPLAY=wayland-1`, `DISPLAY=:1`, `XDG_SESSION_TYPE=wayland`, and `DBUS_SESSION_BUS_ADDRESS` read from `/proc/<pid of "$T/home/.config/eww/scripts/screens watch">/environ`. Start terminals with a neutral prompt and directory (`alacritty --working-directory $HOME/work -T notes -e env PS1='\$ ' bash --norc`) or the user name and path end up in the pictures. Flyouts: `HOVER_MS=100 ~/.config/eww/scripts/popopen quick qs 0` and `... keys keys 0`, then `eww close <window>`. Portrait: `swaymsg create_output`, `output HEADLESS-2 resolution 1080x1920 position 1920 0`, `focus output HEADLESS-2`, grim `-o HEADLESS-2`. A worktree created in the devbox has a `.git` file pointing to `/run/host/...`, which does not exist on the host: use `GIT_DIR=<repo>/.git/worktrees/<name> GIT_WORK_TREE=$PWD` instead of editing it.
+After ten seconds the bar and the strip are open by themselves (autostart). Run every later command inside the session's namespaces, so that the scripts' `pgrep` and `pkill` see only the copy: `nsenter --target <pid of a process of the session> --user --preserve-credentials --net --pid --mount -- env -i <the environment below> <command>`. Keep `$T/run` short (under `/tmp`): a socket path has a length limit. For every later command take the session's own environment: `SWAYSOCK=$(ls $T/run/sway-ipc*.sock)`, `WAYLAND_DISPLAY=wayland-1`, `DISPLAY=:1`, `XDG_SESSION_TYPE=wayland`, and `DBUS_SESSION_BUS_ADDRESS` read from `/proc/<pid of "$T/home/.config/eww/scripts/screens watch">/environ`. Start terminals with a neutral prompt and directory (`alacritty --working-directory $HOME/work -T notes -e env PS1='\$ ' bash --norc`) or the user name and path end up in the pictures. Flyouts: `HOVER_MS=100 ~/.config/eww/scripts/popopen quick qs 0` and `... keys keys 0`, then `eww close <window>`. Portrait: `swaymsg create_output`, `output HEADLESS-2 resolution 1080x1920 position 1920 0`, `focus output HEADLESS-2`, grim `-o HEADLESS-2`. A worktree created in the devbox has a `.git` file pointing to `/run/host/...`, which does not exist on the host: use `GIT_DIR=<repo>/.git/worktrees/<name> GIT_WORK_TREE=$PWD` instead of editing it.
 
 Then, with `SWAYSOCK` set to the socket that appears in `$T/run` and the same `HOME` and `XDG_RUNTIME_DIR` on every command:
 
