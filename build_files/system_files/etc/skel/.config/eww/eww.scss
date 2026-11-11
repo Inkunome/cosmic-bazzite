@@ -42,13 +42,18 @@ $pixel: "Pixelify Sans", monospace;
 .vine { background-repeat: repeat-x; background-size: auto 12px; background-position: left top; }
 
 // ── Dock (portrait screens) ──
+// The dock is exactly 76 px tall, as tall as the big clock and the workspace box beside it (their windows are 76 px):
+// a 36 px icon + 2 x 6 px padding = a 48 px button, + 2 x 3 px margin + 2 x 8 px dock padding + 2 x 3 px border = 76.
+// Every button holds 36 px: an icon (Ink or system theme), an app's initial, or a minimised window's initial.
 .dock { background-color: $surface; border: 3px solid $line; padding: 8px; }
-.dock-icon { padding: 4px; margin: 3px 0; }
+.dock-icon { padding: 6px; margin: 3px 0; }
 .dock-icon:hover { background-color: $accent-tint; }
 .dock-icon:active { background-color: $accent-tint; }
-// Minimised windows in the dock: the initial of the app in a framed square
+// Minimised windows in the dock: the initial of the app in a framed square (its 2 px border comes out of the 36 px)
 .dock-icon.mini { border: 2px solid $muted; }
-.mini label { font-family: $pixel; font-weight: 600; font-size: 20px; color: $fg; min-width: 36px; min-height: 36px; }
+.mini label { font-family: $pixel; font-weight: 600; font-size: 20px; color: $fg; min-width: 32px; min-height: 32px; }
+// an app of the dock without an icon shows its initial in the same 36 px
+.dock .app-initial { min-width: 36px; min-height: 36px; }
 .dock-sep { background-color: $line; margin: 10px 4px; }
 
 // Big clock on portrait screens: the time only, in a box as tall as the dock (its window height is set in eww.yuck)

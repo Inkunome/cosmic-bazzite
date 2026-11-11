@@ -192,11 +192,11 @@
         (button :timeout "10s" :class "dock-icon mini" :tooltip {w.name} :onclick "ink-scratch show ${w.id}"
           (label :text {w.initial})))
       (box :class "dock-sep" :width 2))
-    ;; a 44 px button holds a 36 px Ink icon (padding 4 px); the icons of other apps keep their 44 px
+    ;; every icon of the dock is 36 px (Ink and system theme alike), so every button is 48 px and the dock 76 px tall
     (dock-app :app "launcher" :tip "App launcher" :size 36)
     (dock-app :app "dashboard" :tip "Dashboard" :size 36)
     (for a in dock_apps
-      (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 44 :inksize 36))))
+      (dock-item :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :builtin {a.builtin} :size 36 :inksize 36))))
 
 (defwidget bigclock []
   (box :class "bigclock" :valign "fill" :halign "fill"

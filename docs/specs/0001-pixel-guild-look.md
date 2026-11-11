@@ -130,7 +130,7 @@ The `ring` and `media-card` widgets go if nothing uses them any more. A new smal
 ### Other changes in `eww.yuck`
 
 - The quick-settings pill shows `inkwell.svg` instead of `paw.svg` (delete `paw.svg`).
-- Icon sizes become whole multiples of 12 px: 12, 24 or 36 (a 44 px dock button holds a 36 px icon). This applies to the Ink icons only; application icons from the system theme keep their sizes.
+- Icon sizes become whole multiples of 12 px: 12, 24 or 36. This applies to the Ink icons, with one exception for application icons: in the dock of a portrait screen every icon is 36 px, system theme included, and every button is 48 px (36 px + 6 px padding a side, the minimised window's initial included), so the dock is exactly 76 px tall (48 + 2 × 3 px margin + 2 × 8 px padding + 2 × 3 px border), as tall as the big clock and the workspace box beside it. Elsewhere, application icons from the system theme keep their sizes (20 px in the bottom strip).
 - The labels of `.ws` and `.layout`, the privacy words and the player's icons, as said above.
 
 ## Icons
