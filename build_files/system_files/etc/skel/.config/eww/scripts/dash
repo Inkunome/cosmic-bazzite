@@ -10,8 +10,18 @@
 here=$(dirname "$(readlink -f "$0")")
 # one dash command at a time: a double press (key repeat) used to send two `eww open` at once, and the one that arrived while
 # the daemon was busy opening the first made eww start a second daemon
-exec 9>"${XDG_RUNTIME_DIR:-/tmp}/ink-dash.lock"
-flock -w 2 9 || [[ ${1:-} == close ]] || exit 0
+# (a mkdir lock, not flock: a file descriptor is inherited by the eww daemon that `eww open` may start, which then holds the
+# lock for as long as it lives and nothing opens any more)
+LOCK="${XDG_RUNTIME_DIR:-/tmp}/ink-dash.lock.d"
+got=0
+for _ in $(seq 1 20); do
+    if mkdir "$LOCK" 2>/dev/null; then got=1; break; fi
+    # a lock older than 10 s is left over from a command that was killed
+    [[ -n $(find "$LOCK" -maxdepth 0 -mmin +0.17 2>/dev/null) ]] && rmdir "$LOCK" 2>/dev/null
+    sleep 0.1
+done
+((got)) || [[ ${1:-} == close ]] || exit 0
+((got)) && trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 is_open() { eww active-windows 2>/dev/null | grep -q '^dashboard:\|^launcher:\|^expose:'; }
 open_kind() {
     local kind=$1 idx w h
@@ -23,7 +33,7 @@ open_kind() {
         if pgrep -x eww-wayland >/dev/null; then
             sleep 2; timeout 3 eww ping >/dev/null 2>&1 || { swaymsg -q mode default; return 1; }   # busy: try again, never open
         else
-            "$here/screens" apply 9>&-
+            "$here/screens" apply
         fi
     fi
     if [[ $kind == launcher ]]; then
@@ -48,7 +58,7 @@ current() { eww active-windows 2>/dev/null | sed -n 's/^\(dashboard\|launcher\|e
 case "${1:-toggle}" in
     open) open_kind "${2:-launcher}" ;;
     close) swaymsg -q mode default
-           timeout 3 eww close dashboard launcher expose >/dev/null 2>&1; [[ $? == 124 ]] && exec "$here/panic" ;;
+           timeout 3 eww close dashboard launcher expose >/dev/null 2>&1; [[ $? == 124 ]] && { rmdir "$LOCK" 2>/dev/null; exec "$here/panic"; } ;;
     toggle)
         kind=${2:-launcher}
         if [[ $(current) == "$kind" ]]; then "$here/dash" close; else open_kind "$kind"; fi ;;

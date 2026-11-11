@@ -1,8 +1,14 @@
 #!/bin/bash
 # Escape hatch for a launcher / dashboard that hangs and eats the keyboard (Ctrl+Alt+Escape, also run by `dash close` when eww
-# does not answer): leave the binding mode, kill every eww process (its panels disappear with it), and bring the bar back.
+# does not answer, and by `ewwguard` when two eww daemons run): leave the binding mode, stop every eww process, remove what eww
+# left behind (its scripts keep running when it is killed, and pile up at each restart), and bring the bar back.
 swaymsg -q mode default
+timeout 3 eww kill >/dev/null 2>&1
 pkill -KILL -x eww-wayland
-sleep 0.5
+sleep 0.3
+kill_tree() { local c; for c in $(pgrep -P "$1"); do kill_tree "$c"; done; kill "$1" 2>/dev/null; }
+# the scripts of eww's own variables, now orphans (parent 1)
+for p in $(ps -eo pid=,ppid=,args= | awk '$2 == 1 && /ink-scratch watch|scripts\/workspaces|ink-layout watch|scripts\/media|eww\/scripts\//  && !/screens watch|winpill watch|expose watch/ { print $1 }'); do kill_tree "$p"; done
+rm -rf "${XDG_RUNTIME_DIR:-/tmp}/ink-dash.lock.d"
 "$(dirname "$(readlink -f "$0")")/screens" apply >/dev/null 2>&1
 exit 0
