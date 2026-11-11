@@ -24,19 +24,30 @@ fullscreen_focused() {
 off() { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "un${line%% *} $k" 2>/dev/null; done; }
 on()  { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "$line" 2>/dev/null; done; }
 
+# bind / unbind act on the binding mode sway is in at that moment: do nothing in the launcher, dash... modes (their own Ctrl+Space
+# closes the panel) and catch up when the mode is "default" again
+in_default_mode() { [[ $(swaymsg -t get_binding_state 2>/dev/null | jq -r .name) == default ]]; }
+# make the bindings match the focused window; called at every event and once when (re)subscribing, so a missed event cannot
+# leave the shortcuts off
+sync() {
+    in_default_mode || return 0
+    if fullscreen_focused; then off; guarded=1      # again each time: a config reload brings the keys back
+    elif ((guarded)); then on; guarded=0; fi
+}
+
 case "${1:-watch}" in
     watch)
         exec 8>"${XDG_RUNTIME_DIR:-/tmp}/ink-gameguard.lock"; flock -n 8 || exit 0
         guarded=0
-        trap '((guarded)) && on; exit 0' EXIT TERM INT
+        trap '((guarded)) && in_default_mode && on; exit 0' EXIT TERM INT
         while true; do
-            # one event per change of focus, fullscreen state or workspace; re-subscribe if sway restarts
+            sync
+            # one event per change of focus, fullscreen state, workspace or binding mode; re-subscribe if sway restarts
             while read -r ev; do
                 # a title change (a terminal, a browser tab) is the most frequent event and cannot change anything here
                 [[ $ev == *'"change": "title"'* || $ev == *'"change":"title"'* ]] && continue
-                if fullscreen_focused; then off; guarded=1      # again at each event: a config reload brings the keys back
-                elif ((guarded)); then on; guarded=0; fi
-            done < <(swaymsg -t subscribe -m '["window","workspace"]' 2>/dev/null)
+                sync
+            done < <(swaymsg -t subscribe -m '["window","workspace","mode"]' 2>/dev/null 8>&-)
             sleep 2
         done ;;
     off) off ;;
