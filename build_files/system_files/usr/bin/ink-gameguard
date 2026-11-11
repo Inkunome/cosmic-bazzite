@@ -31,7 +31,9 @@ case "${1:-watch}" in
         trap '((guarded)) && on; exit 0' EXIT TERM INT
         while true; do
             # one event per change of focus, fullscreen state or workspace; re-subscribe if sway restarts
-            while read -r _; do
+            while read -r ev; do
+                # a title change (a terminal, a browser tab) is the most frequent event and cannot change anything here
+                [[ $ev == *'"change": "title"'* || $ev == *'"change":"title"'* ]] && continue
                 if fullscreen_focused; then off; guarded=1      # again at each event: a config reload brings the keys back
                 elif ((guarded)); then on; guarded=0; fi
             done < <(swaymsg -t subscribe -m '["window","workspace"]' 2>/dev/null)
