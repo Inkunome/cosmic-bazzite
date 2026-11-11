@@ -35,16 +35,18 @@ cp -a build_files/system_files/etc/skel/.config/. "$T/home/.config/"
 Things the running image does not have yet, and how the headless home gets them:
 
 - **Fonts** the branch adds: copy the font files the branch ships (look under `build_files/system_files/usr/share/fonts/`) into `$T/home/.local/share/fonts/`. For a family the branch installs as a package (see `build_files/build.sh`) and that `fc-list` does not show on this machine, take the files from the `dist/fonts/` folder of the design system's repository if you have it, into the same folder. Then `HOME=$T/home fc-cache -f`. If a family cannot be found, say which: the screenshots would show a fallback font and must not be committed.
-- **Wallpaper** and other files the branch adds under `usr/share`: the sway configuration names their installed path, which does not exist yet. Add `$T/home/.config/ink/sway.d/90-try.conf` with an `output * bg <path in the checkout> fill` line (that directory is included last by the configuration).
+- **Wallpaper** and other files the branch adds under `usr/share`: the sway configuration names their installed path, and sway refuses the whole file when it is missing. In the headless copy only, rewrite that path to the checkout: `sed -i "s#/usr/share/backgrounds/ink/#$PWD/build_files/system_files/usr/share/backgrounds/ink/#" $T/home/.config/sway/config` (a `90-try.conf` line is too late: the error comes first).
 
-Start it. The previous screenshots of the README were taken this way, but the exact invocation was not recorded, and swayfx needs a GL renderer for its effects; start from this and adapt:
+Start it (verified 2026-11-11). Three things matter: `XDG_SESSION_TYPE=wayland` (`/usr/bin/eww` runs the X11 build without it and every `eww open` fails with "Failed to get x11 window"), a clean environment (your shell's `DISPLAY` and `DBUS_SESSION_BUS_ADDRESS` would make eww read the live session's media player and tray: it showed the owner's playing track), and `WLR_RENDERER=gles2`.
 
 ```
-env -i HOME="$T/home" XDG_RUNTIME_DIR="$T/run" PATH="$PATH" LANG="${LANG:-C.UTF-8}" \
+env -i HOME="$T/home" XDG_RUNTIME_DIR="$T/run" PATH="$PATH" LANG="${LANG:-C.UTF-8}" XDG_SESSION_TYPE=wayland \
     XDG_CONFIG_HOME="$T/home/.config" XDG_CACHE_HOME="$T/home/.cache" \
-    WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 \
-    dbus-run-session sway -c "$T/home/.config/sway/config" >"$T/sway.log" 2>&1 &
+    WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=gles2 \
+    dbus-run-session sway -c "$T/home/.config/sway/config" >"$T/sway.log" 2>&1 </dev/null &
 ```
+
+After ten seconds the bar and the strip are open by themselves (autostart). For every later command take the session's own environment: `SWAYSOCK=$(ls $T/run/sway-ipc*.sock)`, `WAYLAND_DISPLAY=wayland-1`, `DISPLAY=:1`, `XDG_SESSION_TYPE=wayland`, and `DBUS_SESSION_BUS_ADDRESS` read from `/proc/<pid of "$T/home/.config/eww/scripts/screens watch">/environ`. Start terminals with a neutral prompt and directory (`alacritty --working-directory $HOME/work -T notes -e env PS1='\$ ' bash --norc`) or the user name and path end up in the pictures. Flyouts: `HOVER_MS=100 ~/.config/eww/scripts/popopen quick qs 0` and `... keys keys 0`, then `eww close <window>`. Portrait: `swaymsg create_output`, `output HEADLESS-2 resolution 1080x1920 position 1920 0`, `focus output HEADLESS-2`, grim `-o HEADLESS-2`. A worktree created in the devbox has a `.git` file pointing to `/run/host/...`, which does not exist on the host: use `GIT_DIR=<repo>/.git/worktrees/<name> GIT_WORK_TREE=$PWD` instead of editing it.
 
 Then, with `SWAYSOCK` set to the socket that appears in `$T/run` and the same `HOME` and `XDG_RUNTIME_DIR` on every command:
 
@@ -59,7 +61,7 @@ When you find the invocation that works, **write it into this file** in place of
 
 Compare with the specification, piece by piece: bar chips, the branch under the bar, focused and unfocused windows, the bottom strip, the launcher (Ctrl+Space), the dashboard (Alt+Space), the quick settings and the other flyouts (they open on hover: `~/.config/eww/scripts/popopen <window> <var> <monitor>` opens one without a pointer; read the script for its arguments), expose (Super+Tab), the layout picker (Super+G), a notification (`notify-send "Screenshot" "Copied to clipboard"`), the screenshot menu (fuzzel), the portrait screen (workspaces, dock, clock; no bar).
 
-**The lock screen is checked here, before anything goes live.** A swaylock configuration with a key swaylock does not know makes it exit, and a lock that does not start is a security problem, not a cosmetic one. In the headless session run `swaylock -f` (it locks only that session), confirm with `pgrep -x swaylock` that it is running and with a screenshot that it draws the new colours, then end it by the pid you started (`kill <pid>`), never with `pkill swaylock`, which would also hit the lock of the live session. If swaylock refuses to start, stop: the branch is not fit for the live step until that is fixed.
+**The lock screen is checked here, before anything goes live.** A swaylock configuration with a key swaylock does not know makes it exit, and a lock that does not start is a security problem, not a cosmetic one. In the headless session run `swaylock -f` (it locks only that session), confirm with `pgrep -x swaylock` that it is running and with a screenshot that it draws the new colours, then **unlock it with `kill -USR1 <pid>`** (a plain `kill` makes sway treat the locker as crashed and keep the whole session locked behind a solid red screen: the session must then be restarted), by the pid you checked belongs to the headless `XDG_RUNTIME_DIR`, never with `pkill swaylock`, which would also hit the lock of the live session. If swaylock refuses to start, stop: the branch is not fit for the live step until that is fixed.
 
 **The window shadow.** swayfx's shadow with a very small blur radius is the least certain part of the look: a radius of 0 is undefined in its shader, and the branch uses the smallest defined value. Look at the focused window's right and bottom edges. If the shadow is garbled, missing or soft, set `shadows disable` in the sway configuration (the specification's fallback) and commit that.
 
