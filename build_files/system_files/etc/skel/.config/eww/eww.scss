@@ -79,6 +79,9 @@ $pixel: "Pixelify Sans", monospace;
 .pop { background-color: $surface; border: 3px solid $fg; padding: 14px 16px; margin: 0 6px 6px 0; box-shadow: 4px 4px 0 $line; }
 .pop-title { font-family: $pixel; font-weight: 600; font-size: 18px; color: $accent; }
 .dim { color: $muted; }
+// data in IBM Plex Mono: percentages, key hints (window titles: .strip-win, .ecard .dim)
+.pct { font-family: $mono; }
+.hint { font-family: $mono; font-size: 12px; }
 .pop-btn { border: 2px solid $muted; padding: 1px 8px; }
 .pop-btn, .pop-btn label { font-family: $mono; font-size: 12px; color: $fg; }
 .pop-btn:hover { background-color: $accent-tint; }
@@ -166,6 +169,7 @@ calendar.highlight { color: $muted; font-weight: bold; }
 .ecard { border: 3px solid $surface; padding: 8px; }
 .ecard:hover { background-color: $accent-tint; }
 .ecard.focused { border-color: $accent; }
+.ecard .dim { font-family: $mono; font-size: 12px; }
 .ethumb { background-color: $bg; }
 .ews { background-color: $bg; border: 2px solid $bg; padding: 2px 8px; }
 .ews, .ews label { font-family: $mono; font-weight: bold; color: $fg; }

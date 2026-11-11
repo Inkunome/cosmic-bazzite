@@ -232,7 +232,7 @@
               :onclick "~/.config/eww/scripts/audio mute ${kind}"
         {data.muted ? "${name} (muted)" : name})
       ;; the number comes from the same variable the slider writes, so it moves with the slider
-      (label :halign "end" :text "${round(val, 0)}%"))
+      (label :class "pct" :halign "end" :text "${round(val, 0)}%"))
     (scale :timeout "10s" :class "slider" :min 0 :max 101 :value val
            :onchange "~/.config/eww/scripts/audio set ${kind} {}")))
 
@@ -298,7 +298,7 @@
       (box :orientation "v" :space-evenly false :visible {qs.bright >= 0}
         (box :space-evenly false
           (label :class "dim" :halign "start" :hexpand true :text "brightness")
-          (label :halign "end" :text "${qs.bright}%"))
+          (label :class "pct" :halign "end" :text "${qs.bright}%"))
         (scale :timeout "10s" :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
                :onchange "brightnessctl -q set {}%"))
       (label :class "pop-title" :halign "start" :text "settings")
@@ -374,7 +374,7 @@
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
       (box :space-evenly false
         (label :class "pop-title" :halign "start" :hexpand true :text "shortcuts")
-        (label :class "dim" :halign "end" :text "Super = the Windows key"))
+        (label :class "dim hint" :halign "end" :text "Super = the Windows key"))
       (box :spacing 24 :valign "start"
         (box :orientation "v" :space-evenly false :spacing 5 :valign "start"
           (label :class "pop-title" :halign "start" :text "apps")
@@ -493,7 +493,7 @@
       (box :spacing 6 :halign "start"
         (for a in pinned
           (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :docked {a.docked} :selected {a.idx == sel})))
-      (label :class "dim" :halign "start" :text "right-click: pin or unpin   ·   middle-click: add to or remove from the dock"))))
+      (label :class "dim hint" :halign "start" :text "right-click: pin or unpin   ·   middle-click: add to or remove from the dock"))))
 
 (defwidget launcher-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false :spacing 12
@@ -648,7 +648,7 @@
   (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "expose")
-      (label :class "dim" :halign "end" :text {picked != "" ? "now click a workspace, or + new workspace, to put it there  ·  right-click it again to cancel   " : "click a window to jump to it  ·  right-click one to move it to another workspace or a new one   "})
+      (label :class "dim hint" :halign "end" :text {picked != "" ? "now click a workspace, or + new workspace, to put it there  ·  right-click it again to cancel   " : "click a window to jump to it  ·  right-click one to move it to another workspace or a new one   "})
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
     (scroll :vscroll true :hscroll true :vexpand true
       (box :orientation "v" :space-evenly false :spacing 18
@@ -711,7 +711,7 @@
       (lay-card :id "v" :name "Vertical" :key "V" :desc "top to bottom")
       (lay-card :id "t" :name "Tabbed" :key "T" :desc "tabs in a row")
       (lay-card :id "s" :name "Stacked" :key "S" :desc "title list"))
-    (label :class "dim" :halign "start" :text "its own group, new windows open inside  ·  H V T S, Esc to cancel")))
+    (label :class "dim hint" :halign "start" :text "its own group, new windows open inside  ·  H V T S, Esc to cancel")))
 
 ;; Where is the pointer? A transparent full-screen window that is there for a moment: the toolkit reports the position of the
 ;; pointer when the window appears under it (scripts/wslayout pointer). The picker opens under that point.
@@ -738,7 +738,7 @@
     (box :space-evenly false :spacing 8
       (image :path "${EWW_CONFIG_DIR}/icons/${icon}.svg" :image-width 24 :image-height 24)
       (label :class "bat-name" :halign "start" :hexpand true :limit-width 28 :text name)
-      (label :halign "end" :text "${pct}%"))
+      (label :class "pct" :halign "end" :text "${pct}%"))
     (progress :value pct :class "bar-meter")
     (label :class "dim" :halign "start" :text "${kind}  ·  ${state == 'unknown' ? 'state not reported' : replace(state, '-', ' ')}${time != '' ? '  ·  ' + time : ''}")))
 
@@ -753,7 +753,7 @@
       (box :orientation "v" :space-evenly false :spacing 4 :visible {qs.bright >= 0}
         (box :space-evenly false
           (label :class "dim" :halign "start" :hexpand true :text "screen brightness")
-          (label :halign "end" :text "${qs.bright}%"))
+          (label :class "pct" :halign "end" :text "${qs.bright}%"))
         (scale :timeout "10s" :class "slider" :min 1 :max 101 :value {qs.bright >= 0 ? qs.bright : 50}
                :onchange "brightnessctl -q set {}%"))
       ;; the power profile (when power-profiles-daemon is there): click one to switch
