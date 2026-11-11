@@ -10,16 +10,18 @@ alias run-vm := run-vm-qcow2
 default:
     @just --list
 
-# Check Just Syntax
+# Check Just Syntax, then the static checks of the desktop's look (build_files/tools/check-look.sh)
 [group('Just')]
 check:
     #!/usr/bin/bash
+    set -e
     find . -type f -name "*.just" | while read -r file; do
     	echo "Checking syntax: $file"
     	just --unstable --fmt --check -f $file
     done
     echo "Checking syntax: Justfile"
     just --unstable --fmt --check -f Justfile
+    bash build_files/tools/check-look.sh
 
 # Fix Just Syntax
 [group('Just')]
