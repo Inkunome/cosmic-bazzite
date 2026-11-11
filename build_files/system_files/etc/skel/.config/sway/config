@@ -206,10 +206,12 @@ exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 exec ~/.config/eww/scripts/winpill watch
 
-# while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it
+# while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it (Escape leaves the mode by itself, and
+# Ctrl+Alt+Escape kills and restarts eww if the panel hangs and eats the keyboard)
 # the launcher: Up/Down/Tab/Shift+Tab move the selection (Left/Right too while the search is empty, see below), Return launches it (typing still goes to the search field)
 mode "launcher" {
-    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Escape mode "default"; exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+Mod1+Escape exec ~/.config/eww/scripts/panic
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
     bindsym Mod1+space exec ~/.config/eww/scripts/dash close
     bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
@@ -223,7 +225,8 @@ mode "launcher" {
 
 # the same while the search field is empty: Left and Right choose a pinned app (`apps search` switches between the two)
 mode "launcher-pinned" {
-    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Escape mode "default"; exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+Mod1+Escape exec ~/.config/eww/scripts/panic
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
     bindsym Mod1+space exec ~/.config/eww/scripts/dash close
     bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
@@ -248,7 +251,8 @@ mode "winlayout" {
 }
 
 mode "dash" {
-    bindsym Escape exec ~/.config/eww/scripts/dash close
+    bindsym Escape mode "default"; exec ~/.config/eww/scripts/dash close
+    bindsym Ctrl+Mod1+Escape exec ~/.config/eww/scripts/panic
     bindsym Ctrl+space exec ~/.config/eww/scripts/dash close
     bindsym Mod1+space exec ~/.config/eww/scripts/dash close
     bindsym $mod+Tab exec ~/.config/eww/scripts/dash close
