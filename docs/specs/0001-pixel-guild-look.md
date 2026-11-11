@@ -145,7 +145,8 @@ Every SVG under `eww/icons/` is redrawn; file names stay unless said otherwise, 
   - `muted`: coffee (off), bell-off.
   - `bad`: vol-muted, power-poweroff, the fill of battery-0.
   - `warn`: privacy-mic, privacy-cam, privacy-screen, the fill of battery-20.
-  - `px-body`: the fill of the other batteries; `gold`: the bolt of the charging ones.
+  - `px-body`: the fill of the other batteries; `gold`: the bolt of the charging ones, except on battery-20-charging, whose bolt is `fg` because its `warn` fill has the same value as `gold`.
+  - power-suspend is a crescent moon.
 - **The inkwell** (11×8): `M4 0h3v2h-3zM2 2h7v1h-7zM1 3h9v4h-9zM2 7h7v1h-7z` in `accent`, and `M3 4h1v1h-1z` in `fg`.
 - **The bramble**, `vine-bottom.svg`, a 48×12 tile: `M0 3h12v3h-12zM12 6h12v3h-12zM24 3h12v3h-12zM36 0h12v3h-12zM9 6h3v3h-3zM33 6h3v3h-3z` in `px-body`; `M18 0h6v3h-6zM18 9h3v3h-3z` in `accent`; `M42 3h3v3h-3z` in `gold`.
 - Icons already drawn for the design, to reuse as they are (12×12 paths):
@@ -157,7 +158,7 @@ Every SVG under `eww/icons/` is redrawn; file names stay unless said otherwise, 
   - launcher (the design system's search icon)
   - vol-high `M2 5h2v2h-2zM4 4h1v4h-1zM5 3h1v6h-1zM8 4h1v4h-1zM10 3h1v6h-1z`
   - coffee `M2 4h7v5h-7zM9 5h2v1h-2zM10 6h1v2h-1zM9 8h2v1h-2zM1 10h9v1h-9zM4 1h1v2h-1zM6 1h1v2h-1z`
-  - play `M4 2h1v8h-1zM5 3h2v6h-2zM7 4h1v4h-1zM8 5h1v2h-1z`, prev `M7 2h1v8h-1zM5 3h2v6h-2zM4 4h1v4h-1zM3 5h1v2h-1z`
+  - play `M4 2h1v8h-1zM5 3h2v6h-2zM7 4h1v4h-1zM8 5h1v2h-1z`, prev, with a bar so it mirrors next (bar, then the left triangle) `M2 2h1v8h-1zM8 2h1v8h-1zM6 3h2v6h-2zM5 4h1v4h-1zM4 5h1v2h-1z`; next is its mirror `M3 2h1v8h-1zM4 3h2v6h-2zM6 4h1v4h-1zM7 5h1v2h-1zM9 2h1v8h-1z` (a plain mirror of the old prev was the play icon itself)
 
 ## Wallpaper
 
