@@ -10,7 +10,7 @@ alias run-vm := run-vm-qcow2
 default:
     @just --list
 
-# Check Just Syntax, then the static checks of the desktop's look (build_files/tools/check-look.sh)
+# Check Just Syntax, then the static checks of the look (check-look.sh skips a check whose tool is missing)
 [group('Just')]
 check:
     #!/usr/bin/bash

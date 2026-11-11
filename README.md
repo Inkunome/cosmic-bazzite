@@ -167,6 +167,11 @@ just run-vm-qcow2
 just check          # lint the Justfile, then the static checks of the look (build_files/tools/check-look.sh)
 ```
 
+The static checks of the look (`build_files/tools/check-look.sh`) read the files; nothing is rendered. They use `python3` and `git`, plus `grass` (the Sass compiler eww embeds: `cargo install grass --locked`), `fc-scan`, `dnf` with network access, and `shellcheck`; `GRASS=` and `SHELLCHECK=` name a binary by path.
+
+- `build_files/tools/check-look.sh` (what `just check` runs): every check whose tool is present runs; a check whose tool is missing prints `SKIPPED (<tool> not found)` and does not fail the run. Only a real failure does.
+- `build_files/tools/check-look.sh --strict`: a missing tool is a failure too, so every check must run. This is the acceptance mode, for a machine that has all the tools.
+
 GitHub Actions (`.github/workflows/build.yml`) builds the image on every pull request and publishes and signs it when something lands on `main`, and every day at 10:05 UTC to follow Bazzite. Add your cosign private key as the `SIGNING_SECRET` repository secret; the public key is `cosign.pub`. ISO builds (`build-disk.yml`) run on demand.
 
 ## Notes

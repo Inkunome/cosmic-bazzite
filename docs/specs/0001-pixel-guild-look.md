@@ -208,7 +208,7 @@ The devbox has no eww, no sway, no grim. Nothing in this change can be rendered 
 
 ## Acceptance (static, in the devbox)
 
-A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on the first failure. It is kept in the repository and wired into `just check`.
+A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on the first failure. It is kept in the repository and wired into `just check`. A check whose tool is missing prints `SKIPPED (<tool> not found)` and does not fail the run, so `just check` works on a machine without the tools; with `--strict` a missing tool is a failure, and acceptance means `check-look.sh --strict` passes.
 
 1. `eww.scss` compiles with `grass` (the Sass compiler eww embeds), installed into a scratch folder with `cargo install grass --locked --root <scratch>`; if that cannot be installed offline or online, say so and use another Sass compiler, naming it.
 2. In `eww.scss` and `eww.yuck`: no colour literal (`#rgb`, `#rrggbb`, `rgb(`, `rgba(`, a CSS colour name used as a colour); in `eww.scss` no `border-radius` other than 0; no `gap:`, `clip-path`, `display:`, `var(`.
