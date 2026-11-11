@@ -125,8 +125,11 @@ git push -u origin "$(git branch --show-current)"
 The pull request's text: if the branch's worktree has an untracked `PR_BODY.md`, use it (and delete it afterwards); otherwise write one from the specification: what changes, what does not, how it was checked (the static script; the headless session; the live try or not), what was **not** checked (the image build, a VM), and the new screenshots.
 
 ```
+gh pr view --json number,isDraft,url 2>/dev/null     # a pull request may already be open for the branch
 gh pr create --base main --title "<one line>" --body-file PR_BODY.md
 ```
+
+If the pull request already exists, do not open another: the push above adds your commits to it. Tick what you checked in its list of things not checked yet (`gh pr edit --body-file`), add what you found, and leave it a draft until the owner has seen the headless result; `gh pr ready` is theirs to ask for.
 
 Without `gh`: give the owner the compare link that `git push` printed and the text to paste.
 
