@@ -96,4 +96,16 @@ else
     for s in "${scripts[@]}"; do echo "  ok: ${s#"$root"/}"; done
 fi
 
+step 11 "colours copied into sway, mako, fuzzel, swaylock, alacritty and zellij are opaque token values"
+check copied
+
+step 12 "every key of swaylock, mako, fuzzel and the sway look section is a known one"
+check keys
+
+step 13 "the commands of eww.yuck's :on... attributes are the same as $BASE_REF's"
+check commands
+
+step 14 "every name an eww.yuck expression reads is defined, every expression has a plausible shape"
+check variables
+
 printf '\nall checks passed\n'

@@ -220,6 +220,10 @@ A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on 
 8. The wallpaper script run twice gives the same bytes as the committed PNG, which is 3840×2160.
 9. `fc-scan` reads each shipped font file; the package names in `build.sh` exist in Fedora's repositories.
 10. `shellcheck` passes on every script added or changed.
+11. Every colour copied into the sway look section, mako, fuzzel, swaylock, alacritty and zellij is a token value and opaque (the one exception: sway's fully transparent `shadow_inactive_color`).
+12. Every key of the swaylock, mako and fuzzel files, and every option of the sway look section, is on an allow-list holding exactly the keys in use, each verified against the program's man page; a new key fails until it is verified and added on purpose.
+13. The set of distinct commands in the `:on…` attributes of `eww.yuck` equals `main`'s.
+14. Every variable an `eww.yuck` expression or `${…}` interpolation reads is defined (a `defvar`, `defpoll` or `deflisten`, a parameter in scope, a `for` variable, an `EWW_*` built-in), every function called is one of eww's, and every expression has a plausible shape (balanced, no two operands or operators in a row, each `?` with its `:`). Best effort, with a tokenizer of the script's own, not eww's parser.
 
 ## Test plan
 

@@ -10,6 +10,10 @@ reasons on failure.
   check-look.py --root DIR svg                every icon on its grid, whole coordinates, token colours only
   check-look.py --root DIR sway --base REF    bindings identical to REF, no blur, square corners, no layer effects
   check-look.py --root DIR palette            no old palette value left under etc/skel/.config
+  check-look.py --root DIR copied             colours copied into sway, mako, fuzzel, swaylock, alacritty, zellij
+  check-look.py --root DIR keys               every key of swaylock, mako, fuzzel and the sway look section is known
+  check-look.py --root DIR commands --base REF  the :on... commands of eww.yuck are the same as REF's
+  check-look.py --root DIR variables          every name read by an eww.yuck expression is defined
   check-look.py png-size FILE W H             the PNG's size
 """
 import argparse
@@ -632,6 +636,417 @@ def cmd_png_size(path, w, h):
     finish(f"{os.path.basename(path)} is {w}x{h}")
 
 
+# ── 11. colours copied from the tokens into the other programs' files ──
+LOOK_END = "# ── input"
+COPIES = {
+    # file: (kind of colour syntax)
+    "sway/config": "hash",
+    "mako/config": "hash",
+    "fuzzel/fuzzel.ini": "fuzzel",
+    "swaylock/config": "bare",
+    "alacritty/alacritty.toml": "hash",
+    "zellij/themes/ink.kdl": "hash",
+}
+
+
+def look_section(text):
+    if LOOK_END not in text:
+        err(f"sway: the marker '{LOOK_END}' that ends the look section is missing")
+        return text
+    return text[:text.index(LOOK_END)]
+
+
+def strip_hash_comment(line, kind):
+    """The line without its comment. In the hash-colour formats a comment starts with '#' followed by a space or at the
+    start of the line ('#150F28' is a colour); zellij's comments start with //."""
+    if line.lstrip().startswith("#") and not re.match(r"\s*#[0-9A-Fa-f]{3,8}\b", line):
+        return ""
+    line = re.sub(r"\s#\s.*$", "", line) if kind != "zellij" else line
+    return re.sub(r"\s*//.*$", "", line)
+
+
+def colour_ok(hexval, where, allow_transparent=False):
+    """hexval: 6 or 8 hex digits. A token value, opaque (alpha FF when written)."""
+    tokens = {v[1:].upper() for v in TOKENS.values()}
+    h = hexval.upper()
+    if len(h) not in (6, 8):
+        err(f"{where}: colour {hexval} is not RRGGBB or RRGGBBAA")
+        return
+    if h[:6] not in tokens:
+        err(f"{where}: colour {hexval} is not a token value (eww/_tokens.scss)")
+    if len(h) == 8 and h[6:] != "FF" and not (allow_transparent and h[6:] == "00"):
+        err(f"{where}: colour {hexval} is not opaque")
+
+
+def cmd_copied(root):
+    count = 0
+    for rel, kind in COPIES.items():
+        path = f"{SKEL}/{rel}"
+        text = read(root, path)
+        if rel == "sway/config":
+            text = look_section(text)
+        section = ""
+        for n, raw in enumerate(text.splitlines(), 1):
+            where = f"{rel}:{n}"
+            if kind == "fuzzel" or kind == "bare":
+                line = "" if raw.lstrip().startswith("#") else raw
+                m = re.match(r"\s*\[(.+)\]\s*$", line)
+                if m:
+                    section = m.group(1)
+                    continue
+                m = re.match(r"\s*([A-Za-z0-9_.-]+)\s*=\s*(\S+)", line)
+                if not m:
+                    continue
+                key, value = m.groups()
+                if (kind == "fuzzel" and section == "colors") or (kind == "bare" and key.endswith("color")):
+                    if not re.fullmatch(r"[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?", value):
+                        err(f"{where}: {key}={value} is not RRGGBB or RRGGBBAA")
+                    else:
+                        colour_ok(value, where)
+                        count += 1
+                elif re.search(r"#?\b[0-9A-Fa-f]{6}\b", value) and re.search(r"[0-9]", value):
+                    err(f"{where}: a colour-like value outside the colour keys: {key}={value}")
+                continue
+            line = strip_hash_comment(raw, "zellij" if rel.startswith("zellij") else kind)
+            for m in re.finditer(r"#([0-9A-Fa-f]+)\b", line):
+                transparent_ok = rel == "sway/config" and re.match(r"\s*shadow_inactive_color\b", line) is not None
+                colour_ok(m.group(1), where, allow_transparent=transparent_ok)
+                count += 1
+            if re.search(r"\b(rgba?|hsla?)\(", line):
+                err(f"{where}: a colour function; write the token value")
+    finish(f"{count} colours copied into sway (look section), mako, fuzzel, swaylock, alacritty and zellij: all token "
+           "values, all opaque (sway's transparent shadow_inactive_color excepted)")
+
+
+# ── 12. known keys ──
+# Exactly the keys in use, each checked against the program's man page (swaylock 1.8, mako 1.9, fuzzel 1.11, swayfx 0.6)
+# when it was added. A new key fails here until it is verified against the man page and added on purpose.
+KNOWN_KEYS = {
+    "swaylock/config": {None: {
+        "color", "inside-color", "ring-color", "key-hl-color", "bs-hl-color", "ring-ver-color", "inside-ver-color",
+        "ring-wrong-color", "inside-wrong-color", "ring-clear-color", "inside-clear-color", "line-color", "text-color",
+        "font", "indicator-radius", "show-failed-attempts"}},
+    "mako/config": {
+        None: {"font", "background-color", "text-color", "border-color", "progress-color", "border-size",
+               "border-radius", "padding", "margin", "default-timeout", "layer", "max-history", "anchor"},
+        "urgency=high": {"border-color", "default-timeout"},
+        "mode=do-not-disturb": {"invisible"},
+    },
+    "fuzzel/fuzzel.ini": {
+        "main": {"font", "prompt", "terminal", "width", "layer", "namespace"},
+        "colors": {"background", "text", "match", "selection", "selection-text", "selection-match", "border"},
+        "border": {"width", "radius"},
+    },
+}
+SWAY_LOOK_KEYS = {
+    "set", "font", "default_border", "workspace_layout", "default_orientation", "title_align", "titlebar_padding",
+    "titlebar_border_thickness", "gaps", "corner_radius", "blur", "shadows", "shadow_blur_radius", "shadow_offset",
+    "shadow_color", "shadow_inactive_color", "default_dim_inactive", "client.focused", "client.focused_inactive",
+    "client.unfocused", "client.urgent", "output",
+}
+VERIFY = "verify it against the program's man page, then add it to KNOWN_KEYS in check-look.py on purpose"
+
+
+def cmd_keys(root):
+    count = 0
+    for rel, sections in KNOWN_KEYS.items():
+        section = None
+        for n, raw in enumerate(read(root, f"{SKEL}/{rel}").splitlines(), 1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            m = re.fullmatch(r"\[(.+)\]", line)
+            if m:
+                section = m.group(1)
+                if section not in sections:
+                    err(f"{rel}:{n}: section [{section}] is not known: {VERIFY}")
+                continue
+            key = re.split(r"\s*=", line, maxsplit=1)[0].strip()
+            count += 1
+            if key not in sections.get(section, set()):
+                err(f"{rel}:{n}: key '{key}'{f' in [{section}]' if section else ''} is not known: {VERIFY}")
+    for n, raw in enumerate(look_section(read(root, SWAY)).splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        count += 1
+        key = line.split()[0]
+        if key not in SWAY_LOOK_KEYS:
+            err(f"sway/config:{n}: option '{key}' in the look section is not known: {VERIFY}")
+    finish(f"{count} keys of swaylock, mako, fuzzel and the sway look section are all known")
+
+
+# ── 13. commands of eww.yuck ──
+def yuck_commands(src):
+    out = set()
+    for f in [w for top in parse(src) if is_form(top) for w in walk(top)]:
+        items = f[1]
+        for i, x in enumerate(items[:-1]):
+            if not is_form(x) and x[0] == "sym" and re.fullmatch(r":on[a-z]+", x[1]):
+                v = items[i + 1]
+                if is_form(v):
+                    out.add(("form", x[1]))
+                else:
+                    out.add(v[1] if v[0] != "expr" else "{" + v[1] + "}")
+    return out
+
+
+def cmd_commands(root, base):
+    try:
+        new = yuck_commands(read(root, EWW + "/eww.yuck"))
+        old = yuck_commands(git_show(root, base, EWW + "/eww.yuck"))
+    except YuckError as e:
+        err(f"eww.yuck: {e}")
+        finish("")
+    for c in sorted(new - old):
+        err(f"eww.yuck: a command that {base} does not have: {c}")
+    for c in sorted(old - new):
+        err(f"eww.yuck: a command of {base} that is gone: {c}")
+    finish(f"the {len(new)} distinct commands of the :on... attributes are the same as {base}'s")
+
+
+# ── 14. variables and expressions of eww.yuck ──
+EWW_BUILTIN_VARS = {"EWW_TIME", "EWW_CPU", "EWW_RAM", "EWW_DISK", "EWW_BATTERY", "EWW_NET", "EWW_TEMPS",
+                    "EWW_CONFIG_DIR", "EWW_CMD", "EWW_EXECUTABLE"}
+EWW_FUNCTIONS = {"round", "floor", "ceil", "min", "max", "powi", "powf", "log", "sin", "cos", "tan", "cot", "degtorad",
+                 "radtodeg", "matches", "replace", "search", "captures", "strlength", "substring", "arraylength",
+                 "objectlength", "jq", "get_env", "formattime", "formatbytes"}
+LITERAL_SYMS = {"true", "false", "null"}
+OPS = ["?:", "?.", "==", "!=", "<=", ">=", "&&", "||", "=~", "+", "-", "*", "/", "%", "<", ">", "?", ":", "!"]
+
+
+class ExprError(Exception):
+    pass
+
+
+def expr_tokens(text):
+    """Tokens of a simplexpr: ('str', inner-exprs), ('num',), ('id', name, called), ('op', op), punctuation."""
+    out = []
+    i = 0
+    while i < len(text):
+        c = text[i]
+        if c.isspace():
+            i += 1
+        elif c in "\"'`":
+            j = i + 1
+            inner = []
+            while j < len(text) and text[j] != c:
+                if text[j] == "\\":
+                    j += 2
+                    continue
+                if text.startswith("${", j):
+                    k = scan_expr(text, j + 1)
+                    inner.append(text[j + 2:k])
+                    j = k + 1
+                    continue
+                j += 1
+            if j >= len(text):
+                raise ExprError("unterminated string")
+            out.append(("str", inner))
+            i = j + 1
+        elif c.isdigit():
+            m = re.match(r"\d+(\.\d+)?", text[i:])
+            out.append(("num",))
+            i += len(m.group(0))
+        elif c.isalpha() or c == "_":
+            m = re.match(r"[A-Za-z_][A-Za-z0-9_]*((\??\.)[A-Za-z_][A-Za-z0-9_-]*)*", text[i:])
+            name = m.group(0)
+            i += len(name)
+            rest = text[i:].lstrip()
+            out.append(("id", re.split(r"\??\.", name)[0], rest.startswith("(") and "." not in name))
+        elif re.match(r"\??\.[A-Za-z_]", text[i:]):
+            # a field after an index or a call: x["/"].used_perc
+            m = re.match(r"\??\.[A-Za-z_][A-Za-z0-9_-]*", text[i:])
+            out.append(("field",))
+            i += len(m.group(0))
+        elif c in "()[],":
+            out.append((c,))
+            i += 1
+        else:
+            for op in OPS:
+                if text.startswith(op, i):
+                    out.append(("op", op))
+                    i += len(op)
+                    break
+            else:
+                raise ExprError(f"unexpected character {c!r}")
+    return out
+
+
+def check_expr(text, names, where):
+    """Best-effort grammar and name check of one simplexpr; `names` are the variables in scope."""
+    try:
+        toks = expr_tokens(text)
+    except (ExprError, YuckError) as e:
+        err(f"{where}: {e} in {{{text}}}")
+        return
+    if not toks:
+        err(f"{where}: empty expression")
+        return
+    expect = True            # an operand is expected
+    stack = []               # '(' group, 'call', '[' array or index
+    ternary = 0
+    prev = None
+    for t in toks:
+        k = t[0]
+        if k == "field":
+            if expect:
+                err(f"{where}: a field where an operand is expected in {{{text}}}")
+                return
+            prev = t
+            continue
+        if k in ("str", "num", "id"):
+            if not expect:
+                err(f"{where}: two operands in a row in {{{text}}}")
+                return
+            expect = False
+            if k == "str":
+                for inner in t[1]:
+                    check_expr(inner, names, where)
+            elif k == "id":
+                name, called = t[1], t[2]
+                if called:
+                    if name not in EWW_FUNCTIONS:
+                        err(f"{where}: unknown function {name}() in {{{text}}}")
+                elif name not in LITERAL_SYMS and name not in names:
+                    err(f"{where}: variable '{name}' is not defined here (in {{{text}}})")
+        elif k == "op":
+            op = t[1]
+            if op == "?.":
+                err(f"{where}: '?.' after a non-name in {{{text}}}")
+                return
+            if expect:
+                if op not in ("!", "-"):
+                    err(f"{where}: operator '{op}' where an operand is expected in {{{text}}}")
+                    return
+                continue
+            if op == "!":
+                err(f"{where}: '!' after an operand in {{{text}}}")
+                return
+            if op == "?":
+                ternary += 1
+            elif op == ":":
+                ternary -= 1
+                if ternary < 0:
+                    err(f"{where}: ':' without '?' in {{{text}}}")
+                    return
+            expect = True
+        elif k in ("(", "["):
+            if expect:
+                stack.append(k)
+            elif k == "(" and prev and prev[0] == "id" and prev[2]:
+                stack.append("call")
+                expect = True
+                prev = t
+                continue
+            elif k == "[":
+                stack.append("index")
+                expect = True
+                prev = t
+                continue
+            else:
+                err(f"{where}: '{k}' after an operand in {{{text}}}")
+                return
+            expect = True
+        elif k in (")", "]"):
+            if not stack:
+                err(f"{where}: '{k}' without an opening in {{{text}}}")
+                return
+            top = stack.pop()
+            want = ")" if top in ("(", "call") else "]"
+            if k != want:
+                err(f"{where}: '{k}' closes a '{top}' in {{{text}}}")
+                return
+            empty_ok = top in ("call", "[") and prev[0] in ("(", "[")
+            if expect and not empty_ok:
+                err(f"{where}: an operand is missing before '{k}' in {{{text}}}")
+                return
+            expect = False
+        elif k == ",":
+            if not stack or stack[-1] not in ("call", "[") or expect:
+                err(f"{where}: misplaced ',' in {{{text}}}")
+                return
+            expect = True
+        prev = t
+    if stack:
+        err(f"{where}: '{stack[-1]}' never closed in {{{text}}}")
+    elif expect:
+        err(f"{where}: the expression ends on an operator in {{{text}}}")
+    elif ternary:
+        err(f"{where}: '?' without ':' in {{{text}}}")
+
+
+def check_value(tok, names, where):
+    if is_form(tok):
+        return
+    kind, text = tok[0], tok[1]
+    if kind == "expr":
+        check_expr(text, names, where)
+    elif kind == "str":
+        i = 0
+        while True:
+            i = text.find("${", i)
+            if i < 0:
+                break
+            k = scan_expr(text, i + 1)
+            check_expr(text[i + 2:k], names, where)
+            i = k + 1
+    elif kind == "sym" and not text.startswith(":") and not re.fullmatch(r"-?\d+(\.\d+)?", text) \
+            and text not in LITERAL_SYMS and text not in names:
+        err(f"{where}: variable '{text}' is not defined here")
+
+
+def check_form(form, names, src):
+    where = f"eww.yuck:{line_of(src, form[2])}"
+    items = form[1]
+    if head(form) == "for":
+        # (for VAR in ITERABLE BODY...)
+        if len(items) < 5 or items[1][0] != "sym" or items[2][1] != "in":
+            err(f"{where}: a for that is not (for VAR in ITERABLE ...)")
+            return
+        check_value(items[3], names, where)
+        inner = names | {items[1][1]}
+        for x in items[4:]:
+            check_form(x, inner, src) if is_form(x) else check_value(x, inner, where)
+        return
+    for x in items[1:]:
+        if is_form(x):
+            check_form(x, names, src)
+        else:
+            check_value(x, names, where)
+
+
+def cmd_variables(root):
+    src = read(root, EWW + "/eww.yuck")
+    try:
+        forms = parse(src)
+    except YuckError as e:
+        err(f"eww.yuck: {e}")
+        finish("")
+    globals_ = set(EWW_BUILTIN_VARS)
+    for f in forms:
+        if is_form(f) and head(f) in ("defvar", "defpoll", "deflisten"):
+            globals_.add(f[1][1][1])
+    exprs = 0
+    for f in forms:
+        if not is_form(f):
+            continue
+        h = head(f)
+        if h in ("defvar", "defpoll", "deflisten"):
+            for x in f[1][2:]:
+                check_value(x, globals_, f"eww.yuck:{line_of(src, f[2])}")
+        elif h in ("defwidget", "defwindow"):
+            params = {p.lstrip("?") for p in (t[1] for t in f[1][2][1])} if is_form(f[1][2]) else set()
+            for x in f[1][3:]:
+                if is_form(x):
+                    check_form(x, globals_ | params, src)
+                else:
+                    check_value(x, globals_ | params, f"eww.yuck:{line_of(src, f[2])}")
+        exprs += sum(1 for w in walk(f) for t in w[1] if not is_form(t) and t[0] == "expr")
+    finish(f"every name read by the {exprs} {{...}} expressions and the ${{...}} interpolations of eww.yuck is defined "
+           "(globals, parameters, for variables, EWW_*); every expression has a plausible shape")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
@@ -652,6 +1067,14 @@ def main():
         cmd_sway(root, a.base)
     elif a.check == "palette":
         cmd_palette(root)
+    elif a.check == "copied":
+        cmd_copied(root)
+    elif a.check == "keys":
+        cmd_keys(root)
+    elif a.check == "commands":
+        cmd_commands(root, a.base)
+    elif a.check == "variables":
+        cmd_variables(root)
     elif a.check == "png-size":
         cmd_png_size(a.args[0], int(a.args[1]), int(a.args[2]))
     else:
