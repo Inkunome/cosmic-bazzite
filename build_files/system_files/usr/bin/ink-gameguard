@@ -1,0 +1,38 @@
+#!/bin/bash
+# While the focused window is fullscreen (a game, a video), the shortcuts that do not use the Super key are switched off, so
+# Ctrl+Space (launcher), Alt+Space (dashboard), Alt+Tab, Alt+Esc and Ctrl+Alt+F (kill) reach the game instead. They come back as
+# soon as the window leaves fullscreen or loses the focus. Super shortcuts keep working (Super+Return leaves fullscreen).
+# sway runs `ink-gameguard watch` at login. The shortcuts are read from your sway config, so there is no second list to keep up
+# to date; add more (one per line, as written in the config, e.g. Ctrl+Shift+m) in ~/.config/ink/gameguard.keys.
+KEYS=(Ctrl+space Mod1+space Mod1+Tab Mod1+Escape Ctrl+Mod1+41)
+shopt -s nullglob
+files=("$HOME/.config/sway/config" "$HOME"/.config/ink/sway.d/*.conf)   # awk stops at a file that does not exist
+[[ -r $HOME/.config/ink/gameguard.keys ]] && mapfile -t -O "${#KEYS[@]}" KEYS < <(grep -v '^[[:space:]]*\(#\|$\)' "$HOME/.config/ink/gameguard.keys")
+
+# the binding line of a key, as written in the config (the last one wins, like in sway), without its trailing comment
+binding() {
+    awk -v k="$1" '($1 == "bindsym" || $1 == "bindcode") && $2 == k { sub(/[ \t]+#.*/, ""); line = $0 } END { if (line) print line }' "${files[@]}" 2>/dev/null
+}
+fullscreen_focused() {
+    swaymsg -t get_tree 2>/dev/null | jq -e '[recurse(.nodes[]?, .floating_nodes[]?) | select(.focused)][0].fullscreen_mode // 0 | . > 0' >/dev/null
+}
+off() { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "un${line%% *} $k" 2>/dev/null; done; }
+on()  { local k line; for k in "${KEYS[@]}"; do line=$(binding "$k"); [[ -n $line ]] && swaymsg -q "$line" 2>/dev/null; done; }
+
+case "${1:-watch}" in
+    watch)
+        exec 8>"${XDG_RUNTIME_DIR:-/tmp}/ink-gameguard.lock"; flock -n 8 || exit 0
+        guarded=0
+        trap '((guarded)) && on; exit 0' EXIT TERM INT
+        while true; do
+            # one event per change of focus, fullscreen state or workspace; re-subscribe if sway restarts
+            while read -r _; do
+                if fullscreen_focused; then off; guarded=1      # again at each event: a config reload brings the keys back
+                elif ((guarded)); then on; guarded=0; fi
+            done < <(swaymsg -t subscribe -m '["window","workspace"]' 2>/dev/null)
+            sleep 2
+        done ;;
+    off) off ;;
+    on) on ;;
+    *) sed -n '2,8p' "$0" >&2; exit 1 ;;
+esac

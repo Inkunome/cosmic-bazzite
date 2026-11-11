@@ -205,6 +205,8 @@ exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 exec ~/.config/eww/scripts/winpill watch
+# in a fullscreen window (a game) the shortcuts without Super are off, see ink-gameguard
+exec ink-gameguard watch
 
 # while the launcher or dashboard is open, Escape / Ctrl+Space / Alt+Space close it (Escape leaves the mode by itself, and
 # Ctrl+Alt+Escape kills and restarts eww if the panel hangs and eats the keyboard)

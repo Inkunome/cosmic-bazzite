@@ -152,7 +152,7 @@ systemctl enable nix-daemon.socket
 ## Default dotfiles live in /etc/skel for new users; `ink-sync` copies them into
 ## an existing home. Sway itself is selected from the GDM session menu.
 cp -a /ctx/system_files/. /
-chmod +x /usr/bin/ink-layout /usr/bin/ink-sync /usr/bin/ink-lock /usr/bin/ink-ssh-load \
+chmod +x /usr/bin/ink-layout /usr/bin/ink-sync /usr/bin/ink-lock /usr/bin/ink-ssh-load /usr/bin/ink-gameguard \
     /etc/skel/.config/eww/scripts/*
 
 # ssh-agent as a user service for every user (its socket starts it on first use, ink-ssh-load unlocks the key at login)
