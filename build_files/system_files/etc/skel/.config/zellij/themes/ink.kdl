@@ -1,6 +1,7 @@
 // ink: the Pixel Guild look for zellij. Colours: the design system's tokens, from ~/.config/eww/_tokens.scss
 // bg #150F28   surface #20173A   line #4A3B7A   fg #F3ECFF   muted #A99BC9   accent #FF7AA8   accent-tint #3A1630
 // px-highlight #B8A9F0   warn #F2B84B   bad #FF8A80   ok #6FD6A0   info #A9B8FF
+// Every text colour on its fill is at least 4.5:1; on an accent fill, text and emphasis are on-accent #150F28.
 themes {
     ink {
         // plain text: panes' text, the status bar hints
@@ -15,9 +16,9 @@ themes {
         text_selected {
             base "#150F28"
             background "#FF7AA8"
-            emphasis_0 "#3A1630"
-            emphasis_1 "#4A3B7A"
-            emphasis_2 "#20173A"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
             emphasis_3 "#150F28"
         }
         // tabs and the keys of the status bar
@@ -26,15 +27,15 @@ themes {
             background "#4A3B7A"
             emphasis_0 "#F2B84B"
             emphasis_1 "#F3ECFF"
-            emphasis_2 "#FF7AA8"
+            emphasis_2 "#6FD6A0"
             emphasis_3 "#B8A9F0"
         }
         ribbon_selected {
             base "#150F28"
             background "#FF7AA8"
-            emphasis_0 "#3A1630"
-            emphasis_1 "#20173A"
-            emphasis_2 "#4A3B7A"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
             emphasis_3 "#150F28"
         }
         table_title {
@@ -56,9 +57,9 @@ themes {
         table_cell_selected {
             base "#150F28"
             background "#FF7AA8"
-            emphasis_0 "#3A1630"
-            emphasis_1 "#4A3B7A"
-            emphasis_2 "#20173A"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
             emphasis_3 "#150F28"
         }
         list_unselected {
@@ -72,14 +73,14 @@ themes {
         list_selected {
             base "#150F28"
             background "#FF7AA8"
-            emphasis_0 "#3A1630"
-            emphasis_1 "#4A3B7A"
-            emphasis_2 "#20173A"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
             emphasis_3 "#150F28"
         }
-        // pane borders: line when idle, accent on the focused pane, px-highlight while a mode highlights it
+        // pane borders: muted when idle, accent on the focused pane, px-highlight while a mode highlights it
         frame_unselected {
-            base "#4A3B7A"
+            base "#A99BC9"
             background "#150F28"
             emphasis_0 "#A99BC9"
             emphasis_1 "#FF7AA8"
