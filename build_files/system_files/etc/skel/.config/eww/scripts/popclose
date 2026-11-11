@@ -9,5 +9,9 @@ if [[ -z ${INK_POPCLOSE_DETACHED:-} ]]; then
     exit 0
 fi
 sleep 0.5
-[[ $(eww get "$2_pill") == false && $(eww get "$2_pop") == false ]] && eww close "$1"
+if [[ $(eww get "$2_pill") == false && $(eww get "$2_pop") == false ]]; then
+    eww close "$1"
+elif ! eww active-windows 2>/dev/null | grep -q "^$1:"; then
+    eww update "$2_pill=false" "$2_pop=false" >/dev/null 2>&1   # nothing to close: drop flags left over
+fi
 exit 0
