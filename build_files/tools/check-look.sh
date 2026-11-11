@@ -96,16 +96,48 @@ if needs python3 cmp; then
     check png-size "$png" 3840 2160
 fi
 
-step 9 "fonts: fontconfig reads the shipped files, the packages exist in Fedora"
+step 9 "fonts: TrueType or OpenType only, fontconfig and Pango read them, the packages exist in Fedora"
+fontdir="$root/build_files/system_files/usr/share/fonts"
+# The desktop's text renderer (Pango) loads TrueType and OpenType only: fontconfig lists a web font file (.woff2) but
+# nothing ever draws it. So a shipped font is .ttf or .otf; beside them, only licence texts.
+fontfiles=()
+while IFS= read -r -d '' f; do
+    case $f in
+        *.ttf | *.otf) fontfiles+=("$f") ;;
+        *.txt) ;;
+        *) fail "${f#"$root"/}: not a TrueType or OpenType font (the desktop's text renderer, Pango, loads only .ttf and .otf)" ;;
+    esac
+done < <(find "$fontdir" -type f -print0 2>/dev/null)
+((${#fontfiles[@]} > 0)) || fail "no font file shipped under usr/share/fonts"
+echo "  ok: ${#fontfiles[@]} font file(s), all TrueType or OpenType"
+families=()
 if needs fc-scan; then
-    fonts=0
-    while IFS= read -r -d '' f; do
-        fonts=$((fonts + 1))
+    for f in "${fontfiles[@]}"; do
         fam=$(fc-scan --format '%{family}' "$f" 2>/dev/null) || fail "fc-scan cannot read ${f#"$root"/}"
         [[ -n $fam ]] || fail "fc-scan reports no family for ${f#"$root"/}"
+        families+=("${fam%%,*}")
         echo "  ok: ${f#"$root"/}: $(fc-scan --format 'family=%{family} style=%{style} weight=%{weight}' "$f")"
-    done < <(find "$root/build_files/system_files/usr/share/fonts" -type f \( -name '*.woff2' -o -name '*.woff' -o -name '*.ttf' -o -name '*.otf' \) -print0 2>/dev/null)
-    ((fonts > 0)) || fail "no font file shipped under usr/share/fonts"
+    done
+fi
+if ((${#families[@]} > 0)) && needs pango-list; then
+    # Pango with a fontconfig that knows only the shipped fonts: each family must be listed with a face of its own (a
+    # face marked * is synthesised by Pango)
+    iso="$tmp/fontconfig"
+    mkdir -p "$iso/fonts" "$iso/home" "$iso/cache"
+    cp "${fontfiles[@]}" "$iso/fonts/"
+    printf '<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">\n<fontconfig><dir>%s</dir><cachedir>%s</cachedir></fontconfig>\n' \
+        "$iso/fonts" "$iso/cache" >"$iso/fonts.conf"
+    env -u XDG_CONFIG_HOME -u XDG_CACHE_HOME -u XDG_DATA_HOME HOME="$iso/home" FONTCONFIG_FILE="$iso/fonts.conf" \
+        pango-list >"$iso/pango.txt" 2>/dev/null || fail "pango-list failed"
+    mapfile -t uniq < <(printf '%s\n' "${families[@]}" | sort -u)
+    for fam in "${uniq[@]}"; do
+        faces=$(awk -v fam="$fam" '
+            index($0, fam " ") == 1 || $0 == fam { on = 1; next }
+            on && /^[^ \t]/ { on = 0 }
+            on && $1 !~ /^\*/ { sub(/^[ \t]+/, ""); print }' "$iso/pango.txt")
+        [[ -n $faces ]] || fail "pango-list does not list '$fam' with a face of its own: the desktop would never draw it"
+        echo "  ok: pango-list lists $fam: $(tr '\n' ';' <<<"$faces" | sed 's/;$//')"
+    done
 fi
 if needs dnf; then
     # the package lines of the dnf5 install list ("    name-fonts \")

@@ -125,7 +125,7 @@ Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varl
 | Screenshots | `grim`, `slurp`, `swappy` |
 | System | `brightnessctl`, `playerctl`, `pavucontrol`, `wlsunset`, `udiskie`, `network-manager-applet`, `nm-connection-editor`, `blueman`, `mate-polkit`, `system-config-printer` |
 | Apps and tools | `alacritty`, `zellij`, `thunar`, `jq`, `socat`, `nix` |
-| Fonts | `ibm-plex-sans-fonts`, `ibm-plex-mono-fonts`, `fira-code-fonts`; Pixelify Sans is not packaged by Fedora and ships in `/usr/share/fonts/ink-pixelify-sans/` (SIL OFL 1.1) |
+| Fonts | `ibm-plex-sans-fonts`, `ibm-plex-mono-fonts`, `fira-code-fonts`; Pixelify Sans is not packaged by Fedora and ships as `/usr/share/fonts/ink-pixelify-sans/PixelifySans-SemiBold.ttf` (SIL OFL 1.1): TrueType, not a web font file, because the desktop's text renderer (Pango) loads TrueType and OpenType only |
 | Command-line tools | `ripgrep`, `fd-find`, `chafa`, `neovim` |
 
 Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, PipeWire / WirePlumber, `tuned-ppd` (power profiles), GNOME Settings, gvfs, udisks2.

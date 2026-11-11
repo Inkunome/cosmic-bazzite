@@ -159,7 +159,9 @@ chmod +x /usr/bin/ink-layout /usr/bin/ink-sync /usr/bin/ink-lock /usr/bin/ink-ss
 
 # Fonts of the Pixel Guild look: IBM Plex Sans and Mono come from Fedora (ibm-plex-sans-fonts, ibm-plex-mono-fonts,
 # installed above); Pixelify Sans is not packaged by Fedora, so its file (weight 600, from the Inkunome design system,
-# SIL OFL 1.1) ships in /usr/share/fonts/ink-pixelify-sans/. Copied after dnf, it missed fontconfig's cache trigger.
+# SIL OFL 1.1) ships in /usr/share/fonts/ink-pixelify-sans/PixelifySans-SemiBold.ttf. It is TrueType, not the design
+# system's web font file (.woff2): the desktop's text renderer (Pango) loads TrueType and OpenType only. Copied after
+# dnf, it missed fontconfig's cache trigger.
 fc-cache -f /usr/share/fonts/ink-pixelify-sans
 
 # ssh-agent as a user service for every user (its socket starts it on first use, ink-ssh-load unlocks the key at login)

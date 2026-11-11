@@ -63,7 +63,7 @@ Rules that hold everywhere:
 Pixelify Sans is for short text only. The image installs the three families:
 
 - IBM Plex Sans and IBM Plex Mono from Fedora's packages if they exist under those names (verify with `dnf repoquery` in the devbox, which is Fedora; record the exact package names in `build.sh`).
-- Pixelify Sans from Fedora if packaged (verify the same way); otherwise the font file is shipped under `build_files/system_files/usr/share/fonts/ink-pixelify-sans/` with its OFL licence text, taken from the `dist/fonts/` folder of the design system's repository. Check with `fc-scan` that fontconfig reads it and reports the family "Pixelify Sans", and which weights it holds: use a weight the file really has, never a synthesised bold.
+- Pixelify Sans from Fedora if packaged (verify the same way); otherwise the font file is shipped under `build_files/system_files/usr/share/fonts/ink-pixelify-sans/` with its OFL licence text, taken from the `dist/fonts/` folder of the design system's repository. Check with `fc-scan` that fontconfig reads it and reports the family "Pixelify Sans", and which weights it holds: use a weight the file really has, never a synthesised bold. The file ships as TrueType, `PixelifySans-SemiBold.ttf` (the design system's `.woff2` decompressed with `woff2_decompress`, a lossless change of container): GTK's text renderer, Pango, loads TrueType and OpenType only, so a `.woff2` is listed by fontconfig but never drawn. Check with `pango-list` that the family is listed.
 - `fira-code-fonts` stays installed (the terminal and zellij are free to use it).
 
 ## eww
@@ -218,7 +218,7 @@ A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on 
 6. The sway configuration's `bindsym`, `bindcode` and `mode` lines are identical to `main`'s; it contains no `blur` setting other than `blur disable`, no `corner_radius` other than 0, no `layer_effects`, and a `shadow_blur_radius` of at least 1 (0 is undefined in swayfx).
 7. No file under `etc/skel/.config` contains an old palette value (`1c1424`, `2a1d36`, `5b4570`, `f6eaf4`, `b9a3c4`, `c8a2f0`, `ff9ccf`, `ff8fc4`, `e0566f`, `ffd1e6`, `f0d4ff`, `ffc8e2`, any case).
 8. The wallpaper script run twice gives the same bytes as the committed PNG, which is 3840×2160.
-9. `fc-scan` reads each shipped font file; the package names in `build.sh` exist in Fedora's repositories.
+9. Every shipped font file is `.ttf` or `.otf`; `fc-scan` reads each one; `pango-list`, with fontconfig pointed at a copy holding only the shipped fonts, lists each family; the package names in `build.sh` exist in Fedora's repositories.
 10. `shellcheck` passes on every script added or changed.
 11. Every colour copied into the sway look section, mako, fuzzel, swaylock, alacritty and zellij is a token value and opaque (the one exception: sway's fully transparent `shadow_inactive_color`).
 12. Every key of the swaylock, mako and fuzzel files, and every option of the sway look section, is on an allow-list holding exactly the keys in use, each verified against the program's man page; a new key fails until it is verified and added on purpose.
