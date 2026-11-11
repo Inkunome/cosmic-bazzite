@@ -1,0 +1,10 @@
+#!/bin/bash
+# Two eww daemons can run at once (an `eww open` that cannot reach the first one starts a second): the new one takes over the
+# socket and holds the launcher, the old one keeps the bar, and nothing can close the launcher any more. `ewwguard watch`
+# (run by sway) looks every 3 s and, when two processes listen on eww's socket for two checks in a row, runs `panic`.
+exec 8>"${XDG_RUNTIME_DIR:-/tmp}/ink-ewwguard.lock"; flock -n 8 || exit 0
+here=$(dirname "$(readlink -f "$0")"); bad=0
+while sleep 3; do
+    n=$(ss -xlpH 2>/dev/null | awk '/eww-server_/ { while (match($0, /pid=[0-9]+/)) { print substr($0, RSTART, RLENGTH); $0 = substr($0, RSTART + RLENGTH) } }' | sort -u | wc -l)
+    if ((n > 1)); then ((++bad >= 2)) && { bad=0; "$here/panic" 8>&-; }; else bad=0; fi
+done

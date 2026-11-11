@@ -55,6 +55,8 @@ show_now() {
     want="$out $xl $xr $y"
     [[ $(cat "$LAST" 2>/dev/null) == "$want" ]] && eww active-windows 2>/dev/null | grep -q '^winpill-r:' && return
     mon=$(monitor_of "$out"); [[ -n $mon ]] || return
+    # `eww open` starts a daemon of its own when none answers (while eww restarts): that one would race the real one
+    timeout 2 eww ping >/dev/null 2>&1 || return 0
     eww close winpill-l winpill-r 9>&- >/dev/null 2>&1
     eww open winpill-l --arg "mon=$mon" --pos "${xl}x${y}" --size "${BW}x${H}" 9>&- >/dev/null 2>&1 &&
         eww open winpill-r --arg "mon=$mon" --pos "${xr}x${y}" --size "${BW}x${H}" 9>&- >/dev/null 2>&1 && echo "$want" > "$LAST"

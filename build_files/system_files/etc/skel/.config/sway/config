@@ -205,6 +205,8 @@ exec_always ~/.config/eww/scripts/screens apply
 exec ~/.config/eww/scripts/screens watch
 exec ~/.config/eww/scripts/expose watch
 exec ~/.config/eww/scripts/winpill watch
+# two eww daemons at once would leave a launcher that cannot be closed: restart eww cleanly when that happens
+exec ~/.config/eww/scripts/ewwguard
 # in a fullscreen window (a game) the shortcuts without Super are off, see ink-gameguard
 exec ink-gameguard watch
 
