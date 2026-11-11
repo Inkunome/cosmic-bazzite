@@ -2,7 +2,7 @@
 
 A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in a pixel-art look (dark purples and a pink accent, square corners, hard borders, pixel icons), with a pixel bramble under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
-![Desktop: tabbed windows, bar with a thorny branch, bottom strip, lilac wallpaper](docs/img/desktop.webp)
+![Desktop: tabbed windows with square pink and purple frames, bar of separate chips with a pixel bramble under it, bottom strip, pixel night-sky wallpaper with a moon and stepped hills](docs/img/desktop.webp)
 
 The screenshots below are taken from the real desktop (sway + eww in a headless session), not from a mock-up.
 

@@ -476,7 +476,8 @@
 ;; Wide layout for landscape screens (pinned as a row of tiles), long layout for portrait ones (pinned as a list).
 ;; `dash` picks the layout from the shape of the focused screen.
 (defwidget launcher []
-  (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14    ;; search field first: it takes the keyboard focus when the launcher opens
+  (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14
+    ;; search field first: it takes the keyboard focus when the launcher opens
     (box :space-evenly false :spacing 10
       (input :class "search" :hexpand true :timeout "5s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
