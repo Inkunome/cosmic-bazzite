@@ -1,0 +1,8 @@
+#!/bin/bash
+# Escape hatch for a launcher / dashboard that hangs and eats the keyboard (Ctrl+Alt+Escape, also run by `dash close` when eww
+# does not answer): leave the binding mode, kill every eww process (its panels disappear with it), and bring the bar back.
+swaymsg -q mode default
+pkill -KILL -x eww-wayland
+sleep 0.5
+"$(dirname "$(readlink -f "$0")")/screens" apply >/dev/null 2>&1
+exit 0

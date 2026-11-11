@@ -11,7 +11,7 @@ here=$(dirname "$(readlink -f "$0")")
 # one dash command at a time: a double press (key repeat) used to send two `eww open` at once, and the one that arrived while
 # the daemon was busy opening the first made eww start a second daemon
 exec 9>"${XDG_RUNTIME_DIR:-/tmp}/ink-dash.lock"
-flock -w 5 9 || exit 0
+flock -w 2 9 || [[ ${1:-} == close ]] || exit 0
 is_open() { eww active-windows 2>/dev/null | grep -q '^dashboard:\|^launcher:\|^expose:'; }
 open_kind() {
     local kind=$1 idx w h
@@ -47,7 +47,8 @@ open_kind() {
 current() { eww active-windows 2>/dev/null | sed -n 's/^\(dashboard\|launcher\|expose\): .*/\1/p' | head -1; }
 case "${1:-toggle}" in
     open) open_kind "${2:-launcher}" ;;
-    close) eww close dashboard launcher expose >/dev/null 2>&1; swaymsg -q mode default ;;
+    close) swaymsg -q mode default
+           timeout 3 eww close dashboard launcher expose >/dev/null 2>&1; [[ $? == 124 ]] && exec "$here/panic" ;;
     toggle)
         kind=${2:-launcher}
         if [[ $(current) == "$kind" ]]; then "$here/dash" close; else open_kind "$kind"; fi ;;
