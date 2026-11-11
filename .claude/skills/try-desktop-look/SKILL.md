@@ -57,7 +57,11 @@ When you find the invocation that works, **write it into this file** in place of
 
 ### What to look at
 
-Compare with the specification, piece by piece: bar chips, the branch under the bar, focused and unfocused windows, the bottom strip, the launcher (Ctrl+Space), the dashboard (Alt+Space), the quick settings and the other flyouts (they open on hover: `~/.config/eww/scripts/popopen <window> <var> <monitor>` opens one without a pointer; read the script for its arguments), expose (Super+Tab), the layout picker (Super+G), a notification (`notify-send "Screenshot" "Copied to clipboard"`), the lock screen colours, the screenshot menu (fuzzel), the portrait screen (workspaces, dock, clock; no bar).
+Compare with the specification, piece by piece: bar chips, the branch under the bar, focused and unfocused windows, the bottom strip, the launcher (Ctrl+Space), the dashboard (Alt+Space), the quick settings and the other flyouts (they open on hover: `~/.config/eww/scripts/popopen <window> <var> <monitor>` opens one without a pointer; read the script for its arguments), expose (Super+Tab), the layout picker (Super+G), a notification (`notify-send "Screenshot" "Copied to clipboard"`), the screenshot menu (fuzzel), the portrait screen (workspaces, dock, clock; no bar).
+
+**The lock screen is checked here, before anything goes live.** A swaylock configuration with a key swaylock does not know makes it exit, and a lock that does not start is a security problem, not a cosmetic one. In the headless session run `swaylock -f` (it locks only that session), confirm with `pgrep -x swaylock` that it is running and with a screenshot that it draws the new colours, then end it (`pkill -x -u "$(id -u)" swaylock` kills the live lock too if one is up: check first that the live session is not locked, or kill by the pid you just started). If swaylock refuses to start, stop: the branch is not fit for the live step until that is fixed.
+
+**The window shadow.** swayfx's shadow with a very small blur radius is the least certain part of the look: a radius of 0 is undefined in its shader, and the branch uses the smallest defined value. Look at the focused window's right and bottom edges. If the shadow is garbled, missing or soft, set `shadows disable` in the sway configuration (the specification's fallback) and commit that.
 
 Keys can be sent with `swaymsg` commands rather than a keyboard: run what the binding runs (`~/.config/eww/scripts/dash toggle launcher`, and so on).
 
@@ -81,8 +85,11 @@ Stop the headless session (`swaymsg exit`), check that no process still has `$T`
 Ask first, in one sentence, saying what will change and how to go back. Then:
 
 ```
+[ -e ~/.cache/ink-try-last-backup ] && { echo "a try is already applied: restore it first (below), or the first backup would be lost"; exit 1; }
 B=~/.config/ink-try-backup-$(date +%Y%m%d-%H%M%S); mkdir -p "$B"
-for d in sway eww mako fuzzel swaylock alacritty zellij; do [ -e ~/.config/$d ] && cp -a ~/.config/$d "$B/"; done
+for d in sway eww mako fuzzel swaylock alacritty zellij; do
+  if [ -e ~/.config/$d ]; then cp -a ~/.config/$d "$B/"; else : > "$B/$d.absent"; fi
+done
 [ -e ~/.config/ink/sway.d/90-try.conf ] && cp -a ~/.config/ink/sway.d/90-try.conf "$B/"
 echo "$B" > ~/.cache/ink-try-last-backup
 ```
@@ -90,11 +97,15 @@ echo "$B" > ~/.cache/ink-try-last-backup
 Write the way back **before** applying, and give it to the owner, because a broken configuration may leave them without a bar or a launcher (a terminal still opens with Super+Shift+Return):
 
 ```
-B=$(cat ~/.cache/ink-try-last-backup); for d in sway eww mako fuzzel swaylock alacritty zellij; do
-  [ -e "$B/$d" ] && rm -rf ~/.config/$d && cp -a "$B/$d" ~/.config/$d; done
+B=$(cat ~/.cache/ink-try-last-backup); [ -d "$B" ] || { echo "no backup at '$B': nothing restored"; exit 1; }
+for d in sway eww mako fuzzel swaylock alacritty zellij; do
+  if [ -e "$B/$d" ]; then rm -rf ~/.config/$d && cp -a "$B/$d" ~/.config/$d      # what was there before
+  elif [ -e "$B/$d.absent" ]; then rm -rf ~/.config/$d; fi                       # it did not exist before the try
+done
 rm -f ~/.config/ink/sway.d/90-try.conf; [ -e "$B/90-try.conf" ] && cp -a "$B/90-try.conf" ~/.config/ink/sway.d/
 rm -rf ~/.local/share/fonts/ink-try; fc-cache -f
 swaymsg reload; makoctl reload
+rm -f ~/.cache/ink-try-last-backup      # the backup folder itself stays until the owner removes it
 ```
 
 Apply: copy the branch's `sway`, `eww`, `mako`, `fuzzel`, `swaylock` directories over the live ones, keeping the owner's own files that the image does not ship (`~/.config/ink/` is theirs: never replace it; only add `sway.d/90-try.conf` for the wallpaper path, and remove it at the end of the try). Terminal colours (`alacritty`, `zellij`) only if the owner wants them tried: those directories often hold their own settings, so merge the colour section by hand instead of replacing the file. Fonts into `~/.local/share/fonts/ink-try/`, then `fc-cache -f`. Then `swaymsg reload` and `makoctl reload`.
