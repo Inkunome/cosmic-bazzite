@@ -1,0 +1,21 @@
+// Colour tokens of the Inkunome design system, pixel register, dark theme (repository inkunome-design, tokens.json,
+// commit 7fe3a1f). This is the only place in the eww configuration where a colour is written: eww.scss imports it.
+// The same values are copied, with a comment naming this file, into the `set $...` lines of the sway config and into
+// the mako, fuzzel, swaylock, alacritty and zellij files. A second palette (the light theme) is a swap of this file.
+$bg: #150F28;
+$surface: #20173A;
+$sunken: #0C0818;
+$fg: #F3ECFF;
+$muted: #A99BC9;
+$line: #4A3B7A;
+$accent: #FF7AA8;
+$on-accent: #150F28;
+$accent-tint: #3A1630;
+$px-body: #7B66C8;
+$px-highlight: #B8A9F0;
+$gold: #F2B84B;
+$warn: #F2B84B;
+$warn-tint: #33270C;
+$bad: #FF8A80;
+$ok: #6FD6A0;
+$info: #A9B8FF;
