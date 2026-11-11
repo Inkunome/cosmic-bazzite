@@ -1,61 +1,56 @@
-# Ink — swayfx config (forest / mushroom / Ink palette)
+# Ink — swayfx config (Pixel Guild look: the Inkunome design system's pixel register, dark theme)
 set $mod Mod4
 set $term alacritty
 set $menu fuzzel
 
 # ── palette ────────────────────────────────────────────────
-set $loam    #1c1424
-set $moss    #5b4570
-set $spore   #f6eaf4
-set $glow    #c8a2f0
-set $feather #ff9ccf
-# pastel pink: the drop target shown while dragging a window
-set $blush   #ffc8e2
-set $amanita #e0566f
+# the design system's tokens; the source is ~/.config/eww/_tokens.scss (same values, same names)
+set $bg        #150F28
+set $surface   #20173A
+set $fg        #F3ECFF
+set $muted     #A99BC9
+set $line      #4A3B7A
+set $accent    #FF7AA8
+set $on_accent #150F28
+set $bad       #FF8A80
 
 # ── look (swayfx) ──────────────────────────────────────────
-font pango:Fira Code 10
-default_border pixel 1
+font pango:IBM Plex Mono 10
+default_border pixel 3
 # new windows open as tabs of the workspace by default (Super+E splits, Super+W re-tabs);
 # when a container is split, tile side by side on landscape screens and stacked on portrait ones
 workspace_layout tabbed
 default_orientation auto
 title_align center
 titlebar_padding 10 5
-# thin frames: 1 px around the content and around the title (sway cannot set a thickness per focus state)
-titlebar_border_thickness 1
+# hard frames: 3 px around the content and around the title (sway cannot set a thickness per focus state)
+titlebar_border_thickness 3
 gaps inner 8
 gaps outer 4
-corner_radius 18
-blur enable
-blur_passes 3
-blur_radius 5
+# square corners, nothing translucent
+corner_radius 0
+blur disable
+# a hard shadow under the focused window only: 4 px right and down, no softening, in the line colour
 shadows enable
-# an aura: a very soft lilac glow around the focused window only
-shadow_blur_radius 20
-shadow_color #c8a2f033
-shadow_inactive_color #1c142400
-shadow_offset 0 0
-default_dim_inactive 0.08
-dim_inactive_colors.unfocused #1c1424
-# no shadow on the dock, the clock and the workspaces of a portrait screen: the lilac aura is for the focused window
-layer_effects "ink-dock" blur enable; shadows disable; corner_radius 24
-# no shadow on the panels (launcher, dashboard, Super+G picker, flyouts) either: the aura is only for the focused window
-layer_effects "ink-pop" blur enable; shadows disable; corner_radius 22
-layer_effects "launcher" blur enable; corner_radius 18
-layer_effects "notifications" blur enable; corner_radius 18
+shadow_blur_radius 0
+shadow_offset 4 4
+shadow_color #4A3B7AFF
+shadow_inactive_color #4A3B7A00
+default_dim_inactive 0
+# the bar, the dock, the panels and the notifications get no compositor effect: eww and mako draw their own frames
 
-# every window has a lilac frame around its content and around its title (1 px each); the focused one is a brighter, lighter lilac
-# and the others are a softer, half-transparent one
-#                       border    bg       text    indicator child_border
-client.focused          #f0d4ff   $loam    $spore  $blush    #f0d4ff
-client.focused_inactive #c8a2f088 $loam    $spore  #00000000  #c8a2f088
-client.unfocused        #c8a2f088 $loam    $spore  #00000000  #c8a2f088
-client.urgent           $amanita  $loam    $spore  $amanita  $amanita
+# every window has a frame around its content and around its title (3 px each): the focused one is filled with the accent,
+# the others have a frame in the line colour
+#                       border    bg       text        indicator child_border
+client.focused          $accent   $accent  $on_accent  $accent   $accent
+client.focused_inactive $line     $bg      $fg         $line     $line
+client.unfocused        $line     $bg      $muted      $line     $line
+client.urgent           $bad      $bad     $on_accent  $bad      $bad
 
-output * bg $loam solid_color
-# wallpaper: change the file to switch (forest-night, ink-feathers and loam-moss are also installed)
-output * bg /usr/share/backgrounds/ink/lilac-dusk.jpg fill
+output * bg $bg solid_color
+# wallpaper: change the file to switch. ink-pixel-dusk is the default of this look; the previous default, lilac-dusk.jpg,
+# and forest-night, ink-feathers and loam-moss are also installed in /usr/share/backgrounds/ink/
+output * bg /usr/share/backgrounds/ink/ink-pixel-dusk.png fill
 
 # ── input: bépo / azerty / qwerty ──────────────────────────
 # Order = ink-layout indices: 0 qwerty (the default), 1 azerty, 2 bepo
