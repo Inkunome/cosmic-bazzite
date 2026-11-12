@@ -61,9 +61,11 @@ $pixel: "Pixelify Sans", monospace;
 .bigclock-time { font-family: $pixel; font-weight: 600; font-size: 40px; color: $fg; }
 
 // Workspaces beside the dock on portrait screens
-.wsdock { background-color: $surface; border: 3px solid $line; padding: 0 10px; }
+// a segmented strip: each workspace is a square cell filling the dock's inner height (the 76 px window less the 3 px
+// frame: 70 px), cells touch each other and the inside of the frame, so the focused one colours its whole square
+.wsdock { background-color: $surface; border: 3px solid $line; padding: 0; }
 .wsdock .ws, .wsdock .ws label { font-size: 20px; }
-.wsdock .ws { padding: 0 12px; margin: 13px 2px; }
+.wsdock .ws { padding: 0; margin: 0; min-width: 70px; min-height: 70px; }
 
 // ── Bottom strip (landscape screens) ──
 .strip { padding: 0 14px; }

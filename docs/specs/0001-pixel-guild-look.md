@@ -85,7 +85,7 @@ Rewritten around `@import "tokens";`. The class names stay, so `eww.yuck` change
 | `.strip-win` | `surface` fill, 2 px `muted` border. |
 | Empty-strip hint | Same text as today, `muted`, on a `surface` chip. |
 | `.strip-dock`, `.strip-player` | `surface` fill. The player's three glyph buttons become the pixel icons `prev`, `play` / `pause`, `next`. |
-| `.dock`, `.wsdock`, `.bigclock` | `surface` fill, 3 px `line` border. `.bigclock-time` Pixelify Sans 40 px `fg`. `.dock-icon.mini` 2 px `muted` border, Pixelify initial. |
+| `.dock`, `.wsdock`, `.bigclock` | `surface` fill, 3 px `line` border. `.wsdock` is a segmented strip: each workspace a square cell filling the dock's inner height, cells touching each other and the frame, the focused cell filled with `accent` (number `on-accent`), urgent with `bad`, hover `accent-tint`. `.bigclock-time` Pixelify Sans 40 px `fg`. `.dock-icon.mini` 2 px `muted` border, Pixelify initial. |
 | `.pop` | `surface` fill, 3 px `fg` border, hard shadow (4 px, `line`) drawn inside the layer surface: give the panel a right and bottom margin of 6 px so the shadow has room. The fur texture goes: remove every `:style "background-image: … fur.svg"` from `eww.yuck` and delete `fur.svg`. |
 | `.pop-title` | Pixelify Sans 18 px, `accent`. |
 | `.dim` | `muted`. |
