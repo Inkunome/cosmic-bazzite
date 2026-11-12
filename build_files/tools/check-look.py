@@ -10,7 +10,7 @@ reasons on failure.
   check-look.py --root DIR svg                every icon on its grid, whole coordinates, token colours only
   check-look.py --root DIR sway --base REF    bindings identical to REF, no blur, square corners, no layer effects
   check-look.py --root DIR palette            no old palette value left under etc/skel/.config
-  check-look.py --root DIR copied             colours copied into sway, mako, fuzzel, swaylock, alacritty, zellij
+  check-look.py --root DIR copied             colours copied into sway, mako, fuzzel, swaylock, the terminal, zellij
   check-look.py --root DIR keys               every key of swaylock, mako, fuzzel and the sway look section is known
   check-look.py --root DIR commands --base REF  the :on... commands of eww.yuck are the same as REF's
   check-look.py --root DIR variables          every name read by an eww.yuck expression is defined
@@ -692,9 +692,12 @@ COPIES = {
     "mako/config": "hash",
     "fuzzel/fuzzel.ini": "fuzzel",
     "swaylock/config": "bare",
-    "alacritty/alacritty.toml": "hash",
+    # the terminal's colours: a file the image owns, imported by the skel alacritty.toml (which writes no colour)
+    "build_files/system_files/usr/share/ink/alacritty/colors.toml": "hash",
     "zellij/themes/ink.kdl": "hash",
 }
+TERM_COLOURS = "/usr/share/ink/alacritty/colors.toml"
+TERM_SKEL = SKEL + "/alacritty/alacritty.toml"
 
 
 def look_section(text):
@@ -734,10 +737,14 @@ def colour_ok(hexval, where, allow_transparent=False, allow_alpha=None):
                                                          "$widget-alpha of _tokens.scss)" if allow_alpha else ""))
 
 
+def strip_hash_comment_all(text):
+    return "\n".join(re.sub(r"\s#\s.*$|^\s*#.*$", "", l) for l in text.splitlines())
+
+
 def cmd_copied(root):
     count = 0
     for rel, kind in COPIES.items():
-        path = f"{SKEL}/{rel}"
+        path = rel if rel.startswith("build_files/") else f"{SKEL}/{rel}"
         text = read(root, path)
         if rel == "sway/config":
             text = look_section(text)
@@ -772,7 +779,28 @@ def cmd_copied(root):
                 count += 1
             if re.search(r"\b(rgba?|hsla?)\(", line):
                 err(f"{where}: a colour function; write the token value")
-    finish(f"{count} colours copied into sway (look section), mako, fuzzel, swaylock, alacritty and zellij: all token "
+    # the terminal: the skel file imports exactly the image's colours file and writes no colour of its own, and the
+    # build installs that file (the Containerfile copies build_files into the build context, build.sh copies
+    # system_files/. onto /)
+    import tomllib
+    skel = read(root, TERM_SKEL)
+    try:
+        conf = tomllib.loads(skel)
+    except tomllib.TOMLDecodeError as e:
+        err(f"alacritty/alacritty.toml: not valid TOML ({e})")
+        conf = {}
+    if conf.get("general", {}).get("import") != [TERM_COLOURS]:
+        err(f"alacritty/alacritty.toml: [general] import is {conf.get('general', {}).get('import')}, expected ['{TERM_COLOURS}']")
+    if "colors" in conf or re.search(r"#[0-9A-Fa-f]{6}", strip_hash_comment_all(skel)):
+        err("alacritty/alacritty.toml: writes colours of its own (they belong to " + TERM_COLOURS + ")")
+    shipped = "build_files/system_files" + TERM_COLOURS
+    if not os.path.isfile(os.path.join(root, shipped)):
+        err(f"{shipped} is missing")
+    if not re.search(r"^COPY build_files /\s*$", read(root, "Containerfile"), flags=re.M):
+        err("Containerfile: build_files is no longer copied into the build context")
+    if not re.search(r"^cp -a /ctx/system_files/\. /\s*$", read(root, "build_files/build.sh"), flags=re.M):
+        err("build.sh: system_files is no longer copied onto / (the terminal colours would not be installed)")
+    finish(f"{count} colours copied into sway (look section), mako, fuzzel, swaylock, the terminal's colours file and zellij: all token "
            "values, all opaque (sway's transparent shadow_inactive_color excepted, and fuzzel's background at "
            f"$widget-alpha, {widget_alpha_byte(root)})")
 
