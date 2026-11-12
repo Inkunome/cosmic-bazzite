@@ -173,13 +173,13 @@ def cmd_tokens(root):
         s = line.strip()
         if not s or s.startswith("//"):
             continue
-        a = re.fullmatch(r"\$widget-alpha:\s*([0-9.]+);", s)
+        a = re.fullmatch(r"\$(widget-alpha|block-alpha):\s*([0-9.]+);", s)
         if a:
-            if "widget-alpha" in found:
-                err(f"_tokens.scss:{n}: widget-alpha defined twice")
-            found["widget-alpha"] = a.group(1)
-            if not (re.fullmatch(r"0?\.\d+|1(\.0+)?", a.group(1)) and 0 < float(a.group(1)) <= 1):
-                err(f"_tokens.scss:{n}: $widget-alpha {a.group(1)} is not a number in (0, 1]")
+            if a.group(1) in found:
+                err(f"_tokens.scss:{n}: {a.group(1)} defined twice")
+            found[a.group(1)] = a.group(2)
+            if not (re.fullmatch(r"0?\.\d+|1(\.0+)?", a.group(2)) and 0 < float(a.group(2)) <= 1):
+                err(f"_tokens.scss:{n}: ${a.group(1)} {a.group(2)} is not a number in (0, 1]")
             continue
         m = re.fullmatch(r"\$([a-z-]+):\s*(#[0-9A-Fa-f]{6});", s)
         if not m:
@@ -191,11 +191,12 @@ def cmd_tokens(root):
     for k, v in TOKENS.items():
         if found.get(k) != v:
             err(f"_tokens.scss: ${k} is {found.get(k)}, the spec says {v}")
-    if "widget-alpha" not in found:
-        err("_tokens.scss: no $widget-alpha (the one value of the widgets' translucency)")
-    for k in found.keys() - TOKENS.keys() - {"widget-alpha"}:
+    for k in ("widget-alpha", "block-alpha"):
+        if k not in found:
+            err(f"_tokens.scss: no ${k} (a value of the widgets' translucency)")
+    for k in found.keys() - TOKENS.keys() - {"widget-alpha", "block-alpha"}:
         err(f"_tokens.scss: ${k} is not in the spec's table")
-    finish(f"_tokens.scss holds exactly the {len(TOKENS)} values of the table and $widget-alpha")
+    finish(f"_tokens.scss holds exactly the {len(TOKENS)} values of the table, $widget-alpha and $block-alpha")
 
 
 # ── 4. yuck ──

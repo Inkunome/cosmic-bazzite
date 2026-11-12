@@ -23,3 +23,7 @@ $info: #A9B8FF;
 // owner's to tune (decided 2026-11-12). eww.scss derives every translucent background from a token with it; frames,
 // shadows, text, icons, accent and status fills stay opaque. 1 makes everything opaque again.
 $widget-alpha: 0.70;
+// How opaque a block is when it sits inside a translucent panel, pill or dock (tiles, buttons, cards, rows): stacked on
+// a panel at $widget-alpha it reads as a slightly denser area of the same glass, not as an opaque slab (0.35 on 0.70
+// gives about 0.80). The owner's choice of 2026-11-12.
+$block-alpha: 0.35;
