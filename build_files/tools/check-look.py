@@ -683,7 +683,7 @@ def strip_hash_comment(line, kind):
 
 
 def widget_alpha_byte(root):
-    """$widget-alpha of _tokens.scss as the alpha byte a RRGGBBAA colour carries (0.85 -> D9)."""
+    """$widget-alpha of _tokens.scss as the alpha byte a RRGGBBAA colour carries (0.70 -> B2)."""
     m = re.search(r"^\$widget-alpha:\s*([0-9.]+);", read(root, EWW + "/_tokens.scss"), flags=re.M)
     return f"{round(float(m.group(1)) * 255):02X}" if m else None
 
