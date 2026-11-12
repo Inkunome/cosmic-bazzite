@@ -10,16 +10,19 @@ alias run-vm := run-vm-qcow2
 default:
     @just --list
 
-# Check Just Syntax
+# Check Just Syntax, then the static checks of the look (check-look.sh skips a check whose tool is missing)
 [group('Just')]
 check:
     #!/usr/bin/bash
+    status=0
     find . -type f -name "*.just" | while read -r file; do
     	echo "Checking syntax: $file"
     	just --unstable --fmt --check -f $file
     done
     echo "Checking syntax: Justfile"
-    just --unstable --fmt --check -f Justfile
+    just --unstable --fmt --check -f Justfile || status=1
+    bash build_files/tools/check-look.sh || status=1
+    exit $status
 
 # Fix Just Syntax
 [group('Just')]

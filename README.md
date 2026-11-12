@@ -1,28 +1,37 @@
 # Ink desktop on Bazzite
 
-A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in light purple and pink, with a thorny branch of flowers under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
+A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in a pixel-art look (dark purples and a pink accent, hard borders, translucent panels with notched pixel corners, pixel icons), with a pixel bramble under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
-![Desktop: tabbed windows, bar with a thorny branch, bottom strip, lilac wallpaper](docs/img/desktop.webp)
+![Desktop: a floating group of two tabbed terminals with a pink frame and a hard shadow, the bar of separate translucent chips with a pixel bramble under it, three notifications, the bottom strip, the pixel night-sky wallpaper with a moon and stepped hills](docs/img/desktop.webp)
 
 The screenshots below are taken from the real desktop (sway + eww in a headless session), not from a mock-up.
 
 Everything lives in `build_files/`. The image is built by GitHub Actions and signed with cosign.
 
+## Look
+
+The desktop takes its look from the Inkunome design system, its **pixel register** in the dark theme (the "Pixel Guild" look): one palette of tokens, hard borders, pixel icons on a 12 x 12 grid, and three typefaces (Pixelify Sans for titles, clocks and workspace numbers, IBM Plex Sans for labels, IBM Plex Mono for data). Applications keep their own look (no GTK or Qt theme).
+
+- **Windows**: square corners and a 3 px frame, `accent` round the focused window, `line` round the others, with a hard 4 px shadow under the focused one. Each title bar has a thin 1 px outline (accent on the focused title, which is tinted; line on the others, so neighbouring tabs stay apart). The focused window's title carries two chevrons with no background of their own.
+- **Panels** (flyouts, quick settings, launcher, dashboard, expose, the layout picker) have the design's notched pixel corners: an 8 x 8 px square cut out of each corner, a 3 px frame that follows the steps, and a hard 4 px shadow with the same outline. They are drawn by a nine-slice image, `eww/icons/panel-frame.svg`, which `build_files/tools/pixel-panel-frame.py` generates from the tokens.
+- **Translucency, no blur**: the panels, the bar's chips and the dock are see-through, and the blocks inside a panel (tiles, buttons, cards) a little denser. Two values in `eww/_tokens.scss` set it: `$widget-alpha` (0.70) for the surfaces, `$block-alpha` (0.35) for the blocks inside them. Frames, shadows, text, accent and status colours stay opaque. After changing `$widget-alpha`, run `build_files/tools/pixel-panel-frame.py` again (the panel frame carries the same value; `just check` says when it is out of date).
+- The wallpaper, `ink-pixel-dusk.png`, is drawn by `build_files/tools/pixel-wallpaper.py`. The terminal (alacritty) has the darker `sunken` background.
+
 ## What you get
 
 | Piece | What it does |
 | --- | --- |
-| **swayfx** | Compositor: blur, shadows, rounded corners. Windows open as **tabs** by default |
-| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, battery (icon follows the charge and the charging state, hover for every battery: the laptop's, or a headset, mouse or keyboard UPower knows, a slider for the screen brightness when the machine has a backlight, and the power profile (saver, balanced, performance) when power-profiles-daemon is there; hidden when there is no battery), a privacy pill that appears only while an application is using the microphone, the camera or a screen share (hover the icon to see which), volume (sliders and output / input pickers), notifications, caffeine button (no auto-lock, no screen blanking, no idle suspend), tray, quick-settings menu |
+| **swayfx** | Compositor: 3 px frames, square corners, thin title outlines, a hard shadow under the focused window. Windows open as **tabs** by default |
+| **eww bar** (landscape screens) | Workspaces of that screen, clock, keyboard layout, battery (icon follows the charge and the charging state, hover for every battery: the laptop's, or a headset, mouse or keyboard UPower knows, a slider for the screen brightness when the machine has a backlight, and the power profile (saver, balanced, performance) when power-profiles-daemon is there; hidden when there is no battery), a privacy pill that appears only while an application is using the microphone, the camera or a screen share (hover the icon to see which), volume (a mute button beside each slider, speakers and microphone, and output / input pickers), notifications, caffeine button (no auto-lock, no screen blanking, no idle suspend), tray, quick-settings menu (the paw) |
 | **eww strip** (landscape screens) | A 36 px strip at the bottom: minimised windows on the left (click to bring one back), then a small dock (launcher, dashboard and your apps) and the media player on the right. Windows stop above it |
-| **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left and a clock (time only) at its right, all of the dock's height. No bar on portrait screens |
-| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8), middle-click to add it to the dock or remove it; a line under the search field confirms each change |
-| **Dashboard** (`Alt+Space`) | Time, CPU/RAM/disk, media player, toggles, calendar, notifications. A wide layout and a long one for portrait screens |
+| **eww dock** (portrait screens) | Launcher, dashboard, your apps and minimised windows, centred at the bottom, with the screen's workspaces at its left (a strip of square cells, the focused one filled) and a clock (time only) at its right, all 76 px tall. No bar on portrait screens |
+| **Launcher** (`Ctrl+Space`) | Pinned apps, type to search, `↑` `↓` `Tab` to select, `Enter` to start. Right-click an app to pin or unpin it (up to 8, four to a row), middle-click to add it to the dock or remove it; a line under the search field confirms each change. The window keeps one size whatever it shows, so the search field never moves |
+| **Dashboard** (`Alt+Space`) | The time, the date and the calendar; the recent notifications (with Clear all); CPU, memory and disk as ten-segment meters (the disk warns from 85 %); and the track playing. Three layouts, chosen from the screen's shape: two columns (960 px) on a landscape screen, three columns over 60 % of the screen on a landscape screen 2560 px wide or more, one scrolling column on a portrait screen. The toggles are in the quick settings |
 | **Expose** (`Super+Tab`) | Every workspace and window as a thumbnail, grouped by screen, click one to jump to it, right-click one then click a workspace, or "+ new workspace" of a screen, to move it there (eww has no real drag and drop) |
-| **Title buttons** | Two small buttons on the title bar of the focused window, `‹` before the title and `›` after it: push the window to the previous / next workspace of its screen (a new one at the first / last; it follows you). A middle click on a button closes the window. The title between them is free: drag it with the left button to move the window |
+| **Title buttons** | Two small chevrons on the title bar of the focused window, `‹` before the title and `›` after it (filled with the accent under the pointer): push the window to the previous / next workspace of its screen (a new one at the first / last; it follows you). A middle click on a button closes the window. The title between them is free: drag it with the left button to move the window |
 | **Window layout** (`Super+G`) | A picker opens under the mouse: the focused window gets its own group (horizontal, vertical, tabbed or stacked) and the windows you open next land inside it. `H` `V` `T` `S` choose, `Esc` cancels. The system chip is gone from the bar: cpu, ram and disk are in the dashboard |
 | **Keyboard** | qwerty (default), azerty and bépo, switched live and shown in the bar |
-| **Caffeine** | The cup in the bar (also a tile in the quick settings and the dashboard) keeps the screen awake: no automatic lock, no blanking, until you click it again or log out. The lock before a suspend stays |
+| **Caffeine** | The cup in the bar (also a tile in the quick settings) keeps the screen awake: no automatic lock, no blanking, until you click it again or log out. The lock before a suspend stays |
 | **Screenshots** | Area, window, screen or output; copy, save or annotate; optional 5 s delay |
 | **Minimise** | `Alt+Esc` sends a window away (to the dock on a portrait screen, to the bottom strip on a landscape one), `Alt+Tab` brings the next one back |
 
@@ -33,13 +42,15 @@ Everything lives in `build_files/`. The image is built by GitHub Actions and sig
 
 ### Dashboard and menus
 
-![Dashboard](docs/img/dashboard.webp)
-![Quick settings: Wi-Fi, Bluetooth, brightness, apps and power](docs/img/quick-settings.webp)
+![Dashboard: the clock, the date and the calendar; notifications, system meters and the media line](docs/img/dashboard.webp)
+![The dashboard on a screen 2560 px wide or more (here 3440 x 1440): three columns over 60 % of the screen](docs/img/dashboard-wide-screen.webp)
+![Quick settings: Wi-Fi, Bluetooth, power profile, caffeine, apps and power](docs/img/quick-settings.webp)
+![Sound panel: a mute button beside each slider, the microphone muted](docs/img/sound.webp)
 ![Shortcut sheet, shown when hovering the keyboard layout](docs/img/shortcuts.webp)
 
 ### Portrait screens
 
-The bar is replaced by a dock, with that screen's workspaces at its left and a clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
+The bar is replaced by a dock, with that screen's workspaces at its left (a strip of square cells) and a clock at its right, and the dashboard becomes a single column. Each screen is judged on its own shape, and the layout follows when you plug, unplug or rotate a screen.
 
 | Dock | Dashboard |
 | :---: | :---: |
@@ -120,7 +131,8 @@ Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varl
 | Notifications and clipboard | `mako`, `cliphist`, `wl-clipboard`, `wl-clip-persist` |
 | Screenshots | `grim`, `slurp`, `swappy` |
 | System | `brightnessctl`, `playerctl`, `pavucontrol`, `wlsunset`, `udiskie`, `network-manager-applet`, `nm-connection-editor`, `blueman`, `mate-polkit`, `system-config-printer` |
-| Apps and tools | `alacritty`, `zellij`, `thunar`, `fira-code-fonts`, `jq`, `socat`, `nix` |
+| Apps and tools | `alacritty`, `zellij`, `thunar`, `jq`, `socat`, `nix` |
+| Fonts | `ibm-plex-sans-fonts`, `ibm-plex-mono-fonts`, `fira-code-fonts`; Pixelify Sans is not packaged by Fedora and ships as `/usr/share/fonts/ink-pixelify-sans/PixelifySans-SemiBold.ttf` (SIL OFL 1.1): TrueType, not a web font file, because the desktop's text renderer (Pango) loads TrueType and OpenType only |
 | Command-line tools | `ripgrep`, `fd-find`, `chafa`, `neovim` |
 
 Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, PipeWire / WirePlumber, `tuned-ppd` (power profiles), GNOME Settings, gvfs, udisks2.
@@ -130,16 +142,16 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | Path in the image | Content |
 | --- | --- |
 | `/etc/skel/.config/sway/config` | Sway config: look, keys, autostart, keyboard layouts |
-| `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `scripts/`, `icons/` |
+| `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `_tokens.scss` (the colours), `scripts/`, `icons/` |
 | `/etc/skel/.config/{mako,fuzzel,swaylock}/` | Notifications, launcher styling, lock screen |
 | `/etc/skel/.config/zellij/` | Zellij defaults and the `ink` theme (the same palette as the desktop) |
-| `/etc/skel/.config/alacritty/` | Terminal padding |
+| `/etc/skel/.config/alacritty/` | Terminal padding and colours |
 | `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
 | `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
 | `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
 | `/usr/bin/ink-lock` | Lock the screen with the wallpaper of each screen (what `Super+L`, the power menu and the idle timeout run) |
 | `/usr/bin/ink-sync` | Copy the default configuration into your home |
-| `/usr/share/backgrounds/ink/` | Wallpapers: `lilac-dusk` (default), `forest-night`, `ink-feathers`, `loam-moss` |
+| `/usr/share/backgrounds/ink/` | Wallpapers: `ink-pixel-dusk` (default), `lilac-dusk` (the previous default), `forest-night`, `ink-feathers`, `loam-moss` |
 
 ### Make it yours
 
@@ -148,8 +160,8 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 - **Keep a keyboard in qwerty**: `input "<identifier>" { xkb_layout "us"  xkb_variant "" }` in a file of that folder (identifiers: `swaymsg -t get_inputs`). That keyboard then ignores the layout switch.
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Dock apps** (both kinds of screen, small in the bottom strip on landscape ones): `~/.config/ink/dock`, one id per line, starting with `browser`, `terminal`, `files` and `settings`. Middle-click an app in the launcher to add it, right-click an icon in the dock to remove it.
-- **Colours**: the palette is at the top of `eww.scss` and in the `set $…` lines of the Sway config.
-- **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding by default; `ink-sync` leaves your terminal config alone).
+- **Colours**: the palette is `~/.config/eww/_tokens.scss` (the design system's tokens; `eww.scss` writes no colour of its own), with the two translucency values `$widget-alpha` and `$block-alpha`, and the `set $…` lines of the Sway config. Mako, fuzzel, swaylock, alacritty and zellij carry the same values, each with a comment naming `_tokens.scss`.
+- **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding and the Pixel Guild colours by default; `ink-sync` leaves your terminal config alone). To take the new colours in an existing home, copy the `[colors.*]` sections of `/etc/skel/.config/alacritty/alacritty.toml` into yours, and `/etc/skel/.config/zellij/themes/ink.kdl` over `~/.config/zellij/themes/ink.kdl`.
 - **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
 - **Monitors**: `wdisplays` for a quick layout. To keep positions and rotation across reloads and reboots, write a `~/.config/kanshi/config`; `kanshi` then starts by itself and re-applies it after every reload.
 
@@ -159,8 +171,13 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 just build          # podman build of the image, tagged cosmic-bazzite:latest
 just build-qcow2    # disk image to try it in a VM (needs bootc-image-builder)
 just run-vm-qcow2
-just check          # lint the Justfile
+just check          # lint the Justfile, then the static checks of the look (build_files/tools/check-look.sh)
 ```
+
+The static checks of the look (`build_files/tools/check-look.sh`) read the files; nothing is rendered. They use `python3` and `git`, plus `grass` (the Sass compiler eww embeds: `cargo install grass --locked`), `fc-scan`, `dnf` with network access, and `shellcheck`; `GRASS=` and `SHELLCHECK=` name a binary by path.
+
+- `build_files/tools/check-look.sh` (what `just check` runs): every check whose tool is present runs; a check whose tool is missing prints `SKIPPED (<tool> not found)` and does not fail the run. Only a real failure does.
+- `build_files/tools/check-look.sh --strict`: a missing tool is a failure too, so every check must run. This is the acceptance mode, for a machine that has all the tools.
 
 GitHub Actions (`.github/workflows/build.yml`) builds the image on every pull request and publishes and signs it when something lands on `main`, and every day at 10:05 UTC to follow Bazzite. Add your cosign private key as the `SIGNING_SECRET` repository secret; the public key is `cosign.pub`. ISO builds (`build-disk.yml`) run on demand.
 

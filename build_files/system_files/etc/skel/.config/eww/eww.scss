@@ -1,198 +1,301 @@
-// Ink palette
-$loam: #1c1424;
-$surface: rgba(42, 29, 54, 0.72);
-$moss: #5b4570;
-$spore: #f6eaf4;
-$dim: #b9a3c4;
-$glow: #c8a2f0;
-$feather: #ff9ccf;
-$pink: #ff8fc4;
-$amanita: #e0566f;
-$amber: #ffd1e6;
+// Ink desktop, Pixel Guild look: the Inkunome design system's pixel register, dark theme.
+// Every colour comes from _tokens.scss; this file writes none. Hard borders; the floating panels have the design's
+// notched pixel corners (below), everything else is square.
+// The widgets' backgrounds are translucent (the owner's choice of 2026-11-12): a top-level surface goes through widget()
+// below ($widget-alpha of _tokens.scss), a block inside one through block() ($block-alpha); frames, shadows, text,
+// icons, accent and status fills, meters and the pressed and selected states stay opaque. sway keeps blur off: what is
+// behind shows through as it is.
+// GTK 3 CSS: no gap, no flexbox, no CSS variables. Spacing comes from margin, padding and the :spacing of eww.yuck.
+@import "tokens";
 
-* { all: unset; font-family: "Fira Code", monospace; font-size: 13px; color: $spore; }
+$sans: "IBM Plex Sans", sans-serif;
+$mono: "IBM Plex Mono", monospace;
+// Pixelify Sans ships in one weight, 600 (SemiBold): always ask for 600, never bold, so nothing is synthesised.
+$pixel: "Pixelify Sans", monospace;
 
-.bar { padding: 0 12px; }  /* no frame: pills and the branch carry the look */
-.pill { padding: 3px 12px; margin: 5px 3px; border-radius: 16px; background: rgba($moss, 0.45); }
-.ws { padding: 3px 11px; margin: 5px 2px; border-radius: 16px; color: $dim; }
-.ws:hover { background: rgba($moss, 0.6); }
-.ws.visible { color: $spore; }
-.ws.focused { color: $loam; background: $glow; }
-.ws.urgent { color: $spore; background: $amanita; }
-.layout { color: $feather; border: 1px solid rgba($feather, 0.5); }
-.layout:hover { background: rgba($feather, 0.2); }
-.clock { color: $amber; font-weight: bold; }
-.vol { color: $glow; }
-.vol.muted { color: $amanita; }
-.cpu { color: $pink; }
+// A token as a translucent widget background, and the same token fully transparent (for a border that only reserves
+// room inside a translucent fill, so the fill shows through it once instead of doubling under it)
+@function widget($c) { @return change-color($c, $alpha: $widget-alpha); }
+@function clear($c) { @return change-color($c, $alpha: 0); }
+// a fill inside a translucent panel, pill or dock: $block-alpha, so it does not stack up to an opaque slab
+@function block($c) { @return change-color($c, $alpha: $block-alpha); }
 
-.dock {
-  background: $surface;
-  border: 1px solid rgba($glow, 0.25);
-  border-radius: 24px;
-  padding: 8px;
-}
-.dock-icon { padding: 4px; margin: 3px 0; border-radius: 14px; }
-.dock-icon:hover { background: rgba($glow, 0.18); }
-.dock-icon:active { background: rgba($glow, 0.32); }
+// The rule below also matches the label inside every button, so a text style set on a button is repeated on its label.
+* { all: unset; font-family: $sans; font-size: 13px; color: $fg; }
 
+// ── Bar: no frame, separate chips on the wallpaper, the bramble underneath ──
+.bar { padding: 0 12px; }
 .bar-pad { padding: 0; }
-.vine { background-color: transparent; background-repeat: repeat-x; background-size: auto 16px; background-position: left top; }
+.pill { padding: 3px 10px; margin: 5px 2px; background-color: widget($surface); }
+.ws { padding: 3px 11px; margin: 5px 2px; background-color: widget($surface); }
+.ws, .ws label { font-family: $pixel; font-weight: 600; font-size: 16px; color: $muted; }
+.ws:hover { background-color: $accent-tint; }
+.ws.visible, .ws.visible label { color: $fg; }
+.ws.focused { background-color: $accent; }
+.ws.focused, .ws.focused label { color: $on-accent; }
+.ws.urgent { background-color: $bad; }
+.ws.urgent, .ws.urgent label { color: $on-accent; }
+// the border takes 2 px a side: the padding gives them back so the chip keeps the height of the others
+.layout { background-color: widget($surface); border: 2px solid $accent; }
+.pill.layout { padding: 1px 10px; }
+.layout, .layout label { font-family: $mono; font-weight: bold; font-size: 12px; color: $accent; }
+.layout:hover { background-color: $accent-tint; }
+.clock { font-family: $mono; font-weight: bold; color: $fg; }
+.vol { color: $fg; }
+.vol.muted { color: $bad; }
+// privacy: something is using the microphone, the camera or a screen share; each icon is followed by its word
+.privacy { background-color: $warn-tint; }
+.privacy, .privacy label { font-family: $mono; font-size: 12px; color: $warn; }
+// Caffeine button of the bar: lit when the screen is kept awake
+.pill.caf.on { background-color: $accent-tint; }
+.qs { padding: 3px 10px; }
+.qs:hover { background-color: $accent-tint; }
+// the bramble: a 48 x 12 tile repeated along the bottom edge of the bar
+.vine { background-repeat: repeat-x; background-size: auto 12px; background-position: left top; }
 
-// Flyouts
-.pop { background-color: rgba(42, 29, 54, 0.9); border: 2px solid rgba($glow, 0.35); border-radius: 24px; padding: 14px 16px; }
-.pop-title { color: $feather; font-weight: bold; }
-.dim { color: $dim; }
-.pop-btn { color: $spore; border-radius: 8px; padding: 0 2px; }
-.pop-btn:hover { color: $glow; }
-.pop-btn.muted { color: $amanita; }
+// ── Dock (portrait screens) ──
+// The dock is exactly 76 px tall, as tall as the big clock and the workspace box beside it (their windows are 76 px):
+// a 36 px icon + 2 x 6 px padding = a 48 px button, + 2 x 3 px margin + 2 x 8 px dock padding + 2 x 3 px border = 76.
+// Every button holds 36 px: an icon (Ink or system theme), an app's initial, or a minimised window's initial.
+.dock { background-color: widget($surface); border: 3px solid $line; padding: 8px; }
+.dock-icon { padding: 6px; margin: 3px 0; }
+.dock-icon:hover { background-color: $accent-tint; }
+.dock-icon:active { background-color: $accent-tint; }
+// Minimised windows in the dock: the initial of the app in a framed square (its 2 px border comes out of the 36 px)
+.dock-icon.mini { border: 2px solid $muted; }
+.mini label { font-family: $pixel; font-weight: 600; font-size: 20px; color: $fg; min-width: 32px; min-height: 32px; }
+// an app of the dock without an icon shows its initial in the same 36 px
+.dock .app-initial { min-width: 36px; min-height: 36px; }
+.dock-sep { background-color: $line; margin: 10px 4px; }
+
+// Big clock on portrait screens: the time only, in a box as tall as the dock (its window height is set in eww.yuck)
+.bigclock { background-color: widget($surface); border: 3px solid $line; padding: 0 12px; }
+.bigclock-time { font-family: $pixel; font-weight: 600; font-size: 40px; color: $fg; }
+
+// Workspaces beside the dock on portrait screens
+// a segmented strip: each workspace is a square cell filling the dock's inner height (the 76 px window less the 3 px
+// frame: 70 px), cells touch each other and the inside of the frame, so the focused one colours its whole square
+.wsdock { background-color: widget($surface); border: 3px solid $line; padding: 0; }
+.wsdock .ws, .wsdock .ws label { font-size: 20px; }
+// a cell has no fill of its own (the dock's shows through once); its states keep their opaque fills
+.wsdock .ws { padding: 0; margin: 0; min-width: 70px; min-height: 70px; background-color: clear($surface); }
+.wsdock .ws:hover { background-color: $accent-tint; }
+.wsdock .ws.focused { background-color: $accent; }
+.wsdock .ws.urgent { background-color: $bad; }
+
+// ── Bottom strip (landscape screens) ──
+.strip { padding: 0 14px; }
+.strip-hint { background-color: widget($surface); padding: 0 10px; margin: 4px 0; font-family: $mono; font-size: 12px; }
+.strip-win { background-color: widget($surface); border: 2px solid $muted; padding: 0 10px; margin: 4px 0; }
+.strip-win, .strip-win label { font-family: $mono; font-size: 12px; color: $fg; }
+.strip-win:hover { background-color: $accent-tint; }
+.strip-dock { background-color: widget($surface); padding: 0 4px; margin: 2px 0; }
+.strip-dock .dock-icon { padding: 2px 4px; margin: 1px 1px; }
+.strip-player { background-color: widget($surface); padding: 0 4px 0 12px; margin: 2px 0; }
+.strip-track { font-family: $mono; font-size: 12px; color: $muted; }
+.strip-btn { padding: 0 8px; }
+.strip-btn:hover { background-color: $accent-tint; }
+
+// ── Flyouts and panels ──
+// Every floating panel (flyouts, quick settings, launcher, dashboard, expose, the layout picker) is a .pop, with the
+// design's notched pixel corner (restored at the owner's request on 2026-11-12). GTK 3 has no clip-path, so the frame is
+// one nine-slice border image, icons/panel-frame.svg, drawn by build_files/tools/pixel-panel-frame.py from the tokens
+// (its path is set on each panel in eww.yuck, with ${EWW_CONFIG_DIR}: eww loads this stylesheet as text, so a relative
+// url() here does not resolve; check-look requires the same :style on every .pop box):
+// a 3 px fg frame round a rectangle with an 8 x 8 px square cut out of each corner, steps included; the same outline
+// 4 px right and down in line for the hard shadow; and inside the frame the band down to the padding box, in the
+// panel's translucent fill. The cut corners stay transparent. The padding box is filled by background-color, clipped
+// to it, so the image and the background meet edge to edge and nothing is painted twice (no darker seam).
+// The borders are the image's slices: 12 px at the top and the left (3 px frame + 9 px band), 15 px at the right and the
+// bottom (4 px shadow + 3 px frame + 8 px band). The content keeps its distance to the frame (the panel's padding minus
+// the band), and the 2 px right and bottom margin plus the 4 px shadow leave the frame where the old 6 px margin left it.
+// $widget-alpha changes the image too: run pixel-panel-frame.py after changing it (check-look says so if forgotten).
+@mixin panel-padding($v, $h) { padding: ($v - 9px) ($h - 8px) ($v - 8px) ($h - 9px); }
+.pop {
+  border-style: solid;
+  border-width: 12px 15px 15px 12px;
+  border-color: $fg;
+  border-image-slice: 12 15 15 12;
+  border-image-repeat: repeat;
+  background-color: widget($surface);
+  background-clip: padding-box;
+  margin: 0 2px 2px 0;
+  @include panel-padding(14px, 16px);
+}
+.pop-title { font-family: $pixel; font-weight: 600; font-size: 18px; color: $accent; }
+.dim { color: $muted; }
+// data in IBM Plex Mono: percentages, key hints (window titles: .strip-win, .ecard .dim)
+.pct { font-family: $mono; }
+.hint { font-family: $mono; font-size: 12px; }
+.pop-btn { border: 2px solid $muted; padding: 1px 8px; }
+.pop-btn, .pop-btn label { font-family: $mono; font-size: 12px; color: $fg; }
+.pop-btn:hover { background-color: $accent-tint; }
+.pop-btn.muted, .pop-btn.muted label { color: $bad; }
 .meter { margin: 0; }
-progressbar trough { background: rgba($moss, 0.7); min-height: 6px; border-radius: 6px; }
-progressbar progress { background: $glow; min-height: 6px; border-radius: 6px; }
-scale trough { background: rgba($moss, 0.7); min-height: 6px; border-radius: 6px; }
-scale highlight { background: $glow; border-radius: 6px; }
-scale slider { background: $spore; min-width: 14px; min-height: 14px; border-radius: 50%; margin: -5px; }
-scale slider:hover { background: $pink; }
+// the sound panel: each device's name is a plain label; the mute button is a square toggle before its slider, in the
+// design system's toggle states (at rest a 2 px muted frame, muted the selected state with the glyph in bad)
+.audio-name { font-family: $mono; font-size: 12px; color: $fg; }
+.audio-name.muted { color: $bad; }
+$mute-icon: 24px;   // the icon's size in eww.yuck
+$mute-frame: 2px;
+.mute-btn { border: $mute-frame solid $muted; padding: 0; }
+// the slider's line is exactly as tall as the mute button beside it
+.slider-line { min-height: $mute-icon + 2 * $mute-frame; }
+.mute-btn:hover { background-color: $accent-tint; }
+.mute-btn.on { background-color: $accent-tint; border-color: $accent; }
+progressbar trough { background-color: $line; min-height: 6px; }
+progressbar progress { background-color: $px-body; min-height: 6px; }
+scale trough { background-color: $line; min-height: 6px; }
+scale highlight { background-color: $accent; }
+scale slider { background-color: $fg; min-width: 12px; min-height: 16px; margin: -5px 0; }
+scale slider:hover { background-color: $accent; }
 
 // Quick settings
-.qs { padding: 3px 10px; }
-.qs:hover { background: rgba($glow, 0.2); }
-.tile { background: rgba($moss, 0.5); border-radius: 12px; padding: 8px 12px; min-width: 140px; }
-.tile:hover { background: rgba($moss, 0.8); }
-.tile.on { background: rgba($glow, 0.22); border: 1px solid rgba($glow, 0.6); }
-.tile-label { font-weight: bold; }
-.app { background: rgba($moss, 0.4); border-radius: 14px; padding: 6px 4px; min-width: 96px; }
-.app:hover { background: rgba($glow, 0.2); color: $glow; }
-.pbtn { background: rgba($moss, 0.4); border-radius: 14px; padding: 6px 2px; min-width: 64px; font-size: 12px; }
-.pbtn:hover { background: rgba($pink, 0.25); }
-.pbtn.confirm { background: $amanita; color: $loam; }
+.tile { background-color: block($bg); border: 2px solid clear($bg); padding: 6px 10px; min-width: 140px; }
+.tile:hover { background-color: $accent-tint; }
+.tile.on { background-color: $accent-tint; border-color: $accent; }
+.tile-label { font-weight: 600; }
+.tile .dim { font-size: 12px; }
+.app { background-color: block($bg); padding: 6px 4px; min-width: 96px; }
+.app:hover { background-color: $accent-tint; }
+.pbtn { background-color: block($bg); border: 2px solid clear($bg); padding: 6px 2px; min-width: 64px; }
+.pbtn label { font-size: 12px; }
+.pbtn:hover { background-color: $accent-tint; }
+.pbtn.pbtn-poweroff label { color: $bad; }
+.pbtn.confirm { border-color: $bad; }
 
-.notif { background: rgba(91, 69, 112, 0.35); border-radius: 14px; padding: 6px 10px; }
-
-// Minimised windows in the dock
-.mini label { color: $glow; font-weight: bold; font-size: 16px; min-width: 40px; min-height: 40px; }
-.dock-icon.mini { border: 2px solid rgba($glow, 0.6); border-radius: 16px; }
-.dock-sep { background: rgba($moss, 0.8); border-radius: 2px; margin: 10px 4px; }
+// Notifications in the flyout
+.notif { background-color: block($bg); padding: 6px 10px; }
 
 // Shortcut sheet
 .keycol { min-width: 205px; }
 .keydesc { font-size: 12px; }
-.keycap { background: rgba(91, 69, 112, 0.55); border: 1px solid rgba($glow, 0.45); border-bottom: 3px solid rgba($glow, 0.6); border-radius: 8px; padding: 0 7px; font-size: 11px; font-weight: bold; color: $spore; }
+.keycap { background-color: block($bg); border: 2px solid $muted; padding: 0 6px; font-family: $mono; font-size: 11px; font-weight: bold; color: $fg; }
 
 // Calendar
-calendar { color: $spore; padding: 2px 4px; }
-calendar.header { color: $feather; font-weight: bold; }
-calendar.button { color: $glow; padding: 0 8px; }
-calendar.button:hover { color: $pink; }
-calendar:selected { background: $glow; color: $loam; border-radius: 10px; }
-calendar:indeterminate { color: $dim; }
-calendar.highlight { color: $feather; font-weight: bold; }
+calendar { font-family: $mono; color: $fg; padding: 2px 4px; }
+calendar.header { font-family: $pixel; font-weight: 600; color: $fg; }
+calendar.button { color: $accent; padding: 0 8px; }
+calendar.button:hover { color: $fg; }
+calendar:selected { background-color: $accent; color: $on-accent; }
+calendar:indeterminate { color: $muted; }
+calendar.highlight { color: $muted; font-weight: bold; }
 
-// Dashboard
-.dash { padding: 18px 22px; }
-.dash-time { font-size: 44px; font-weight: bold; color: $glow; }
-.card { background: rgba(91, 69, 112, 0.35); border-radius: 18px; padding: 10px 14px; }
-.ring { min-width: 74px; min-height: 74px; color: $glow; background-color: rgba($moss, 0.5); }
+// ── Launcher, dashboard, expose ──
+.dash { @include panel-padding(20px, 20px); }
+.dash-long { @include panel-padding(16px, 18px); }
 
-// Dashboard launcher
-.search { background: rgba($moss, 0.45); border: 2px solid rgba($glow, 0.5); border-radius: 18px; padding: 8px 16px; font-size: 15px; caret-color: $glow; }
-.search:focus { border-color: $glow; }
-.app-tile { border-radius: 18px; padding: 8px 6px; min-width: 84px; }
-.app-tile:hover { background: rgba($glow, 0.2); }
+// Dashboard: two equal columns (time, date, calendar | notifications, system, media)
+.dashboard { @include panel-padding(28px, 28px); }
+.dash-time { font-family: $pixel; font-weight: 600; font-size: 96px; color: $fg; }
+.dash-long .dash-time { font-size: 96px; }
+// the widest dashboard (landscape screens of 2560 px or more): more room round the content, a bigger clock (a whole
+// multiple of the pixel face's 24 px step), a calendar with bigger cells; the meters' segments are doubled in eww.yuck
+.dashboard-xl { @include panel-padding(40px, 40px); }
+.dashboard-xl .dash-time { font-size: 144px; }
+// GTK 3's calendar keeps its natural row height whatever room it gets: its cells grow through the font size
+.dashboard-xl calendar { font-size: 24px; }
+.dash-date { font-family: $mono; font-size: 14px; color: $muted; }
+.dash-cal { background-color: block($bg); padding: 16px; }
+.dash-title { font-family: $pixel; font-weight: 600; font-size: 20px; color: $fg; }
+.dash-notif { background-color: block($bg); padding: 12px; }
+.notif-dot { background-color: $accent; min-width: 8px; min-height: 8px; margin-top: 6px; }
+.notif-summary { font-weight: 600; }
+.notif-body { font-size: 13px; color: $muted; }
+.sys-label { font-family: $mono; font-size: 13px; color: $muted; }
+.sys-value { font-family: $mono; font-size: 13px; color: $fg; }
+.sys-value.warn { color: $warn; }
+// the ten-segment meter: a segment is on when the value reaches its tenth
+.seg { background-color: $line; min-width: 16px; min-height: 12px; }
+.seg.on { background-color: $px-body; }
+.seg.on.warn { background-color: $warn; }
+.dash-media { background-color: block($bg); padding: 12px; }
+.dash-track { font-family: $mono; font-size: 13px; color: $muted; }
+
+// Launcher
+.search { background-color: block($bg); border: 2px solid $fg; padding: 8px 12px; font-family: $mono; font-size: 15px; caret-color: $accent; }
+.search:focus { border-color: $fg; }
+.app-tile { background-color: block($bg); border: 2px solid clear($bg); padding: 8px 6px; min-width: 84px; }
+.app-tile:hover { background-color: $accent-tint; }
+// an app that is in the dock gets a line under it in the launcher (the tooltip says so in words)
+.app-tile.docked { border-bottom-color: $px-body; }
 .app-icon { min-width: 48px; min-height: 48px; }
 .app-icon-sm { min-width: 32px; min-height: 32px; }
-.app-initial { font-size: 22px; font-weight: bold; color: $glow; min-width: 40px; }
-.result { border-radius: 14px; padding: 6px 12px; }
-.result:hover { background: rgba($glow, 0.2); }
-
-.dash-long { padding: 16px 18px; }
-.dash-long .dash-time { font-size: 52px; }
+.app-initial { font-family: $pixel; font-weight: 600; font-size: 22px; color: $fg; min-width: 40px; }
+.result { padding: 6px 12px; }
+.result:hover { background-color: $accent-tint; }
+// confirmation line of the launcher ("pinned Firefox to the launcher")
+.lmsg { background-color: $accent; color: $on-accent; padding: 3px 12px; font-weight: 600; }
+// its place in the launcher, kept when it is empty (a little taller than the line itself)
+.lmsg-slot { min-height: 26px; }
 
 // Expose
-.ecard { border-radius: 18px; padding: 8px; }
-.ecard:hover { background: rgba($glow, 0.2); }
-.ecard.focused { border: 2px solid $glow; }
-.ethumb { background: rgba($moss, 0.35); border-radius: 12px; }
-.ews { color: $feather; font-weight: bold; border-radius: 12px; padding: 2px 8px; }
-.ews.focused { color: $loam; background: $glow; }
-
-// Keyboard focus. `* { all: unset }` removes GTK's own ring, so draw one: Tab and the arrow keys now show where you are.
-button:focus { box-shadow: inset 0 0 0 2px rgba($glow, 0.85); }
-.result:focus, .app-tile:focus, .app:focus, .tile:focus, .pbtn:focus { background: rgba($glow, 0.28); }
-.result.selected, .app-tile.selected { background: rgba($glow, 0.28); box-shadow: inset 0 0 0 2px rgba($glow, 0.85); }   // the entry Enter launches
-
-// Audio device list in the volume flyout
-.dev { padding: 3px 8px; border-radius: 10px; color: $dim; }
-.dev:hover { background: rgba($glow, 0.18); color: $spore; }
-.dev.selected { color: $glow; }
-
-// Big clock on portrait screens: the time only, in a box as tall as the dock (its window height is set in eww.yuck)
-.bigclock { background-color: rgba(42, 29, 54, 0.66); border: 2px solid rgba($glow, 0.3); border-radius: 24px; padding: 0 12px; }
-.bigclock-time { font-size: 34px; font-weight: bold; color: $glow; }
-// Bottom strip (landscape screens)
-.strip { padding: 0 14px; }
-// only the player has a background; the rest of the strip is transparent
-.strip-player { background-color: rgba(42, 29, 54, 0.66); border-radius: 14px; padding: 0 12px; margin: 5px 0; }
-.strip-win { color: $spore; background: rgba($glow, 0.14); border-radius: 10px; padding: 0 10px; margin: 5px 0; }
-.strip-win:hover { background: rgba($glow, 0.3); color: $glow; }
-.strip-track { color: $spore; }
-.strip-btn { color: $glow; padding: 0 8px; border-radius: 8px; }
-.strip-btn:hover { background: rgba($glow, 0.22); }
-
-// Workspaces beside the dock on portrait screens
-.wsdock { background-color: rgba(42, 29, 54, 0.66); border: 2px solid rgba($glow, 0.3); border-radius: 24px; padding: 0 10px; }
-.wsdock .ws, .wsdock .ws label { font-size: 22px; font-weight: bold; }
-.wsdock .ws { padding: 0 14px; margin: 14px 3px; border-radius: 16px; }
+.ecard { border: 3px solid clear($surface); padding: 8px; }
+.ecard:hover { background-color: $accent-tint; }
+.ecard.focused { border-color: $accent; }
+.ecard .dim { font-family: $mono; font-size: 12px; }
+.ethumb { background-color: block($bg); }
+.ews { background-color: block($bg); border: 2px solid clear($bg); padding: 2px 8px; }
+.ews, .ews label { font-family: $mono; font-weight: bold; color: $fg; }
+.ews.focused { background-color: $accent; border-color: $accent; }
+.ews.focused, .ews.focused label { color: $on-accent; }
 .escreen { margin-top: 4px; }
+// a window picked up to be moved, and the workspaces it can land on
+.ecard.picked { border-color: $warn; }
+.ews.target { border-color: $accent; }
+.ews.target, .ews.target label { color: $accent; }
+.ews.focused.target, .ews.focused.target label { color: $on-accent; }
+
+// Keyboard focus. `* { all: unset }` removes GTK's own ring, so draw one: a 2 px ring in the text colour.
+button:focus { box-shadow: inset 0 0 0 2px $fg; }
+.result:focus, .app-tile:focus, .app:focus, .tile:focus, .pbtn:focus { background-color: $accent-tint; }
+// the entry Enter launches
+.result.selected { background-color: $accent; }
+.result.selected label, .result.selected .dim, .result.selected .app-initial { color: $on-accent; }
+.app-tile.selected { background-color: $accent-tint; border-color: $accent; }
+
+// Audio device list in the volume flyout (the current one is also marked with a filled dot)
+.dev { padding: 3px 8px; }
+.dev label { color: $muted; }
+.dev:hover { background-color: $accent-tint; }
+.dev:hover label { color: $fg; }
+.dev.selected label { color: $accent; }
 
 // Menus and tooltips. `* { all: unset }` also strips GTK's own menus (tray icon context menus, right-click menus) and
 // tooltips down to bare text over the desktop, so they are drawn again here.
-menu, .menu, .popup, .context-menu { background-color: rgba(42, 29, 54, 0.97); border: 2px solid rgba($glow, 0.4); border-radius: 14px; padding: 6px; }
-menu menuitem, .menu menuitem { padding: 5px 12px; border-radius: 8px; color: $spore; }
-menu menuitem *, .menu menuitem * { color: $spore; }
-menu menuitem:hover, menu menuitem:selected { background: rgba($glow, 0.25); }
-menu menuitem:hover *, menu menuitem:selected * { color: $spore; }
-menu menuitem:disabled, menu menuitem:disabled * { color: rgba($dim, 0.55); }
+menu, .menu, .popup, .context-menu { background-color: $surface; border: 3px solid $fg; padding: 6px; }
+menu menuitem, .menu menuitem { padding: 5px 12px; color: $fg; }
+menu menuitem *, .menu menuitem * { color: $fg; }
+menu menuitem:hover, menu menuitem:selected { background-color: $accent-tint; }
+menu menuitem:hover *, menu menuitem:selected * { color: $fg; }
+menu menuitem:disabled, menu menuitem:disabled * { color: $muted; }
 menu menuitem label { padding: 0 2px; }
 menu menuitem image { min-width: 16px; min-height: 16px; margin-right: 8px; }
-menu menuitem check, menu menuitem radio { min-width: 14px; min-height: 14px; margin-right: 8px; border: 2px solid $dim; border-radius: 4px; }
-menu menuitem radio { border-radius: 50%; }
-menu menuitem check:checked, menu menuitem radio:checked { background: $glow; border-color: $glow; }
+menu menuitem check, menu menuitem radio { min-width: 12px; min-height: 12px; margin-right: 8px; border: 2px solid $muted; }
+menu menuitem check:checked, menu menuitem radio:checked { background-color: $accent; border-color: $accent; }
 menu menuitem arrow { min-width: 10px; min-height: 10px; margin-left: 10px; -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
-menu separator { min-height: 1px; margin: 5px 8px; background: rgba($moss, 0.9); }
-tooltip { background-color: rgba(42, 29, 54, 0.97); border: 1px solid rgba($glow, 0.4); border-radius: 10px; padding: 4px 8px; }
-tooltip * { color: $spore; }
+menu separator { min-height: 2px; margin: 5px 8px; background-color: $line; }
+tooltip { background-color: $surface; border: 2px solid $fg; padding: 4px 8px; }
+tooltip * { color: $fg; }
 
-// An app that is in the dock gets a pink line under it in the launcher
-.app-tile.docked { border-bottom: 2px solid $feather; }
+// Buttons on the title bar of the focused window
+// no background at rest, as in the old design (the owner's choice): a stated exception, not a translucent fill
+.wp-btn { padding: 0 5px; }
+.wp-btn, .wp-btn label { font-family: $mono; font-weight: bold; font-size: 15px; color: $accent; }
+// on hover the button is the accent with the dark glyph: the focused title bar under it is accent-tint
+.wp-btn:hover { background-color: $accent; }
+.wp-btn:hover, .wp-btn:hover label { color: $on-accent; }
 
-// Confirmation line of the launcher ("pinned Firefox to the launcher")
-.lmsg { color: $loam; background: $feather; border-radius: 12px; padding: 3px 12px; font-weight: bold; }
+// The cards of the layout picker (Super+G)
+.lcard { background-color: block($bg); border: 2px solid $muted; padding: 10px 8px; }
+.lcard:hover { border-color: $accent; }
+.lname { font-weight: bold; color: $fg; }
+// The pointer probe is a full-screen window that must stay invisible and still receive the pointer: a fill of alpha
+// 1/255, derived from a token (never seen, so it is not a translucent surface of the look).
+.ptrprobe { background-color: transparentize($sunken, 0.996); }
 
-// The dock on landscape screens, in the bottom strip next to the player
-.strip-dock { background-color: rgba(42, 29, 54, 0.66); border-radius: 14px; padding: 0 8px; margin: 5px 0; }
-.strip-dock .dock-icon { padding: 2px; margin: 1px 1px; border-radius: 9px; }
-
-// Caffeine button of the bar: lit when the screen is kept awake
-.pill.caf.on { background: rgba($feather, 0.28); }
-
-/* expose: a window picked up to be moved, and the workspaces it can land on */
-.ecard.picked { background: rgba(255, 200, 226, 0.28); border: 2px dashed #ffc8e2; }
-.ews.target { border: 1px dashed #ffc8e2; background: rgba(255, 200, 226, 0.14); }
-
-/* pill on the title bar of the focused window */
-.wp-btn { background: transparent; border: none; box-shadow: none; }
-.wp-btn { color: #ffc8e2; font-weight: bold; font-size: 15px; border-radius: 10px; padding: 0 5px; }
-.wp-btn:hover { background: rgba(#ffc8e2, 0.25); }
-
-/* the cards of the layout picker (Super+G) */
-.lcard { padding: 10px 8px; border-radius: 18px; background: rgba($moss, 0.35); border: 2px solid transparent; }
-.lcard:hover { background: rgba($moss, 0.6); }
-.lname { font-weight: bold; color: $spore; }
-.ptrprobe { background: rgba(0, 0, 0, 0.004); }
-
-/* the power profile buttons of the battery flyout, and the privacy pill */
-.profbtn { padding: 3px 3px; border-radius: 12px; background: rgba($moss, 0.4); }
-.profbtn:hover { background: rgba($moss, 0.7); }
-.profbtn.on { background: rgba($glow, 0.28); border: 1px solid rgba($glow, 0.7); }
-.privacy { background: rgba($loam, 0.88); border: 1px solid rgba(#ffb347, 0.75); padding: 3px 10px; }
+// The power profile buttons of the battery flyout: the current one is filled
+.profbtn { padding: 3px 3px; background-color: block($bg); }
+.profbtn:hover { background-color: $accent-tint; }
+.profbtn.on { background-color: $accent; border-color: $accent; }
+.profbtn.on label { color: $on-accent; }

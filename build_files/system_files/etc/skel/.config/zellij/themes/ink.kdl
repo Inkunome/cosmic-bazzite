@@ -1,135 +1,136 @@
-// ink: the sway / eww palette (plum, cream, light purple, pink) for zellij.
-// loam #1c1424   surface #2a1d36   moss #5b4570   spore #f6eaf4   dim #b9a3c4
-// glow #c8a2f0   pink #ff8fc4      feather #ff9ccf amber #ffd1e6    amanita #e0566f   mint #8fd6c0
+// ink: the Pixel Guild look for zellij. Colours: the design system's tokens, from ~/.config/eww/_tokens.scss
+// bg #150F28   surface #20173A   line #4A3B7A   fg #F3ECFF   muted #A99BC9   accent #FF7AA8   accent-tint #3A1630
+// px-highlight #B8A9F0   warn #F2B84B   bad #FF8A80   ok #6FD6A0   info #A9B8FF
+// Every text colour on its fill is at least 4.5:1; on an accent fill, text and emphasis are on-accent #150F28.
 themes {
     ink {
         // plain text: panes' text, the status bar hints
         text_unselected {
-            base "#f6eaf4"
-            background "#1c1424"
-            emphasis_0 "#c8a2f0"
-            emphasis_1 "#ff8fc4"
-            emphasis_2 "#8fd6c0"
-            emphasis_3 "#ffd1e6"
+            base "#F3ECFF"
+            background "#150F28"
+            emphasis_0 "#FF7AA8"
+            emphasis_1 "#B8A9F0"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#F2B84B"
         }
         text_selected {
-            base "#1c1424"
-            background "#c8a2f0"
-            emphasis_0 "#e0566f"
-            emphasis_1 "#5b4570"
-            emphasis_2 "#2a1d36"
-            emphasis_3 "#ff8fc4"
+            base "#150F28"
+            background "#FF7AA8"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
+            emphasis_3 "#150F28"
         }
         // tabs and the keys of the status bar
         ribbon_unselected {
-            base "#f6eaf4"
-            background "#5b4570"
-            emphasis_0 "#ffd1e6"
-            emphasis_1 "#f6eaf4"
-            emphasis_2 "#c8a2f0"
-            emphasis_3 "#ff8fc4"
+            base "#F3ECFF"
+            background "#4A3B7A"
+            emphasis_0 "#F2B84B"
+            emphasis_1 "#F3ECFF"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#B8A9F0"
         }
         ribbon_selected {
-            base "#1c1424"
-            background "#c8a2f0"
-            emphasis_0 "#e0566f"
-            emphasis_1 "#2a1d36"
-            emphasis_2 "#5b4570"
-            emphasis_3 "#ff8fc4"
+            base "#150F28"
+            background "#FF7AA8"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
+            emphasis_3 "#150F28"
         }
         table_title {
-            base "#ff9ccf"
-            background "#1c1424"
-            emphasis_0 "#c8a2f0"
-            emphasis_1 "#ff8fc4"
-            emphasis_2 "#8fd6c0"
-            emphasis_3 "#ffd1e6"
+            base "#FF7AA8"
+            background "#150F28"
+            emphasis_0 "#FF7AA8"
+            emphasis_1 "#B8A9F0"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#F2B84B"
         }
         table_cell_unselected {
-            base "#f6eaf4"
-            background "#2a1d36"
-            emphasis_0 "#c8a2f0"
-            emphasis_1 "#ff8fc4"
-            emphasis_2 "#8fd6c0"
-            emphasis_3 "#ffd1e6"
+            base "#F3ECFF"
+            background "#20173A"
+            emphasis_0 "#FF7AA8"
+            emphasis_1 "#B8A9F0"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#F2B84B"
         }
         table_cell_selected {
-            base "#1c1424"
-            background "#c8a2f0"
-            emphasis_0 "#e0566f"
-            emphasis_1 "#5b4570"
-            emphasis_2 "#2a1d36"
-            emphasis_3 "#ff8fc4"
+            base "#150F28"
+            background "#FF7AA8"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
+            emphasis_3 "#150F28"
         }
         list_unselected {
-            base "#f6eaf4"
-            background "#2a1d36"
-            emphasis_0 "#c8a2f0"
-            emphasis_1 "#ff8fc4"
-            emphasis_2 "#8fd6c0"
-            emphasis_3 "#ffd1e6"
+            base "#F3ECFF"
+            background "#20173A"
+            emphasis_0 "#FF7AA8"
+            emphasis_1 "#B8A9F0"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#F2B84B"
         }
         list_selected {
-            base "#1c1424"
-            background "#c8a2f0"
-            emphasis_0 "#e0566f"
-            emphasis_1 "#5b4570"
-            emphasis_2 "#2a1d36"
-            emphasis_3 "#ff8fc4"
+            base "#150F28"
+            background "#FF7AA8"
+            emphasis_0 "#150F28"
+            emphasis_1 "#150F28"
+            emphasis_2 "#150F28"
+            emphasis_3 "#150F28"
         }
-        // pane borders: dim moss when idle, glow on the focused pane, pink while a mode highlights it
+        // pane borders: muted when idle, accent on the focused pane, px-highlight while a mode highlights it
         frame_unselected {
-            base "#5b4570"
-            background "#1c1424"
-            emphasis_0 "#b9a3c4"
-            emphasis_1 "#c8a2f0"
-            emphasis_2 "#ff8fc4"
-            emphasis_3 "#ffd1e6"
+            base "#A99BC9"
+            background "#150F28"
+            emphasis_0 "#A99BC9"
+            emphasis_1 "#FF7AA8"
+            emphasis_2 "#B8A9F0"
+            emphasis_3 "#F2B84B"
         }
         frame_selected {
-            base "#c8a2f0"
-            background "#1c1424"
-            emphasis_0 "#ff8fc4"
-            emphasis_1 "#8fd6c0"
-            emphasis_2 "#ffd1e6"
-            emphasis_3 "#ff9ccf"
+            base "#FF7AA8"
+            background "#150F28"
+            emphasis_0 "#B8A9F0"
+            emphasis_1 "#6FD6A0"
+            emphasis_2 "#F2B84B"
+            emphasis_3 "#FF7AA8"
         }
         frame_highlight {
-            base "#ff8fc4"
-            background "#1c1424"
-            emphasis_0 "#ffd1e6"
-            emphasis_1 "#c8a2f0"
-            emphasis_2 "#8fd6c0"
-            emphasis_3 "#ff9ccf"
+            base "#B8A9F0"
+            background "#150F28"
+            emphasis_0 "#F2B84B"
+            emphasis_1 "#FF7AA8"
+            emphasis_2 "#6FD6A0"
+            emphasis_3 "#FF7AA8"
         }
         exit_code_success {
-            base "#8fd6c0"
-            background "#1c1424"
-            emphasis_0 "#c8a2f0"
-            emphasis_1 "#ff8fc4"
-            emphasis_2 "#ffd1e6"
-            emphasis_3 "#f6eaf4"
+            base "#6FD6A0"
+            background "#150F28"
+            emphasis_0 "#FF7AA8"
+            emphasis_1 "#B8A9F0"
+            emphasis_2 "#F2B84B"
+            emphasis_3 "#F3ECFF"
         }
         exit_code_error {
-            base "#e0566f"
-            background "#1c1424"
-            emphasis_0 "#ff8fc4"
-            emphasis_1 "#ffd1e6"
-            emphasis_2 "#c8a2f0"
-            emphasis_3 "#f6eaf4"
+            base "#FF8A80"
+            background "#150F28"
+            emphasis_0 "#B8A9F0"
+            emphasis_1 "#F2B84B"
+            emphasis_2 "#FF7AA8"
+            emphasis_3 "#F3ECFF"
         }
         // colours of the cursors when several people share a session
         multiplayer_user_colors {
-            player_1 "#c8a2f0"
-            player_2 "#ff8fc4"
-            player_3 "#8fd6c0"
-            player_4 "#ffd1e6"
-            player_5 "#ff9ccf"
-            player_6 "#e0566f"
-            player_7 "#b9a3c4"
-            player_8 "#5b4570"
-            player_9 "#f6eaf4"
-            player_10 "#6a9a55"
+            player_1 "#FF7AA8"
+            player_2 "#B8A9F0"
+            player_3 "#6FD6A0"
+            player_4 "#F2B84B"
+            player_5 "#FF7AA8"
+            player_6 "#FF8A80"
+            player_7 "#A99BC9"
+            player_8 "#4A3B7A"
+            player_9 "#F3ECFF"
+            player_10 "#A9B8FF"
         }
     }
 }

@@ -1,10 +1,12 @@
-font=Fira Code 10
-background-color=#2a1d36d9
-text-color=#f6eaf4
-border-color=#c8a2f0
-progress-color=over #5b4570
+# Pixel Guild look. Colours: the design system's tokens, from ~/.config/eww/_tokens.scss
+# (surface #20173A, fg #F3ECFF, line #4A3B7A, bad #FF8A80): opaque, square, a 3 px frame.
+font=IBM Plex Sans 10
+background-color=#20173A
+text-color=#F3ECFF
+border-color=#F3ECFF
+progress-color=over #4A3B7A
 border-size=3
-border-radius=20
+border-radius=0
 padding=12
 margin=10
 default-timeout=6000
@@ -13,7 +15,7 @@ max-history=30
 anchor=top-right
 
 [urgency=high]
-border-color=#e0566f
+border-color=#FF8A80
 default-timeout=0
 
 [mode=do-not-disturb]

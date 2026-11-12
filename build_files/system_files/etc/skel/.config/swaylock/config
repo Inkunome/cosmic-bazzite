@@ -1,12 +1,19 @@
-color=1c1424
-inside-color=2a1d36
-ring-color=5b4570
-key-hl-color=c8a2f0
-bs-hl-color=e0566f
-ring-ver-color=ff9ccf
-inside-ver-color=2a1d36
-line-color=00000000
-text-color=f6eaf4
-font=Fira Code
+# Pixel Guild look. Colours: the design system's tokens, from ~/.config/eww/_tokens.scss
+# (bg 150F28 screen, surface 20173A inside, line 4A3B7A ring, accent FF7AA8 key and verifying, bad FF8A80 backspace and wrong,
+# muted A99BC9 ring when the input is cleared)
+color=150f28
+inside-color=20173a
+ring-color=4a3b7a
+key-hl-color=ff7aa8
+bs-hl-color=ff8a80
+ring-ver-color=ff7aa8
+inside-ver-color=20173a
+ring-wrong-color=ff8a80
+inside-wrong-color=20173a
+ring-clear-color=a99bc9
+inside-clear-color=20173a
+line-color=150f28
+text-color=f3ecff
+font=IBM Plex Mono
 indicator-radius=90
 show-failed-attempts

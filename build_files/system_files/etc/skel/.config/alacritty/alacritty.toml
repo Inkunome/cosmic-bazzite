@@ -2,3 +2,32 @@
 [window]
 padding = { x = 16, y = 14 }   # space between the text and the window border
 dynamic_padding = true         # share the leftover pixels evenly instead of leaving a gap on one side
+
+# Pixel Guild colours: the design system's tokens, from ~/.config/eww/_tokens.scss
+[colors.primary]
+background = "#0C0818"   # sunken (darker than surface: the owner's choice for the terminal)
+foreground = "#F3ECFF"   # fg
+
+[colors.cursor]
+cursor = "#FF7AA8"       # accent
+text = "#150F28"         # on-accent
+
+[colors.normal]
+black = "#150F28"        # bg
+red = "#FF8A80"          # bad
+green = "#6FD6A0"        # ok
+yellow = "#F2B84B"       # warn
+blue = "#A9B8FF"         # info
+magenta = "#FF7AA8"      # accent
+cyan = "#B8A9F0"         # px-highlight
+white = "#F3ECFF"        # fg
+
+[colors.bright]
+black = "#A99BC9"        # muted
+red = "#FF8A80"
+green = "#6FD6A0"
+yellow = "#F2B84B"
+blue = "#A9B8FF"
+magenta = "#FF7AA8"
+cyan = "#B8A9F0"
+white = "#F3ECFF"

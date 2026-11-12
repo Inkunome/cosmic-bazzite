@@ -1,0 +1,29 @@
+// Colour tokens of the Inkunome design system, pixel register, dark theme (repository inkunome-design, tokens.json,
+// commit 7fe3a1f). This is the only place in the eww configuration where a colour is written: eww.scss imports it.
+// The same values are copied, with a comment naming this file, into the `set $...` lines of the sway config and into
+// the mako, fuzzel, swaylock, alacritty and zellij files. A second palette (the light theme) is a swap of this file.
+$bg: #150F28;
+$surface: #20173A;
+$sunken: #0C0818;
+$fg: #F3ECFF;
+$muted: #A99BC9;
+$line: #4A3B7A;
+$accent: #FF7AA8;
+$on-accent: #150F28;
+$accent-tint: #3A1630;
+$px-body: #7B66C8;
+$px-highlight: #B8A9F0;
+$gold: #F2B84B;
+$warn: #F2B84B;
+$warn-tint: #33270C;
+$bad: #FF8A80;
+$ok: #6FD6A0;
+$info: #A9B8FF;
+// How opaque the widgets' backgrounds are (panels, the bar's chips, the dock, the blocks inside panels): one number, the
+// owner's to tune (decided 2026-11-12). eww.scss derives every translucent background from a token with it; frames,
+// shadows, text, icons, accent and status fills stay opaque. 1 makes everything opaque again.
+$widget-alpha: 0.70;
+// How opaque a block is when it sits inside a translucent panel, pill or dock (tiles, buttons, cards, rows): stacked on
+// a panel at $widget-alpha it reads as a slightly denser area of the same glass, not as an opaque slab (0.35 on 0.70
+// gives about 0.80). The owner's choice of 2026-11-12.
+$block-alpha: 0.35;
