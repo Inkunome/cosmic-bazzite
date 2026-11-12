@@ -225,16 +225,20 @@
 
 ;; ── Flyouts ──────────────────────────────────────────────
 ;; Open on hover over their pill in the bar, close shortly after the pointer leaves both.
-(defwidget slider-row [name kind data val]
+(defwidget slider-row [name kind data val icon mutedicon]
   (box :class "meter" :orientation "v" :space-evenly false
     (box :space-evenly false
-      (button :timeout "10s" :class "pop-btn ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
-              :onclick "~/.config/eww/scripts/audio mute ${kind}"
-        {data.muted ? "${name} (muted)" : name})
+      ;; the device's name is a plain label (the mute button is the square before the slider); muted says so in words
+      (label :class "audio-name ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
+             :text {data.muted ? "${name} (muted)" : name})
       ;; the number comes from the same variable the slider writes, so it moves with the slider
       (label :class "pct" :halign "end" :text "${round(val, 0)}%"))
-    (scale :timeout "10s" :class "slider" :min 0 :max 101 :value val
-           :onchange "~/.config/eww/scripts/audio set ${kind} {}")))
+    (box :space-evenly false :spacing 8
+      (button :timeout "10s" :class "mute-btn ${data.muted ? 'on' : ''}" :valign "center" :tooltip {data.muted ? "unmute" : "mute"}
+              :onclick "~/.config/eww/scripts/audio mute ${kind}"
+        (image :path "${EWW_CONFIG_DIR}/icons/${data.muted ? mutedicon : icon}.svg" :image-width 24 :image-height 24))
+      (scale :timeout "10s" :class "slider" :hexpand true :valign "center" :min 0 :max 101 :value val
+             :onchange "~/.config/eww/scripts/audio set ${kind} {}"))))
 
 ;; pick the default device: the current one is marked
 (defwidget devices [kind items]
@@ -248,9 +252,9 @@
   (eventbox :timeout "10s" :onhover "eww update vol_pop=true"
             :onhoverlost "eww update vol_pop=false && ~/.config/eww/scripts/popclose volpop vol"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
-      (slider-row :name "speakers" :kind "sink" :data sink :val vol_sink_v)
+      (slider-row :name "speakers" :kind "sink" :data sink :val vol_sink_v :icon "vol-high" :mutedicon "vol-muted")
       (devices :kind "sink" :items {adev.sinks})
-      (slider-row :name "microphone" :kind "source" :data src :val vol_source_v)
+      (slider-row :name "microphone" :kind "source" :data src :val vol_source_v :icon "mic" :mutedicon "mic-muted")
       (devices :kind "source" :items {adev.sources}))))
 
 (defwindow volpop [mon]

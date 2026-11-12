@@ -94,6 +94,13 @@ $pixel: "Pixelify Sans", monospace;
 .pop-btn:hover { background-color: $accent-tint; }
 .pop-btn.muted, .pop-btn.muted label { color: $bad; }
 .meter { margin: 0; }
+// the sound panel: each device's name is a plain label; the mute button is a square toggle before its slider, in the
+// design system's toggle states (at rest a 2 px muted frame, muted the selected state with the glyph in bad)
+.audio-name { font-family: $mono; font-size: 12px; color: $fg; }
+.audio-name.muted { color: $bad; }
+.mute-btn { border: 2px solid $muted; padding: 0; }
+.mute-btn:hover { background-color: $accent-tint; }
+.mute-btn.on { background-color: $accent-tint; border-color: $accent; }
 progressbar trough { background-color: $line; min-height: 6px; }
 progressbar progress { background-color: $px-body; min-height: 6px; }
 scale trough { background-color: $line; min-height: 6px; }

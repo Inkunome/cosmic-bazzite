@@ -435,6 +435,13 @@ def cmd_yuck(root, base):
             return vals
         if expr in ICON_DATA:
             return sources[ICON_DATA[expr]]
+        # a choice between parameters (data.muted ? mutedicon : icon): the union of what each one can be
+        mentioned = [p for p in (widgets[widget][0] if widget else []) if re.search(rf"(?<![\w.]){re.escape(p)}(?![\w.])", expr)]
+        if mentioned and re.fullmatch(r"[\w.\s?:!=<>&|()]+", expr):
+            vals = set()
+            for p in mentioned:
+                vals |= resolve(p, widget)
+            return vals
         err(f"eww.yuck: icon name from '{expr}' has no known source (add it to ICON_DATA in check-look.py)")
         return set()
 

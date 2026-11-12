@@ -93,6 +93,7 @@ Rewritten around `@import "tokens";`. The class names stay, so `eww.yuck` change
 | `.app` | `bg` fill; hover `accent-tint`. |
 | `.pbtn` | `bg` fill; the shut-down button's label and icon in `bad`; `.confirm` 2 px `bad` border. |
 | `.pop-btn` | 2 px `muted` border, IBM Plex Mono 12 px; `.muted` text in `bad`. |
+| Sound panel (`slider-row`) | The device's name is a plain label (IBM Plex Mono 12 px, `fg`; muted: `bad` and the word "(muted)"); the percentage stays at the right of that line. Before each slider, a square mute toggle (24 px icon in a 2 px `muted` frame, tooltip "mute" / "unmute"): `vol-high` / `mic` when live, `vol-muted` / `mic-muted` (in `bad`) when muted, drawn in the selected state (`accent-tint` fill, `accent` frame); the slider takes the rest of the line. The owner's choice of 2026-11-12. |
 | `scale` | Trough `line`, 6 px; highlight `accent`; the slider a 12×16 `fg` square. |
 | `progressbar` | Square; trough `line`; progress `px-body`. |
 | `calendar` | Square, IBM Plex Mono; the selected day `on-accent` on `accent`; other months' days `muted`. |
@@ -140,10 +141,10 @@ Every SVG under `eww/icons/` is redrawn; file names stay unless said otherwise, 
 - **Grid**: `viewBox="0 0 12 12"`, `shape-rendering="crispEdges"`, only rectangles or axis-aligned paths on whole coordinates.
 - **Where the design system already has the icon** (bell, lock, search, home, user, key, shield, clock, package, and others), use its grid: `icons/icons.txt` in the design system's repository (`#` is a filled cell). Draw the rest on the same grid, in the same weight (2-cell strokes, solid shapes).
 - **Colours are written in the file** (an eww image takes no stylesheet), from the tokens only:
-  - `fg`: terminal, browser, files, settings, bell, vol-high, vol-low, the layout icons, lock, suspend, logout, reboot, prev, play, pause, next, cpu, the battery's outline.
+  - `fg`: mic, terminal, browser, files, settings, bell, vol-high, vol-low, the layout icons, lock, suspend, logout, reboot, prev, play, pause, next, cpu, the battery's outline.
   - `accent`: launcher, dashboard, coffee-on, the dot of bell-dot, the paw.
   - `muted`: coffee (off), bell-off.
-  - `bad`: vol-muted, power-poweroff, the fill of battery-0.
+  - `bad`: vol-muted, mic-muted, power-poweroff, the fill of battery-0.
   - `warn`: privacy-mic, privacy-cam, privacy-screen, the fill of battery-20.
   - `px-body`: the fill of the other batteries; `gold`: the bolt of the charging ones, except on battery-20-charging, whose bolt is `fg` because its `warn` fill has the same value as `gold`.
   - power-suspend is a crescent moon.
