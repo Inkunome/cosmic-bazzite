@@ -47,8 +47,9 @@ def scene():
         rect(x, y, 1, 1, HIGHLIGHT)
     for x, y in ((78, 42), (168, 60), (232, 34), (354, 118)):
         rect(x, y, 1, 1, GOLD)
-    # the moon: a 20 x 20 disc with stepped corners, two craters
-    mx, my = 314, 30
+    # the moon: a 20 x 20 disc with stepped corners, two craters; low enough that the fill crop of a 21:9 screen (3440 x 1440)
+    # keeps it clear of the bar
+    mx, my = 314, 44
     rect(mx + 3, my, 14, 20, GOLD)
     rect(mx, my + 3, 20, 14, GOLD)
     rect(mx + 4, my + 6, 3, 3, BG)
