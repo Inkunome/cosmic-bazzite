@@ -22,6 +22,7 @@ check:
     echo "Checking syntax: Justfile"
     just --unstable --fmt --check -f Justfile || status=1
     bash build_files/tools/check-look.sh || status=1
+    bash build_files/tools/test-ink-sync.sh || status=1
     exit $status
 
 # Fix Just Syntax
