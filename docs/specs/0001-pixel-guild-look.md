@@ -101,6 +101,7 @@ Rewritten around `@import "tokens";`. The class names stay, so `eww.yuck` change
 | `calendar` | Square, IBM Plex Mono; the selected day `on-accent` on `accent`; other months' days `muted`. |
 | `.search` | `bg` fill, 2 px `fg` border, IBM Plex Mono 15 px. |
 | `.app-tile` | `bg` fill, 2 px `bg` border; `.selected` `accent-tint` fill, 2 px `accent` border. |
+| Launcher windows | One fixed size in every state (empty query, results, one, none, the confirmation line), the owner's choice of 2026-11-12: `launcher-wide` is 700 x 520 px (the height of the full result list, `MAX_RESULTS` = 7 in `scripts/apps`), so the search field never moves; under the search field the confirmation line has a kept slot (26 px), then one area in which the results and the pinned view replace each other; pinned apps are four tiles to a row (`MAX_PINNED` = 8, two rows at most), so the window never widens. `launcher-long` keeps its 92 % x 80 %. |
 | `.result` | Transparent; `.selected` `accent` fill with `on-accent` text. The file starts with a rule that gives every widget the `fg` colour, so the labels inside a selected row need their own rule. |
 | Expose | Cards square; `.focused` 3 px `accent` border; `.picked` 3 px `warn` border; workspace headers as `bg` chips, the target state in `accent`. |
 | `.wp-btn` | No background at rest (fully transparent, no border, no shadow, as in the old design: the owner's choice of 2026-11-12), `accent` glyph (6.43:1 on the focused title bar's `accent-tint`), IBM Plex Mono bold; on hover an `accent` fill with the glyph in `on-accent`. |

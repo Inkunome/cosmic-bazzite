@@ -226,6 +226,8 @@ calendar.highlight { color: $muted; font-weight: bold; }
 .result:hover { background-color: $accent-tint; }
 // confirmation line of the launcher ("pinned Firefox to the launcher")
 .lmsg { background-color: $accent; color: $on-accent; padding: 3px 12px; font-weight: 600; }
+// its place in the launcher, kept when it is empty (a little taller than the line itself)
+.lmsg-slot { min-height: 26px; }
 
 // Expose
 .ecard { border: 3px solid clear($surface); padding: 8px; }

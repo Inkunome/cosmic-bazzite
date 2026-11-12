@@ -485,8 +485,8 @@
 
 
 ;; ── Launcher (Ctrl+Space, Super+D): search + pinned applications ───────────
-;; Wide layout for landscape screens (pinned as a row of tiles), long layout for portrait ones (pinned as a list).
-;; `dash` picks the layout from the shape of the focused screen.
+;; Wide layout for landscape screens (pinned as tiles), long layout for portrait ones (pinned as a list).
+;; `dash` picks the layout from the shape of the focused screen. Both windows have one fixed size whatever they show.
 (defwidget launcher []
   (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14
     :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
@@ -496,18 +496,29 @@
              :onchange "~/.config/eww/scripts/apps search '{}'"
              :onaccept "~/.config/eww/scripts/apps run '{}'")
       (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/dash close" "close"))
-    ;; confirmation of a pin or dock change (set by `apps`, cleared after a few seconds)
-    (label :class "lmsg" :halign "start" :visible {lmsg != ""} :text lmsg)
-    (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
-      (for r in results
-        (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
-      (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
-    (box :orientation "v" :space-evenly false :spacing 12 :visible {query == ""}
-      (label :class "pop-title" :halign "start" :text "pinned")
-      (box :spacing 6 :halign "start"
-        (for a in pinned
-          (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :docked {a.docked} :selected {a.idx == sel})))
-      (label :class "dim hint" :halign "start" :text "right-click: pin or unpin   ·   middle-click: add to or remove from the dock"))))
+    ;; confirmation of a pin or dock change (set by `apps`, cleared after a few seconds): its place is kept, so it never
+    ;; pushes what is under it
+    (box :class "lmsg-slot" :space-evenly false
+      (label :class "lmsg" :halign "start" :valign "center" :visible {lmsg != ""} :text lmsg))
+    ;; one fixed area under the search field, in which the results and the pinned apps replace each other
+    (box :orientation "v" :space-evenly false :vexpand true
+      (box :orientation "v" :space-evenly false :spacing 4 :visible {query != ""}
+        (for r in results
+          (result-row :id {r.q} :name {r.name} :icon {r.icon} :initial {r.initial} :pinned {r.pinned} :docked {r.docked} :selected {r.idx == sel}))
+        (label :class "dim" :halign "start" :visible {arraylength(results) == 0} :text "no application found"))
+      (box :orientation "v" :space-evenly false :spacing 12 :visible {query == ""}
+        (label :class "pop-title" :halign "start" :text "pinned")
+        ;; four tiles to a row (scripts/apps keeps at most 8 pinned apps): the window never widens
+        (box :orientation "v" :space-evenly false :spacing 6
+          (box :spacing 6 :halign "start"
+            (for a in pinned
+              (box :visible {a.idx < 4}
+                (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :docked {a.docked} :selected {a.idx == sel}))))
+          (box :spacing 6 :halign "start" :visible {arraylength(pinned) > 4}
+            (for a in pinned
+              (box :visible {a.idx >= 4}
+                (app-tile :id {a.q} :name {a.name} :icon {a.icon} :initial {a.initial} :docked {a.docked} :selected {a.idx == sel})))))
+        (label :class "dim hint" :halign "start" :text "right-click: pin or unpin   ·   middle-click: add to or remove from the dock")))))
 
 (defwidget launcher-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false :spacing 12
@@ -531,7 +542,8 @@
 
 (defwindow launcher-wide [mon]
   :monitor mon
-  :geometry (geometry :x "0px" :y "-60px" :width "700px" :anchor "center")
+  ;; one fixed size in every state (the height of the full list of results, scripts/apps' MAX_RESULTS = 7)
+  :geometry (geometry :x "0px" :y "-60px" :width "700px" :height "520px" :anchor "center")
   :stacking "overlay"
   :focusable true
   :namespace "ink-pop"
