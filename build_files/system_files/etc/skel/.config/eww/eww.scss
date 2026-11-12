@@ -223,7 +223,9 @@ tooltip * { color: $fg; }
 // no background at rest, as in the old design (the owner's choice): a stated exception, not a translucent fill
 .wp-btn { padding: 0 5px; }
 .wp-btn, .wp-btn label { font-family: $mono; font-weight: bold; font-size: 15px; color: $accent; }
-.wp-btn:hover { background-color: $accent-tint; }
+// on hover the button is the accent with the dark glyph: the focused title bar under it is accent-tint
+.wp-btn:hover { background-color: $accent; }
+.wp-btn:hover, .wp-btn:hover label { color: $on-accent; }
 
 // The cards of the layout picker (Super+G)
 .lcard { background-color: $bg; border: 2px solid $muted; padding: 10px 8px; }

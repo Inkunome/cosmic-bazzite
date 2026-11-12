@@ -100,7 +100,7 @@ Rewritten around `@import "tokens";`. The class names stay, so `eww.yuck` change
 | `.app-tile` | `bg` fill, 2 px `bg` border; `.selected` `accent-tint` fill, 2 px `accent` border. |
 | `.result` | Transparent; `.selected` `accent` fill with `on-accent` text. The file starts with a rule that gives every widget the `fg` colour, so the labels inside a selected row need their own rule. |
 | Expose | Cards square; `.focused` 3 px `accent` border; `.picked` 3 px `warn` border; workspace headers as `bg` chips, the target state in `accent`. |
-| `.wp-btn` | No background at rest (fully transparent, no border, no shadow, as in the old design: the owner's choice of 2026-11-12), `accent` glyph, IBM Plex Mono bold; hover `accent-tint` fill. |
+| `.wp-btn` | No background at rest (fully transparent, no border, no shadow, as in the old design: the owner's choice of 2026-11-12), `accent` glyph (6.43:1 on the focused title bar's `accent-tint`), IBM Plex Mono bold; on hover an `accent` fill with the glyph in `on-accent`. |
 | `.lcard` | `bg` fill, 2 px `muted` border; hover `accent` border. |
 | `.keycap` | 2 px `muted` border, IBM Plex Mono. |
 | Battery flyout | Bars as `progressbar`; the three profile buttons as `.pop-btn`, the current one `on-accent` on `accent`. |
