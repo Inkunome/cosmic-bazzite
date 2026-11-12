@@ -220,7 +220,8 @@ tooltip { background-color: $surface; border: 2px solid $fg; padding: 4px 8px; }
 tooltip * { color: $fg; }
 
 // Buttons on the title bar of the focused window
-.wp-btn { background-color: $bg; padding: 0 5px; }
+// no background at rest, as in the old design (the owner's choice): a stated exception, not a translucent fill
+.wp-btn { padding: 0 5px; }
 .wp-btn, .wp-btn label { font-family: $mono; font-weight: bold; font-size: 15px; color: $accent; }
 .wp-btn:hover { background-color: $accent-tint; }
 
