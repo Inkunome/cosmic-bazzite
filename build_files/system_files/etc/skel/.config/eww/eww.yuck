@@ -550,27 +550,29 @@
 ;; of the strip or the dock.
 
 ;; The ten-segment meter: a segment is on when the value reaches its tenth, rounded to the nearest (segment i is on from
-;; 10 i - 5 %). With `warn`, the segments that are on take the warning colour.
-(defwidget segmeter [value warn]
-  (box :class "segmeter" :orientation "h" :space-evenly false :spacing 3 :valign "center"
+;; 10 i - 5 %). With `warn`, the segments that are on take the warning colour. A segment is segw x segh px with segsp
+;; between them (16 x 12, 3: twice that on the widest screens, so a meter always grows in whole segments).
+(defwidget segmeter [value warn segw segh segsp]
+  (box :class "segmeter" :orientation "h" :space-evenly false :spacing segsp :valign "center"
     (for i in {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-      (box :class "seg ${value >= i * 10 - 5 ? 'on' : ''} ${warn ? 'warn' : ''}" :width 16 :height 12))))
+      (box :class "seg ${value >= i * 10 - 5 ? 'on' : ''} ${warn ? 'warn' : ''}" :width segw :height segh))))
 
 ;; one line of the system block: the name, the meter, the value (with a word when it warns)
-(defwidget sysrow [label value warn]
+(defwidget sysrow [label value warn segw segh segsp]
   (box :space-evenly false :spacing 12
     (box :width 72 :space-evenly false
       (label :class "sys-label" :halign "start" :text label))
-    (segmeter :value value :warn warn)
+    (segmeter :value value :warn warn :segw segw :segh segh :segsp segsp)
     (label :class "sys-value ${warn ? 'warn' : ''}" :halign "start"
            :text {warn ? "${round(value, 0)}% · nearly full" : "${round(value, 0)}%"})))
 
-(defwidget dash-system []
+(defwidget dash-system [segw segh segsp]
   (box :orientation "v" :space-evenly false :spacing 10
     (label :class "dash-title" :halign "start" :text "System")
-    (sysrow :label "CPU" :value {EWW_CPU.avg} :warn false)
-    (sysrow :label "Memory" :value {EWW_RAM.used_mem_perc} :warn false)
-    (sysrow :label "Disk" :value {EWW_DISK["/"].used_perc} :warn {round(EWW_DISK["/"].used_perc, 0) >= 85})))
+    (sysrow :label "CPU" :value {EWW_CPU.avg} :warn false :segw segw :segh segh :segsp segsp)
+    (sysrow :label "Memory" :value {EWW_RAM.used_mem_perc} :warn false :segw segw :segh segh :segsp segsp)
+    (sysrow :label "Disk" :value {EWW_DISK["/"].used_perc} :warn {round(EWW_DISK["/"].used_perc, 0) >= 85}
+            :segw segw :segh segh :segsp segsp)))
 
 ;; a recent notification: a small square, the summary, the body (mako's history has no time)
 (defwidget dash-notif [summary body]
@@ -580,15 +582,29 @@
       (label :class "notif-summary" :halign "start" :limit-width 44 :text summary)
       (label :class "notif-body" :halign "start" :limit-width 48 :visible {body != ""} :text body))))
 
-;; "Clear all" runs what the button of the notification flyout runs
-(defwidget dash-notifs []
+;; the recent notifications, or "nothing yet"
+(defwidget dash-notif-list []
   (box :orientation "v" :space-evenly false :spacing 8
-    (box :space-evenly false
-      (label :class "dash-title" :halign "start" :hexpand true :text "Notifications")
-      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/notifs clear; eww poll nt" "Clear all"))
     (for n in {nt.items}
       (dash-notif :summary {n.summary} :body {n.body}))
     (label :class "dim" :halign "start" :visible {arraylength(nt.items) == 0} :text "nothing yet")))
+
+;; "Clear all" runs what the button of the notification flyout runs. With `scroll`, the list takes the whole height it is
+;; given and scrolls inside it (the widest dashboard's middle column); without, it is as tall as its notifications.
+(defwidget dash-notifs [scroll]
+  (box :orientation "v" :space-evenly false :spacing 8 :vexpand scroll
+    (box :space-evenly false
+      (label :class "dash-title" :halign "start" :hexpand true :text "Notifications")
+      (button :timeout "10s" :class "pop-btn" :onclick "~/.config/eww/scripts/notifs clear; eww poll nt" "Clear all"))
+    (box :visible {!scroll} (dash-notif-list))
+    (scroll :visible scroll :vscroll true :hscroll false :vexpand true (dash-notif-list))))
+
+;; the track and the key hint on one line
+(defwidget dash-media-line []
+  (box :class "dash-media" :space-evenly false :spacing 12
+    (label :class "dash-track" :halign "start" :hexpand true :limit-width 32
+           :text {media.title != "" ? (media.artist != "" ? "${media.artist} — ${media.title}" : media.title) : "nothing playing"})
+    (label :class "dash-track" :halign "end" :text "Alt+Space closes")))
 
 ;; landscape screens: two equal columns
 (defwidget dashboard []
@@ -601,12 +617,25 @@
       (box :class "dash-cal"
         (calendar :class "cal" :show-heading true :show-week-numbers false)))
     (box :orientation "v" :space-evenly false :spacing 24 :valign "start"
-      (dash-notifs)
-      (dash-system)
-      (box :class "dash-media" :space-evenly false :spacing 12
-        (label :class "dash-track" :halign "start" :hexpand true :limit-width 32
-               :text {media.title != "" ? (media.artist != "" ? "${media.artist} — ${media.title}" : media.title) : "nothing playing"})
-        (label :class "dash-track" :halign "end" :text "Alt+Space closes")))))
+      (dash-notifs :scroll false)
+      (dash-system :segw 16 :segh 12 :segsp 3)
+      (dash-media-line))))
+
+;; landscape screens 2560 px wide or more: three equal columns over 60 % x 60 % of the screen (the dash script chooses)
+(defwidget dashboard-xl []
+  (box :class "pop dash dashboard dashboard-xl" :orientation "h" :space-evenly true :spacing 40
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
+    (box :orientation "v" :space-evenly false :spacing 32
+      (box :orientation "v" :space-evenly false :spacing 8
+        (label :class "dash-time" :halign "start" :text {formattime(EWW_TIME, "%H:%M")})
+        (label :class "dash-date" :halign "start" :text {formattime(EWW_TIME, "%A %d %B %Y")}))
+      (box :class "dash-cal" :vexpand true
+        (calendar :class "cal" :vexpand true :show-heading true :show-week-numbers false)))
+    (dash-notifs :scroll true)
+    (box :orientation "v" :space-evenly false :spacing 24
+      (dash-system :segw 32 :segh 24 :segsp 6)
+      (box :vexpand true)
+      (dash-media-line))))
 
 ;; portrait screens: the same blocks in one scrolling column, the key hint under the track
 (defwidget dashboard-long []
@@ -617,8 +646,8 @@
         (box :orientation "v" :space-evenly false :spacing 4
           (label :class "dash-time" :halign "start" :text {formattime(EWW_TIME, "%H:%M")})
           (label :class "dash-date" :halign "start" :text {formattime(EWW_TIME, "%A %d %B %Y")}))
-        (dash-notifs)
-        (dash-system)
+        (dash-notifs :scroll false)
+        (dash-system :segw 16 :segh 12 :segsp 3)
         (box :class "dash-cal"
           (calendar :class "cal" :show-heading true :show-week-numbers false))
         (box :class "dash-media" :orientation "v" :space-evenly false :spacing 4
@@ -632,6 +661,13 @@
   :stacking "overlay"
   :namespace "ink-pop"
   (dashboard))
+
+(defwindow dashboard-xl [mon]
+  :monitor mon
+  :geometry (geometry :x "0px" :y "0px" :width "60%" :height "60%" :anchor "center")
+  :stacking "overlay"
+  :namespace "ink-pop"
+  (dashboard-xl))
 
 (defwindow dashboard-long [mon]
   :monitor mon

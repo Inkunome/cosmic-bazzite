@@ -1,11 +1,11 @@
 #!/bin/bash
 # Launcher / dashboard control.
 #   dash toggle launcher    app launcher: search + pinned apps      (Ctrl+Space, Super+D)
-#   dash toggle dashboard   time, system, media, toggles, calendar  (Alt+Space, dock icon)
+#   dash toggle dashboard   time, calendar, notifications, system, media  (Alt+Space, dock icon)
 #   dash toggle expose      every workspace and window as thumbnails         (Super+Tab)
 #   dash open <kind> | dash close
 # Each kind has a wide layout (landscape screens) and a long one (portrait screens), chosen from
-# the shape of the focused output. Only one is open at a time. While one is open, sway is in the
+# the shape of the focused output; the dashboard has a third, dashboard-xl, for landscape outputs 2560 px wide or more. Only one is open at a time. While one is open, sway is in the
 # "dash" binding mode so Escape, Ctrl+Space and Alt+Space close it.
 here=$(dirname "$(readlink -f "$0")")
 # one dash command at a time: a double press (key repeat) used to send two `eww open` at once, and the one that arrived while
@@ -22,7 +22,6 @@ for _ in $(seq 1 20); do
 done
 ((got)) || [[ ${1:-} == close ]] || exit 0
 ((got)) && trap 'rmdir "$LOCK" 2>/dev/null' EXIT
-is_open() { eww active-windows 2>/dev/null | grep -q '^dashboard:\|^launcher:\|^expose:'; }
 open_kind() {
     local kind=$1 idx w h
     [[ $kind == launcher || $kind == dashboard || $kind == expose ]] || { echo "usage: dash open launcher|dashboard|expose" >&2; return 1; }
@@ -47,6 +46,7 @@ open_kind() {
     [[ -n $idx ]] || idx=$(swaymsg -t get_outputs -r | jq -r --arg o "$out" '[.[] | select(.active) | .name] | index($o)')
     if [[ $kind == expose ]]; then eww update picked=""; "$here/expose" refresh; eww open expose --id expose --arg "mon=$idx"
     elif ((h > w)); then eww open "$kind-long" --id "$kind" --arg "mon=$idx"
+    elif [[ $kind == dashboard ]] && ((w >= 2560)); then eww open dashboard-xl --id dashboard --arg "mon=$idx"
     else eww open "$kind-wide" --id "$kind" --arg "mon=$idx"; fi
     # the binding mode only if the panel really opened: a mode without its panel would eat the keyboard
     if ! eww active-windows 2>/dev/null | grep -q "^$kind:"; then swaymsg -q mode default; return 1; fi

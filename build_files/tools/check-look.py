@@ -428,8 +428,9 @@ def cmd_yuck(root, base):
         err(f"eww.yuck at {base}: {e}")
         old_windows = {}
     new_windows = {n: p for n, (p, _) in windows.items()}
-    if old_windows != new_windows:
-        err(f"eww.yuck: windows changed: {base} has {sorted(old_windows.items())}, now {sorted(new_windows.items())}")
+    for n, params in sorted(old_windows.items()):
+        if new_windows.get(n) != params:
+            err(f"eww.yuck: window {n} {params} of {base} is gone or changed ({new_windows.get(n)}); the scripts open it by name")
 
     # icons the file can produce
     sources = {"battery": battery_icons(root)}
@@ -509,8 +510,8 @@ def cmd_yuck(root, base):
         err(f"icon '{n}.svg' can be asked for by eww.yuck and does not exist")
     for n in sorted(files - referenced):
         err(f"icon '{n}.svg' exists and nothing references it")
-    finish(f"eww.yuck parses ({len(widgets)} widgets, {len(windows)} windows, the windows of {base} kept); "
-           f"{len(referenced)} icon names resolved, all present, all {len(files)} files referenced; "
+    finish(f"eww.yuck parses ({len(widgets)} widgets, {len(windows)} windows, the windows of {base} kept, "
+           f"{len(new_windows) - len(old_windows)} added); {len(referenced)} icon names resolved, all present, all {len(files)} files referenced; "
            f"{panels} panels carry the notched frame")
 
 

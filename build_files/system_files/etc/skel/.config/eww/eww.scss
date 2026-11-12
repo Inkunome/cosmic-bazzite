@@ -189,6 +189,12 @@ calendar.highlight { color: $muted; font-weight: bold; }
 .dashboard { @include panel-padding(28px, 28px); }
 .dash-time { font-family: $pixel; font-weight: 600; font-size: 96px; color: $fg; }
 .dash-long .dash-time { font-size: 96px; }
+// the widest dashboard (landscape screens of 2560 px or more): more room round the content, a bigger clock (a whole
+// multiple of the pixel face's 24 px step), a calendar with bigger cells; the meters' segments are doubled in eww.yuck
+.dashboard-xl { @include panel-padding(40px, 40px); }
+.dashboard-xl .dash-time { font-size: 144px; }
+// GTK 3's calendar keeps its natural row height whatever room it gets: its cells grow through the font size
+.dashboard-xl calendar { font-size: 24px; }
 .dash-date { font-family: $mono; font-size: 14px; color: $muted; }
 .dash-cal { background-color: block($bg); padding: 16px; }
 .dash-title { font-family: $pixel; font-weight: 600; font-size: 20px; color: $fg; }
