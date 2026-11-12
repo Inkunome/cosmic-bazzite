@@ -182,7 +182,7 @@ Only the palette and the look sections change.
 
 | | border | background | text | indicator | child border |
 |---|---|---|---|---|---|
-| `client.focused` | `accent-tint` | `accent-tint` | `fg` | `accent` | `accent` |
+| `client.focused` | `accent` | `accent-tint` | `fg` | `accent` | `accent` |
 | `client.focused_inactive` | `line` | `bg` | `fg` | `line` | `line` |
 | `client.unfocused` | `line` | `bg` | `muted` | `line` | `line` |
 | `client.urgent` | `bad` | `bad` | `on-accent` | `bad` | `bad` |
