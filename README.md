@@ -2,7 +2,7 @@
 
 A [Universal Blue](https://universal-blue.org/) image: [Bazzite](https://bazzite.gg/) (GNOME) with a second desktop, **swayfx + eww**, in a pixel-art look (dark purples and a pink accent, square corners, hard borders, pixel icons), with a pixel bramble under the bar. The Sway session is chosen from the GDM login screen; GNOME stays as a fallback.
 
-![Desktop: tabbed windows with square pink and purple frames, bar of separate chips with a pixel bramble under it, bottom strip, pixel night-sky wallpaper with a moon and stepped hills](docs/img/desktop.webp)
+![Desktop: a floating group of two tabbed terminals with a pink frame and a hard shadow, the bar of separate translucent chips with a pixel bramble under it, three notifications, the bottom strip, the pixel night-sky wallpaper with a moon and stepped hills](docs/img/desktop.webp)
 
 The screenshots below are taken from the real desktop (sway + eww in a headless session), not from a mock-up.
 
@@ -37,8 +37,10 @@ The desktop takes its look from the Inkunome design system, its **pixel register
 
 ### Dashboard and menus
 
-![Dashboard](docs/img/dashboard.webp)
-![Quick settings: Wi-Fi, Bluetooth, brightness, apps and power](docs/img/quick-settings.webp)
+![Dashboard: the clock, the date and the calendar; notifications, system meters and the media line](docs/img/dashboard.webp)
+![The dashboard on a screen 2560 px wide or more (here 3440 x 1440): three columns over 60 % of the screen](docs/img/dashboard-wide-screen.webp)
+![Quick settings: Wi-Fi, Bluetooth, power profile, caffeine, apps and power](docs/img/quick-settings.webp)
+![Sound panel: a mute button beside each slider, the microphone muted](docs/img/sound.webp)
 ![Shortcut sheet, shown when hovering the keyboard layout](docs/img/shortcuts.webp)
 
 ### Portrait screens
