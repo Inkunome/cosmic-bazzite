@@ -41,10 +41,10 @@ shadow_inactive_color #4A3B7A00
 default_dim_inactive 0
 # the bar, the dock, the panels and the notifications get no compositor effect: eww and mako draw their own frames
 
-# every window has a frame around its content and around its title (3 px each): the focused one has the design system's
-# selected state (an accent outline on the tinted fill, fg text), the others have a frame in the line colour
+# every window has a frame around its content and around its title (3 px each): the focused one has an accent frame round
+# its content and a tinted title with fg text and no frame of its own, the others have a frame in the line colour
 #                       border    bg            text        indicator child_border
-client.focused          $accent   $accent_tint  $fg         $accent   $accent
+client.focused          $accent_tint $accent_tint $fg      $accent   $accent
 client.focused_inactive $line     $bg      $fg         $line     $line
 client.unfocused        $line     $bg      $muted      $line     $line
 client.urgent           $bad      $bad     $on_accent  $bad      $bad
