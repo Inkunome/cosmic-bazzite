@@ -15,7 +15,7 @@ The desktop takes its look from the Inkunome design system, its **pixel register
 - **Windows**: square corners and a 3 px frame, `accent` round the focused window, `line` round the others, with a hard 4 px shadow under the focused one. Each title bar has a thin 1 px outline (accent on the focused title, which is tinted; line on the others, so neighbouring tabs stay apart). The focused window's title carries two chevrons with no background of their own.
 - **Panels** (flyouts, quick settings, launcher, dashboard, expose, the layout picker) have the design's notched pixel corners: an 8 x 8 px square cut out of each corner, a 3 px frame that follows the steps, and a hard 4 px shadow with the same outline. They are drawn by a nine-slice image, `eww/icons/panel-frame.svg`, which `build_files/tools/pixel-panel-frame.py` generates from the tokens.
 - **Translucency, no blur**: the panels, the bar's chips and the dock are see-through, and the blocks inside a panel (tiles, buttons, cards) a little denser. Two values in `eww/_tokens.scss` set it: `$widget-alpha` (0.70) for the surfaces, `$block-alpha` (0.35) for the blocks inside them. Frames, shadows, text, accent and status colours stay opaque. After changing `$widget-alpha`, run `build_files/tools/pixel-panel-frame.py` again (the panel frame carries the same value; `just check` says when it is out of date).
-- The wallpaper, `ink-pixel-dusk.png`, is drawn by `build_files/tools/pixel-wallpaper.py`. The terminal (alacritty) has the darker `sunken` background.
+- The wallpaper, `ink-pixel-dusk.png`, is drawn by `build_files/tools/pixel-wallpaper.py`. The terminal (alacritty) has the darker `sunken` background; its colours ship in the image (below) and follow its updates.
 
 ## What you get
 
@@ -72,7 +72,7 @@ The image is named after the repository (`cosmic-bazzite`). Rename the repositor
 New users get the desktop configuration automatically. For an existing home directory, copy it in once with:
 
 ```bash
-ink-sync        # backs up ~/.config/{sway,eww,mako,fuzzel,swaylock}, then installs the defaults
+ink-sync        # backs up ~/.config/{sway,eww,mako,fuzzel,swaylock}, installs the defaults, makes your alacritty.toml import the image's colours
 ```
 
 Then reload Sway with `Super+Shift+C`.
@@ -145,7 +145,8 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 | `/etc/skel/.config/eww/` | `eww.yuck` (widgets), `eww.scss` (style), `_tokens.scss` (the colours), `scripts/`, `icons/` |
 | `/etc/skel/.config/{mako,fuzzel,swaylock}/` | Notifications, launcher styling, lock screen |
 | `/etc/skel/.config/zellij/` | Zellij defaults and the `ink` theme (the same palette as the desktop) |
-| `/etc/skel/.config/alacritty/` | Terminal padding and colours |
+| `/etc/skel/.config/alacritty/` | Terminal defaults: padding, and an import of the image's colours |
+| `/usr/share/ink/alacritty/colors.toml` | The terminal colours (the Pixel Guild palette), owned by the image |
 | `/usr/bin/ink-layout` | Keyboard layout switcher (`next`, `set <name>`, `watch`) |
 | `/usr/bin/ink-screenshot` | Screenshot tool (`area`, `window`, `screen`, `output` × `copy`, `save`, `edit`) |
 | `/usr/bin/ink-scratch` | Minimise to the scratchpad, cycle, list |
@@ -161,7 +162,7 @@ Already in the Bazzite base and used by the desktop: NetworkManager, Bluetooth, 
 - **Pinned apps**: the launcher keeps them in `~/.config/ink/pinned` (one desktop-file id per line); right-click an app to pin or unpin it.
 - **Dock apps** (both kinds of screen, small in the bottom strip on landscape ones): `~/.config/ink/dock`, one id per line, starting with `browser`, `terminal`, `files` and `settings`. Middle-click an app in the launcher to add it, right-click an icon in the dock to remove it.
 - **Colours**: the palette is `~/.config/eww/_tokens.scss` (the design system's tokens; `eww.scss` writes no colour of its own), with the two translucency values `$widget-alpha` and `$block-alpha`, and the `set $…` lines of the Sway config. Mako, fuzzel, swaylock, alacritty and zellij carry the same values, each with a comment naming `_tokens.scss`.
-- **Terminal**: `~/.config/alacritty/alacritty.toml` (new users get padding and the Pixel Guild colours by default; `ink-sync` leaves your terminal config alone). To take the new colours in an existing home, copy the `[colors.*]` sections of `/etc/skel/.config/alacritty/alacritty.toml` into yours, and `/etc/skel/.config/zellij/themes/ink.kdl` over `~/.config/zellij/themes/ink.kdl`.
+- **Terminal**: the colours live in `/usr/share/ink/alacritty/colors.toml`, which the image owns and updates; `~/.config/alacritty/alacritty.toml` only imports it (`[general]` `import = ["/usr/share/ink/alacritty/colors.toml"]`), so everything else in that file is yours. New users get a file that does this. In an existing home, `ink-sync` never replaces your file: without one it installs the default; a symbolic link is left as it is (it prints the line to add); a file that already imports the colours is left alone; otherwise it keeps a copy as `alacritty.toml.bak-<time>` and adds the import (to your import list or `[general]` table if you have them, else as a new `[general]` table), and refuses to touch a file it cannot edit safely, printing the line to add by hand. To override a colour, write it in your own file: a `[colors.*]` table there takes precedence over the image's (for example `[colors.primary]` `background = "#000000"`). For zellij, copy `/etc/skel/.config/zellij/themes/ink.kdl` over `~/.config/zellij/themes/ink.kdl`.
 - **Keyboard layouts**: `input type:keyboard` in the Sway config; keep `NAMES` in `/usr/bin/ink-layout` in the same order.
 - **Monitors**: `wdisplays` for a quick layout. To keep positions and rotation across reloads and reboots, write a `~/.config/kanshi/config`; `kanshi` then starts by itself and re-applies it after every reload.
 
