@@ -1,10 +1,15 @@
 #!/bin/bash
 # Copy the image's default Ink dotfiles (/etc/skel/.config) into your home.
 # Existing directories are moved aside to <name>.bak-<timestamp>, never deleted.
+#
+# The terminal is handled apart: your ~/.config/alacritty/alacritty.toml is yours (an opacity, key bindings...) and is
+# never replaced. The image's colours live in /usr/share/ink/alacritty/colors.toml and follow its updates; ink-sync
+# only makes sure your file imports them (see sync_alacritty). INK_SKEL names another skel folder (tests).
 set -eu
 ts=$(date +%Y%m%d-%H%M%S)
+skel=${INK_SKEL:-/etc/skel/.config}
 for d in sway eww mako fuzzel swaylock; do
-    src=/etc/skel/.config/$d
+    src=$skel/$d
     dst=$HOME/.config/$d
     [[ -d $src ]] || continue
     if [[ -e $dst ]]; then
@@ -15,4 +20,140 @@ for d in sway eww mako fuzzel swaylock; do
     cp -a "$src" "$dst"
     echo "installed $dst"
 done
+
+# alacritty: the image's colours come in through one import line in your own file, which is never replaced.
+#   no file          -> the image's default file is installed (it imports the colours)
+#   a symbolic link  -> left as it is (managed elsewhere); the line to add is printed
+#   already imports  -> nothing to do
+#   otherwise        -> a copy is kept as alacritty.toml.bak-<time>, then the import is added: into an existing import
+#                       list, or into an existing [general] table, or as a new [general] table at the end. The result is
+#                       parsed again and must hold exactly your settings plus the import, every line of yours kept, or
+#                       nothing is written and the line to add is printed. Relies on python3 (3.11+, tomllib).
+sync_alacritty() {
+    local cfg=$HOME/.config/alacritty/alacritty.toml colors=/usr/share/ink/alacritty/colors.toml
+    if [[ -L $cfg ]]; then
+        echo "$cfg is a symbolic link (managed elsewhere): left as it is. For the image's terminal colours, add to it:"
+        printf '  [general]\n  import = ["%s"]\n' "$colors"
+        return 0
+    fi
+    if [[ ! -e $cfg ]]; then
+        [[ -f $skel/alacritty/alacritty.toml ]] || return 0
+        mkdir -p "${cfg%/*}"
+        cp "$skel/alacritty/alacritty.toml" "$cfg"
+        echo "installed $cfg (it imports the image's terminal colours)"
+        return 0
+    fi
+    if ! command -v python3 >/dev/null; then
+        echo "$cfg: python3 not found, left as it is. For the image's terminal colours, add to it:"
+        printf '  [general]\n  import = ["%s"]\n' "$colors"
+        return 0
+    fi
+    python3 -I - "$cfg" "$colors" "$ts" <<'PY'
+import copy, os, re, shutil, sys
+cfg, colors, ts = sys.argv[1:4]
+try:
+    import tomllib
+except ImportError:
+    tomllib = None
+HINT = f'  [general]\n  import = ["{colors}"]'
+
+
+def manual(why):
+    print(f"{cfg}: {why}; left as it is. For the image's terminal colours, add to it:\n{HINT}")
+    sys.exit(0)
+
+
+if tomllib is None:
+    manual("this python3 has no TOML parser (3.11 or later needed)")
+text = open(cfg, encoding="utf-8").read()
+try:
+    data = tomllib.loads(text)
+except tomllib.TOMLDecodeError as e:
+    manual(f"not valid TOML ({e})")
+
+
+def own_colours():
+    if isinstance(data.get("colors"), dict):
+        print(f"{cfg}: its own [colors] tables take precedence over the image's colours; they are left as they are")
+
+
+general = data.get("general")
+if general is not None and not isinstance(general, dict):
+    manual("its 'general' key is not a table")
+where, current = None, None
+if isinstance(general, dict) and "import" in general:
+    where, current = "general", general["import"]
+elif "import" in data:
+    where, current = "top", data["import"]
+if current is not None and not (isinstance(current, list) and all(isinstance(p, str) for p in current)):
+    manual("its import key is not a list of paths")
+if current is not None and colors in current:
+    print(f"{cfg}: already imports the image's terminal colours")
+    own_colours()
+    sys.exit(0)
+
+lines = text.splitlines(keepends=True)
+header = re.compile(r"^\s*\[")
+general_header = re.compile(r"^\s*\[\s*general\s*\]\s*(#.*)?$")
+import_line = re.compile(r'^(\s*import\s*=\s*\[)(.*)(\]\s*(#.*)?)$')
+new = None
+if current is not None:
+    # add the path in front of the existing single-line list (the person's own imports come after, so they win)
+    if where == "general":
+        start = next((i for i, l in enumerate(lines) if general_header.match(l.rstrip("\n"))), None)
+        if start is None:
+            manual("its [general] keys are not written as a [general] table")
+        span = range(start + 1, next((i for i in range(start + 1, len(lines)) if header.match(lines[i])), len(lines)))
+    else:
+        span = range(0, next((i for i, l in enumerate(lines) if header.match(l)), len(lines)))
+    found = [i for i in span if import_line.match(lines[i].rstrip("\n"))]
+    if len(found) != 1:
+        manual("its import list is not written on one line")
+    i = found[0]
+    end = "\n" if lines[i].endswith("\n") else ""
+    m = import_line.match(lines[i].rstrip("\n"))
+    rest = m.group(2).strip()
+    lines[i] = m.group(1) + f'"{colors}"' + (", " + rest if rest else "") + m.group(3) + end
+    new = "".join(lines)
+elif isinstance(general, dict):
+    start = next((i for i, l in enumerate(lines) if general_header.match(l.rstrip("\n"))), None)
+    if start is None:
+        manual("its [general] keys are not written as a [general] table")
+    lines.insert(start + 1, f'import = ["{colors}"]\n')
+    new = "".join(lines)
+else:
+    sep = "" if text.endswith("\n") or not text else "\n"
+    new = text + sep + ("\n" if text.strip() else "") + f'[general]\nimport = ["{colors}"]\n'
+
+# the result must parse, hold exactly the old settings plus the import, and keep every line of the old file
+try:
+    got = tomllib.loads(new)
+except tomllib.TOMLDecodeError as e:
+    manual(f"the edit would not parse ({e})")
+want = copy.deepcopy(data)
+if where == "top":
+    want["import"] = [colors] + list(current)
+else:
+    want.setdefault("general", {})["import"] = [colors] + (list(current) if current else [])
+if got != want:
+    manual("the edit would change more than the import")
+old_lines, new_lines = text.splitlines(), new.splitlines()
+it = iter(new_lines)
+if current is None and not all(any(l == n for n in it) for l in old_lines):
+    manual("the edit would lose a line")
+if current is not None and len(old_lines) != len(new_lines):
+    manual("the edit would change the number of lines")
+
+backup = f"{cfg}.bak-{ts}"
+shutil.copy2(cfg, backup)
+tmp = f"{cfg}.ink-sync.tmp"
+with open(tmp, "w", encoding="utf-8") as f:
+    f.write(new)
+shutil.copymode(cfg, tmp)
+os.replace(tmp, cfg)
+print(f"{cfg}: now imports the image's terminal colours (your copy: {backup})")
+own_colours()
+PY
+}
+sync_alacritty
 echo "Reload sway with Super+Shift+C."
