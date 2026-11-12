@@ -173,7 +173,7 @@ Only the palette and the look sections change.
 
 - The `set $…` palette lines become the tokens.
 - `font pango:IBM Plex Mono 10`.
-- `default_border pixel 3`, `titlebar_border_thickness 3`, `corner_radius 0`.
+- `default_border pixel 3`, `titlebar_border_thickness 1` with `titlebar_padding 10 5` unchanged (sway draws the title border inside the padding, so the title bar keeps its height and its text's place; a thin line separates unfocused tabs, the owner's choice of 2026-11-12), `corner_radius 0`.
 - `blur disable`; the `blur_passes` and `blur_radius` lines go.
 - `shadows enable`, `shadow_blur_radius 1`, `shadow_offset 4 4`, `shadow_color` `line` (opaque), `shadow_inactive_color` fully transparent: a hard shadow under the focused window only.
 - `default_dim_inactive 0`; the `dim_inactive_colors` line goes.
@@ -183,8 +183,8 @@ Only the palette and the look sections change.
 | | border | background | text | indicator | child border |
 |---|---|---|---|---|---|
 | `client.focused` | `accent-tint` | `accent-tint` | `fg` | `accent` | `accent` |
-| `client.focused_inactive` | `bg` | `bg` | `fg` | `line` | `line` |
-| `client.unfocused` | `bg` | `bg` | `muted` | `line` | `line` |
+| `client.focused_inactive` | `line` | `bg` | `fg` | `line` | `line` |
+| `client.unfocused` | `line` | `bg` | `muted` | `line` | `line` |
 | `client.urgent` | `bad` | `bad` | `on-accent` | `bad` | `bad` |
 
 - `output * bg` uses `bg` as the solid colour and the new wallpaper with `fill`.
