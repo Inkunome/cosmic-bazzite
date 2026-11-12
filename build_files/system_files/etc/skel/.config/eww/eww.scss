@@ -98,7 +98,11 @@ $pixel: "Pixelify Sans", monospace;
 // design system's toggle states (at rest a 2 px muted frame, muted the selected state with the glyph in bad)
 .audio-name { font-family: $mono; font-size: 12px; color: $fg; }
 .audio-name.muted { color: $bad; }
-.mute-btn { border: 2px solid $muted; padding: 0; }
+$mute-icon: 24px;   // the icon's size in eww.yuck
+$mute-frame: 2px;
+.mute-btn { border: $mute-frame solid $muted; padding: 0; }
+// the slider's line is exactly as tall as the mute button beside it
+.slider-line { min-height: $mute-icon + 2 * $mute-frame; }
 .mute-btn:hover { background-color: $accent-tint; }
 .mute-btn.on { background-color: $accent-tint; border-color: $accent; }
 progressbar trough { background-color: $line; min-height: 6px; }

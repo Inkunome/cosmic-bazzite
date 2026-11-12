@@ -226,19 +226,22 @@
 ;; ── Flyouts ──────────────────────────────────────────────
 ;; Open on hover over their pill in the bar, close shortly after the pointer leaves both.
 (defwidget slider-row [name kind data val icon mutedicon]
-  (box :class "meter" :orientation "v" :space-evenly false
-    (box :space-evenly false
-      ;; the device's name is a plain label (the mute button is the square before the slider); muted says so in words
-      (label :class "audio-name ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
-             :text {data.muted ? "${name} (muted)" : name})
-      ;; the number comes from the same variable the slider writes, so it moves with the slider
-      (label :class "pct" :halign "end" :text "${round(val, 0)}%"))
-    (box :space-evenly false :spacing 8
-      (button :timeout "10s" :class "mute-btn ${data.muted ? 'on' : ''}" :valign "center" :tooltip {data.muted ? "unmute" : "mute"}
-              :onclick "~/.config/eww/scripts/audio mute ${kind}"
-        (image :path "${EWW_CONFIG_DIR}/icons/${data.muted ? mutedicon : icon}.svg" :image-width 24 :image-height 24))
-      (scale :timeout "10s" :class "slider" :hexpand true :valign "center" :min 0 :max 101 :value val
-             :onchange "~/.config/eww/scripts/audio set ${kind} {}"))))
+  ;; the mute button, then one column holding the name's line and the slider's line, so the name starts exactly where
+  ;; the slider starts; the button sits at the bottom, level with the slider's line (as tall as the button, eww.scss)
+  (box :class "meter" :space-evenly false :spacing 8
+    (button :timeout "10s" :class "mute-btn ${data.muted ? 'on' : ''}" :valign "end" :tooltip {data.muted ? "unmute" : "mute"}
+            :onclick "~/.config/eww/scripts/audio mute ${kind}"
+      (image :path "${EWW_CONFIG_DIR}/icons/${data.muted ? mutedicon : icon}.svg" :image-width 24 :image-height 24))
+    (box :orientation "v" :space-evenly false :hexpand true
+      (box :space-evenly false
+        ;; the device's name is a plain label; muted says so in words
+        (label :class "audio-name ${data.muted ? 'muted' : ''}" :halign "start" :hexpand true
+               :text {data.muted ? "${name} (muted)" : name})
+        ;; the number comes from the same variable the slider writes, so it moves with the slider
+        (label :class "pct" :halign "end" :text "${round(val, 0)}%"))
+      (box :class "slider-line" :space-evenly false
+        (scale :timeout "10s" :class "slider" :hexpand true :valign "center" :min 0 :max 101 :value val
+               :onchange "~/.config/eww/scripts/audio set ${kind} {}")))))
 
 ;; pick the default device: the current one is marked
 (defwidget devices [kind items]
