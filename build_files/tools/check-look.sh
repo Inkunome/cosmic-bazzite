@@ -85,7 +85,7 @@ needs python3 git && check sway
 step 7 "no old palette value under etc/skel/.config"
 needs python3 && check palette
 
-step 8 "the wallpaper script gives the committed PNG, 3840x2160"
+step 8 "the wallpaper and panel-frame scripts give the committed files"
 if needs python3 cmp; then
     png="$root/build_files/system_files/usr/share/backgrounds/ink/ink-pixel-dusk.png"
     python3 -I "$here/pixel-wallpaper.py" "$tmp/run1.png" || fail "pixel-wallpaper.py failed"
@@ -94,6 +94,10 @@ if needs python3 cmp; then
     cmp -s "$tmp/run1.png" "$png" || fail "pixel-wallpaper.py does not give the committed ink-pixel-dusk.png"
     echo "  ok: two runs give the committed bytes"
     check png-size "$png" 3840 2160
+    frame="$root/build_files/system_files/etc/skel/.config/eww/icons/panel-frame.svg"
+    python3 -I "$here/pixel-panel-frame.py" "$tmp/frame.svg" || fail "pixel-panel-frame.py failed"
+    cmp -s "$tmp/frame.svg" "$frame" || fail "pixel-panel-frame.py does not give the committed panel-frame.svg (run it after changing the tokens or \$widget-alpha)"
+    echo "  ok: pixel-panel-frame.py gives the committed panel-frame.svg"
 fi
 
 step 9 "fonts: TrueType or OpenType only, fontconfig and Pango read them, the packages exist in Fedora"

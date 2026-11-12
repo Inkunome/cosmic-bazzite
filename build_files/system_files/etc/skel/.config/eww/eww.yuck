@@ -255,6 +255,7 @@
   (eventbox :timeout "10s" :onhover "eww update vol_pop=true"
             :onhoverlost "eww update vol_pop=false && ~/.config/eww/scripts/popclose volpop vol"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (slider-row :name "speakers" :kind "sink" :data sink :val vol_sink_v :icon "vol-high" :mutedicon "vol-muted")
       (devices :kind "sink" :items {adev.sinks})
       (slider-row :name "microphone" :kind "source" :data src :val vol_source_v :icon "mic" :mutedicon "mic-muted")
@@ -291,6 +292,7 @@
   (eventbox :timeout "10s" :onhover "eww update qs_pop=true"
             :onhoverlost "eww update qs_pop=false && ~/.config/eww/scripts/popclose quick qs"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 12
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (label :class "pop-title" :halign "start" :text "quick settings")
       (box :orientation "v" :space-evenly false :spacing 8
         (box :spacing 8
@@ -349,6 +351,7 @@
   (eventbox :timeout "10s" :onhover "eww update nt_pop=true"
             :onhoverlost "eww update nt_pop=false && ~/.config/eww/scripts/popclose notifs nt"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (box :space-evenly false
         (label :class "pop-title" :halign "start" :hexpand true :text "notifications")
         (button :timeout "10s" :class "pop-btn ${nt.dnd ? 'muted' : ''}" :onclick "makoctl mode -t do-not-disturb; eww poll nt"
@@ -379,6 +382,7 @@
   (eventbox :timeout "10s" :onhover "eww update keys_pop=true"
             :onhoverlost "eww update keys_pop=false && ~/.config/eww/scripts/popclose keys keys"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (box :space-evenly false
         (label :class "pop-title" :halign "start" :hexpand true :text "shortcuts")
         (label :class "dim hint" :halign "end" :text "Super = the Windows key"))
@@ -444,6 +448,7 @@
   (eventbox :timeout "10s" :onhover "eww update cal_pop=true"
             :onhoverlost "eww update cal_pop=false && ~/.config/eww/scripts/popclose cal cal"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 8
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (label :class "pop-title" :halign "start" :text {formattime(EWW_TIME, "%A %d %B %Y")})
       (calendar :class "cal" :show-heading true :show-week-numbers false))))
 
@@ -484,6 +489,7 @@
 ;; `dash` picks the layout from the shape of the focused screen.
 (defwidget launcher []
   (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     ;; search field first: it takes the keyboard focus when the launcher opens
     (box :space-evenly false :spacing 10
       (input :class "search" :hexpand true :timeout "5s"
@@ -505,6 +511,7 @@
 
 (defwidget launcher-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false :spacing 12
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     (box :space-evenly false :spacing 10
       (input :class "search" :hexpand true :timeout "5s"
              :onchange "~/.config/eww/scripts/apps search '{}'"
@@ -586,6 +593,7 @@
 ;; landscape screens: two equal columns
 (defwidget dashboard []
   (box :class "pop dash dashboard" :orientation "h" :space-evenly true :spacing 24
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     (box :orientation "v" :space-evenly false :spacing 24 :valign "start"
       (box :orientation "v" :space-evenly false :spacing 4
         (label :class "dash-time" :halign "start" :text {formattime(EWW_TIME, "%H:%M")})
@@ -603,6 +611,7 @@
 ;; portrait screens: the same blocks in one scrolling column, the key hint under the track
 (defwidget dashboard-long []
   (box :class "pop dash dash-long" :orientation "v" :space-evenly false
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     (scroll :vscroll true :hscroll false :vexpand true
       (box :orientation "v" :space-evenly false :spacing 24
         (box :orientation "v" :space-evenly false :spacing 4
@@ -654,6 +663,7 @@
 
 (defwidget expose-view []
   (box :class "pop dash" :orientation "v" :space-evenly false :spacing 14
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     (box :space-evenly false
       (label :class "pop-title" :halign "start" :hexpand true :text "expose")
       (label :class "dim hint" :halign "end" :text {picked != "" ? "now click a workspace, or + new workspace, to put it there  ·  right-click it again to cancel   " : "click a window to jump to it  ·  right-click one to move it to another workspace or a new one   "})
@@ -713,6 +723,7 @@
 
 (defwidget layoutpop []
   (box :class "pop" :orientation "v" :space-evenly false :spacing 10
+    :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
     (label :class "pop-title" :halign "start" :text "layout of the focused window")
     (box :spacing 8
       (lay-card :id "h" :name "Horizontal" :key "H" :desc "side by side")
@@ -754,6 +765,7 @@
   (eventbox :timeout "10s" :onhover "eww update bat_pop=true"
             :onhoverlost "eww update bat_pop=false && ~/.config/eww/scripts/popclose batpop bat"
     (box :class "pop" :orientation "v" :space-evenly false :spacing 12
+      :style "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
       (label :class "pop-title" :halign "start" :text "battery")
       (for d in {bat.devices}
         (bat-row :name {d.name} :kind {d.kind} :pct {d.pct} :state {d.state} :time {d.time} :icon {d.icon}))

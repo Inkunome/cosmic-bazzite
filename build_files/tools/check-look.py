@@ -80,7 +80,12 @@ TOP_FORMS = {"defwidget", "defwindow", "defvar", "defpoll", "deflisten", "includ
 # where the data-driven icon names of eww.yuck come from (expression -> source); anything else must be a literal
 ICON_DATA = {"bat.icon": "battery", "d.icon": "battery"}
 
-GRIDS = {"vine-bottom": (48, 12)}
+GRIDS = {"vine-bottom": (48, 12), "panel-frame": (28, 28)}
+# the panel frame carries the panels' translucent fill: its paths may say fill-opacity, which must be $widget-alpha
+TRANSLUCENT_ICONS = {"panel-frame"}
+# every floating panel (a box of class "pop") takes its notched frame from this inline style (eww.scss cannot: eww loads
+# the stylesheet as text, so a relative url() there does not resolve)
+PANEL_STYLE = "border-image-source: url('${EWW_CONFIG_DIR}/icons/panel-frame.svg');"
 ROOT_ATTRS = {"width", "height", "viewBox", "shape-rendering"}
 NS = "{http://www.w3.org/2000/svg}"
 
@@ -482,13 +487,31 @@ def cmd_yuck(root, base):
                     err(f"eww.yuck:{line_of(src, tok[2])}: an icon path without a .svg name: {text}")
     referenced |= builtin_dock_ids(root)
 
+    # every floating panel has the notched frame: a box of class "pop" carries exactly PANEL_STYLE
+    panels = 0
+    for top in forms:
+        for f in walk(top):
+            if head(f) != "box":
+                continue
+            kw = kwargs(f)
+            cls = kw.get("class")
+            if cls is None or is_form(cls) or cls[0] != "str" or "pop" not in cls[1].split():
+                continue
+            panels += 1
+            style = kw.get("style")
+            if style is None or is_form(style) or style[1] != PANEL_STYLE:
+                err(f"eww.yuck:{line_of(src, f[2])}: a .pop box without the panel frame's :style \"{PANEL_STYLE}\"")
+    if not panels:
+        err("eww.yuck: no .pop box found (the floating panels)")
+
     files = {f[:-4] for f in os.listdir(os.path.join(root, EWW, "icons")) if f.endswith(".svg")}
     for n in sorted(referenced - files):
         err(f"icon '{n}.svg' can be asked for by eww.yuck and does not exist")
     for n in sorted(files - referenced):
         err(f"icon '{n}.svg' exists and nothing references it")
     finish(f"eww.yuck parses ({len(widgets)} widgets, {len(windows)} windows, the windows of {base} kept); "
-           f"{len(referenced)} icon names resolved, all present, all {len(files)} files referenced")
+           f"{len(referenced)} icon names resolved, all present, all {len(files)} files referenced; "
+           f"{panels} panels carry the notched frame")
 
 
 # ── 5. svg ──
@@ -535,6 +558,8 @@ def path_points(d, where):
 
 def cmd_svg(root):
     colours = {v.upper() for v in TOKENS.values()}
+    m = re.search(r"^\$widget-alpha:\s*([0-9.]+);", read(root, EWW + "/_tokens.scss"), flags=re.M)
+    widget_alpha = m.group(1) if m else None
     folder = os.path.join(root, EWW, "icons")
     names = sorted(f for f in os.listdir(folder) if f.endswith(".svg"))
     for name in names:
@@ -565,8 +590,12 @@ def cmd_svg(root):
                 continue
             if list(el):
                 err(f"{where}: a path with children")
-            for a in set(el.attrib) - {"fill", "d", "fill-rule"}:
+            allowed = {"fill", "d", "fill-rule"} | ({"fill-opacity"} if name[:-4] in TRANSLUCENT_ICONS else set())
+            for a in set(el.attrib) - allowed:
                 err(f"{where}: attribute {a} on path")
+            if "fill-opacity" in el.attrib and el.get("fill-opacity") != widget_alpha:
+                err(f"{where}: fill-opacity {el.get('fill-opacity')} is not $widget-alpha {widget_alpha} (run "
+                    "build_files/tools/pixel-panel-frame.py)")
             if (el.get("fill") or "").upper() not in colours:
                 err(f"{where}: fill {el.get('fill')} is not a token colour")
             if el.get("fill-rule", "nonzero") not in ("nonzero", "evenodd"):

@@ -1,8 +1,10 @@
 // Ink desktop, Pixel Guild look: the Inkunome design system's pixel register, dark theme.
-// Every colour comes from _tokens.scss; this file writes none. Square corners, hard borders.
+// Every colour comes from _tokens.scss; this file writes none. Hard borders; the floating panels have the design's
+// notched pixel corners (below), everything else is square.
 // The widgets' backgrounds are translucent (the owner's choice of 2026-11-12): a top-level surface goes through widget()
 // below ($widget-alpha of _tokens.scss), a block inside one through block() ($block-alpha); frames, shadows, text,
-// icons, accent and status fills, meters and the pressed and selected states stay opaque. sway keeps blur off: what is behind shows through as it is.
+// icons, accent and status fills, meters and the pressed and selected states stay opaque. sway keeps blur off: what is
+// behind shows through as it is.
 // GTK 3 CSS: no gap, no flexbox, no CSS variables. Spacing comes from margin, padding and the :spacing of eww.yuck.
 @import "tokens";
 
@@ -95,9 +97,31 @@ $pixel: "Pixelify Sans", monospace;
 .strip-btn:hover { background-color: $accent-tint; }
 
 // ── Flyouts and panels ──
-// A panel is a square with a 3 px frame and a hard shadow. The shadow is drawn inside the layer surface: the 6 px right
-// and bottom margin leaves it room.
-.pop { background-color: widget($surface); border: 3px solid $fg; padding: 14px 16px; margin: 0 6px 6px 0; box-shadow: 4px 4px 0 $line; }
+// Every floating panel (flyouts, quick settings, launcher, dashboard, expose, the layout picker) is a .pop, with the
+// design's notched pixel corner (restored at the owner's request on 2026-11-12). GTK 3 has no clip-path, so the frame is
+// one nine-slice border image, icons/panel-frame.svg, drawn by build_files/tools/pixel-panel-frame.py from the tokens
+// (its path is set on each panel in eww.yuck, with ${EWW_CONFIG_DIR}: eww loads this stylesheet as text, so a relative
+// url() here does not resolve; check-look requires the same :style on every .pop box):
+// a 3 px fg frame round a rectangle with an 8 x 8 px square cut out of each corner, steps included; the same outline
+// 4 px right and down in line for the hard shadow; and inside the frame the band down to the padding box, in the
+// panel's translucent fill. The cut corners stay transparent. The padding box is filled by background-color, clipped
+// to it, so the image and the background meet edge to edge and nothing is painted twice (no darker seam).
+// The borders are the image's slices: 12 px at the top and the left (3 px frame + 9 px band), 15 px at the right and the
+// bottom (4 px shadow + 3 px frame + 8 px band). The content keeps its distance to the frame (the panel's padding minus
+// the band), and the 2 px right and bottom margin plus the 4 px shadow leave the frame where the old 6 px margin left it.
+// $widget-alpha changes the image too: run pixel-panel-frame.py after changing it (check-look says so if forgotten).
+@mixin panel-padding($v, $h) { padding: ($v - 9px) ($h - 8px) ($v - 8px) ($h - 9px); }
+.pop {
+  border-style: solid;
+  border-width: 12px 15px 15px 12px;
+  border-color: $fg;
+  border-image-slice: 12 15 15 12;
+  border-image-repeat: repeat;
+  background-color: widget($surface);
+  background-clip: padding-box;
+  margin: 0 2px 2px 0;
+  @include panel-padding(14px, 16px);
+}
 .pop-title { font-family: $pixel; font-weight: 600; font-size: 18px; color: $accent; }
 .dim { color: $muted; }
 // data in IBM Plex Mono: percentages, key hints (window titles: .strip-win, .ecard .dim)
@@ -158,11 +182,11 @@ calendar:indeterminate { color: $muted; }
 calendar.highlight { color: $muted; font-weight: bold; }
 
 // ── Launcher, dashboard, expose ──
-.dash { padding: 20px; }
-.dash-long { padding: 16px 18px; }
+.dash { @include panel-padding(20px, 20px); }
+.dash-long { @include panel-padding(16px, 18px); }
 
 // Dashboard: two equal columns (time, date, calendar | notifications, system, media)
-.dashboard { padding: 28px; }
+.dashboard { @include panel-padding(28px, 28px); }
 .dash-time { font-family: $pixel; font-weight: 600; font-size: 96px; color: $fg; }
 .dash-long .dash-time { font-size: 96px; }
 .dash-date { font-family: $mono; font-size: 14px; color: $muted; }
