@@ -5,7 +5,7 @@ dynamic_padding = true         # share the leftover pixels evenly instead of lea
 
 # Pixel Guild colours: the design system's tokens, from ~/.config/eww/_tokens.scss
 [colors.primary]
-background = "#20173A"   # surface
+background = "#0C0818"   # sunken (darker than surface: the owner's choice for the terminal)
 foreground = "#F3ECFF"   # fg
 
 [colors.cursor]
