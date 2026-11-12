@@ -80,7 +80,7 @@ TOP_FORMS = {"defwidget", "defwindow", "defvar", "defpoll", "deflisten", "includ
 # where the data-driven icon names of eww.yuck come from (expression -> source); anything else must be a literal
 ICON_DATA = {"bat.icon": "battery", "d.icon": "battery"}
 
-GRIDS = {"inkwell": (11, 8), "vine-bottom": (48, 12)}
+GRIDS = {"vine-bottom": (48, 12)}
 ROOT_ATTRS = {"width", "height", "viewBox", "shape-rendering"}
 NS = "{http://www.w3.org/2000/svg}"
 

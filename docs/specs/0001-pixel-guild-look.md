@@ -129,7 +129,7 @@ The `ring` and `media-card` widgets go if nothing uses them any more. A new smal
 
 ### Other changes in `eww.yuck`
 
-- The quick-settings pill shows `inkwell.svg` instead of `paw.svg` (delete `paw.svg`).
+- The quick-settings pill keeps the paw, by the owner's choice of 2026-11-12: `paw.svg`, redrawn on the 12×12 grid, shown at 24 px.
 - Icon sizes become whole multiples of 12 px: 12, 24 or 36. This applies to the Ink icons, with one exception for application icons: in the dock of a portrait screen every icon is 36 px, system theme included, and every button is 48 px (36 px + 6 px padding a side, the minimised window's initial included), so the dock is exactly 76 px tall (48 + 2 × 3 px margin + 2 × 8 px padding + 2 × 3 px border), as tall as the big clock and the workspace box beside it. Elsewhere, application icons from the system theme keep their sizes (20 px in the bottom strip).
 - The labels of `.ws` and `.layout`, the privacy words and the player's icons, as said above.
 
@@ -137,17 +137,17 @@ The `ring` and `media-card` widgets go if nothing uses them any more. A new smal
 
 Every SVG under `eww/icons/` is redrawn; file names stay unless said otherwise, so the scripts that build icon names (`battery`, `launch`, `apps`) keep working.
 
-- **Grid**: `viewBox="0 0 12 12"`, `shape-rendering="crispEdges"`, only rectangles or axis-aligned paths on whole coordinates. `inkwell.svg` is the exception, on its own 11×8 grid.
+- **Grid**: `viewBox="0 0 12 12"`, `shape-rendering="crispEdges"`, only rectangles or axis-aligned paths on whole coordinates.
 - **Where the design system already has the icon** (bell, lock, search, home, user, key, shield, clock, package, and others), use its grid: `icons/icons.txt` in the design system's repository (`#` is a filled cell). Draw the rest on the same grid, in the same weight (2-cell strokes, solid shapes).
 - **Colours are written in the file** (an eww image takes no stylesheet), from the tokens only:
   - `fg`: terminal, browser, files, settings, bell, vol-high, vol-low, the layout icons, lock, suspend, logout, reboot, prev, play, pause, next, cpu, the battery's outline.
-  - `accent`: launcher, dashboard, coffee-on, the dot of bell-dot, the inkwell (with one `fg` shine cell).
+  - `accent`: launcher, dashboard, coffee-on, the dot of bell-dot, the paw.
   - `muted`: coffee (off), bell-off.
   - `bad`: vol-muted, power-poweroff, the fill of battery-0.
   - `warn`: privacy-mic, privacy-cam, privacy-screen, the fill of battery-20.
   - `px-body`: the fill of the other batteries; `gold`: the bolt of the charging ones, except on battery-20-charging, whose bolt is `fg` because its `warn` fill has the same value as `gold`.
   - power-suspend is a crescent moon.
-- **The inkwell** (11×8): `M4 0h3v2h-3zM2 2h7v1h-7zM1 3h9v4h-9zM2 7h7v1h-7z` in `accent`, and `M3 4h1v1h-1z` in `fg`.
+- **The paw** (kept by the owner's choice of 2026-11-12, in place of the inkwell first drawn for the quick-settings pill): two inner toes, two outer toes and the pad, `M3 1h2v2h-2zM7 1h2v2h-2zM1 3h2v2h-2zM9 3h2v2h-2zM4 5h4v1h-4zM3 6h6v1h-6zM2 7h8v2h-8zM2 9h3v1h-3zM7 9h3v1h-3z` in `accent`.
 - **The bramble**, `vine-bottom.svg`, a 48×12 tile: `M0 3h12v3h-12zM12 6h12v3h-12zM24 3h12v3h-12zM36 0h12v3h-12zM9 6h3v3h-3zM33 6h3v3h-3z` in `px-body`; `M18 0h6v3h-6zM18 9h3v3h-3z` in `accent`; `M42 3h3v3h-3z` in `gold`.
 - Icons already drawn for the design, to reuse as they are (12×12 paths):
   - terminal `M1 2h10v1h-10zM1 3h1v7h-1zM10 3h1v7h-1zM1 10h10v1h-10zM3 5h1v1h-1zM4 6h1v1h-1zM3 7h1v1h-1zM6 8h3v1h-3z`

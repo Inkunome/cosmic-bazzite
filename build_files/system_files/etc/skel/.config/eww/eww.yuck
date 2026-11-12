@@ -95,7 +95,7 @@
       (eventbox :timeout "10s" :onhover "~/.config/eww/scripts/popopen quick qs ${mon}"
                 :onhoverlost "eww update qs_pill=false && ~/.config/eww/scripts/popclose quick qs"
         ;; the inkwell, the design system's mark, drawn on its own 11 x 8 grid at twice its size
-        (box :class "pill qs" (image :path "${EWW_CONFIG_DIR}/icons/inkwell.svg" :image-width 22 :image-height 16))))))
+        (box :class "pill qs" (image :path "${EWW_CONFIG_DIR}/icons/paw.svg" :image-width 24 :image-height 24))))))
 
 ;; A pixel bramble (stem, thorns, a flower, a berry) runs along the bottom edge of the bar.
 ;; It sits below the bar, so it never covers any widget.
