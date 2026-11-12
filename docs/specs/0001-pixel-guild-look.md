@@ -42,11 +42,12 @@ Source: the design system's `tokens.json` (repository `inkunome-design`, commit 
 | `bad` | `#FF8A80` | `$amanita` |
 | `ok` | `#6FD6A0` | (terminal green only) |
 | `info` | `#A9B8FF` | (terminal blue only) |
+| `widget-alpha` | `0.85` | the opacity of the widgets' backgrounds (below) |
 
 Rules that hold everywhere:
 
 - **Every corner is square**: no `border-radius` other than 0, in eww, sway (`corner_radius 0`), mako, fuzzel.
-- **Nothing is translucent, nothing is blurred**: no `rgba()`, no alpha in a colour, `blur disable` in sway, no `layer_effects` blur.
+- **The widgets' backgrounds are translucent, nothing is blurred** (the owner's choice of 2026-11-12, replacing "nothing is translucent"): one value, `$widget-alpha` in `_tokens.scss` (0.85), applied through one helper of `eww.scss`, `widget()`, which derives the translucent colour from the token. Translucent: the `surface` of every floating panel, of the bar's chips (pills, workspace chips, the strip's chips) and of the dock, and the `bg` blocks inside panels (tiles, buttons, the search field, the calendar, notification and media blocks, expose's thumbnails and headers, key caps), each with its own token; the screenshot menu's background (fuzzel) carries the same alpha as its alpha byte. Opaque: frames, the hard shadows, text, icons, accent and status fills (the focused workspace, the privacy chip, selected and pressed states), meters, the lock screen and mako's notifications. A border that only reserves room inside a translucent fill takes the token at alpha 0 so the fill does not double under it. No `rgba()` is written in `eww.scss`; `blur disable` in sway, no `layer_effects` blur. Worst-case contrast at 0.85 over pure white: `fg` text 9.26:1, `muted` 4.17:1, `accent` 4.36:1.
 - **No gradient, no soft shadow.** A shadow is a hard offset: 4 px right and down, in `line`.
 - **Borders**: 3 px for windows and panels (`fg` for a panel, `accent` for the focused window, `line` for the others), 2 px for controls (`muted` for a control at rest, `accent` when on or selected). `line` is decoration and never the only boundary of a control.
 - **Status always carries a word** or an explicit label, never colour alone. The accent is never a status colour.
@@ -192,7 +193,7 @@ In swayfx 0.6 the shadow radius is the blur sigma of the shader, which divides b
 ## The other files
 
 - **mako**: IBM Plex Sans 10; `surface` background (opaque); `fg` text; `fg` border, 3 px, radius 0; progress colour `line`; high urgency border `bad`.
-- **fuzzel** (screenshot menu, clipboard): IBM Plex Mono 13; background `surface`, text `fg`, match `accent`, selection `accent` with `on-accent` text and match, border `fg` 3 px, radius 0.
+- **fuzzel** (screenshot menu, clipboard): IBM Plex Mono 13; background `surface` at `$widget-alpha` (alpha byte `d9`), text `fg`, match `accent`, selection `accent` with `on-accent` text and match, border `fg` 3 px, radius 0.
 - **swaylock**: IBM Plex Mono; the ring and inside colours mapped from the table above (`bg` screen, `surface` inside, `line` ring, `accent` key highlight and verifying, `bad` backspace and wrong).
 - **alacritty**: a `[colors]` section: background `surface`, foreground `fg`, cursor `accent`; ANSI red `bad`, green `ok`, yellow `warn`, blue `info`, magenta `accent`, cyan `px-highlight`, black `bg`, white `fg` (bright black `muted`; the other bright colours the same as normal). No font change.
 - **zellij** (`themes/ink.kdl`): the same mapping; the theme's name stays `ink`.
@@ -213,7 +214,7 @@ A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on 
 
 1. `eww.scss` compiles with `grass` (the Sass compiler eww embeds), installed into a scratch folder with `cargo install grass --locked --root <scratch>`; if that cannot be installed offline or online, say so and use another Sass compiler, naming it.
 2. In `eww.scss` and `eww.yuck`: no colour literal (`#rgb`, `#rrggbb`, `rgb(`, `rgba(`, a CSS colour name used as a colour); in `eww.scss` no `border-radius` other than 0; no `gap:`, `clip-path`, `display:`, `var(`.
-3. `_tokens.scss` holds exactly the table's values.
+3. `_tokens.scss` holds exactly the table's values, `$widget-alpha` included (a number in (0, 1]).
 4. `eww.yuck`: parentheses and strings balanced; every widget used is defined and every defined widget is used; every icon path it can produce exists (including the names built from data: the battery icons that `scripts/battery` can print, `launcher` and `dashboard`, the built-in dock ids, `lay-h|v|t|s`, `power-lock|suspend|logout|reboot|poweroff`); every icon file is referenced.
 5. Every SVG is well-formed, on its grid, with whole coordinates and token colours only.
 6. The sway configuration's `bindsym`, `bindcode` and `mode` lines are identical to `main`'s; it contains no `blur` setting other than `blur disable`, no `corner_radius` other than 0, no `layer_effects`, and a `shadow_blur_radius` of at least 1 (0 is undefined in swayfx).
@@ -221,7 +222,7 @@ A script `build_files/tools/check-look.sh` runs all of it and exits non-zero on 
 8. The wallpaper script run twice gives the same bytes as the committed PNG, which is 3840×2160.
 9. Every shipped font file is `.ttf` or `.otf`; `fc-scan` reads each one; `pango-list`, with fontconfig pointed at a copy holding only the shipped fonts, lists each family; the package names in `build.sh` exist in Fedora's repositories.
 10. `shellcheck` passes on every script added or changed.
-11. Every colour copied into the sway look section, mako, fuzzel, swaylock, alacritty and zellij is a token value and opaque (the one exception: sway's fully transparent `shadow_inactive_color`).
+11. Every colour copied into the sway look section, mako, fuzzel, swaylock, alacritty and zellij is a token value and opaque (the exceptions: sway's fully transparent `shadow_inactive_color`, and fuzzel's background, whose alpha byte must be `$widget-alpha`).
 12. Every key of the swaylock, mako and fuzzel files, and every option of the sway look section, is on an allow-list holding exactly the keys in use, each verified against the program's man page; a new key fails until it is verified and added on purpose.
 13. The set of distinct commands in the `:on…` attributes of `eww.yuck` equals `main`'s.
 14. Every variable an `eww.yuck` expression or `${…}` interpolation reads is defined (a `defvar`, `defpoll` or `deflisten`, a parameter in scope, a `for` variable, an `EWW_*` built-in), every function called is one of eww's, and every expression has a plausible shape (balanced, no two operands or operators in a row, each `?` with its `:`). Best effort, with a tokenizer of the script's own, not eww's parser.

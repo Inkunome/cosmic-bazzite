@@ -173,6 +173,14 @@ def cmd_tokens(root):
         s = line.strip()
         if not s or s.startswith("//"):
             continue
+        a = re.fullmatch(r"\$widget-alpha:\s*([0-9.]+);", s)
+        if a:
+            if "widget-alpha" in found:
+                err(f"_tokens.scss:{n}: widget-alpha defined twice")
+            found["widget-alpha"] = a.group(1)
+            if not (re.fullmatch(r"0?\.\d+|1(\.0+)?", a.group(1)) and 0 < float(a.group(1)) <= 1):
+                err(f"_tokens.scss:{n}: $widget-alpha {a.group(1)} is not a number in (0, 1]")
+            continue
         m = re.fullmatch(r"\$([a-z-]+):\s*(#[0-9A-Fa-f]{6});", s)
         if not m:
             err(f"_tokens.scss:{n}: not a token line: {s}")
@@ -183,9 +191,11 @@ def cmd_tokens(root):
     for k, v in TOKENS.items():
         if found.get(k) != v:
             err(f"_tokens.scss: ${k} is {found.get(k)}, the spec says {v}")
-    for k in found.keys() - TOKENS.keys():
+    if "widget-alpha" not in found:
+        err("_tokens.scss: no $widget-alpha (the one value of the widgets' translucency)")
+    for k in found.keys() - TOKENS.keys() - {"widget-alpha"}:
         err(f"_tokens.scss: ${k} is not in the spec's table")
-    finish(f"_tokens.scss holds exactly the {len(TOKENS)} values of the table")
+    finish(f"_tokens.scss holds exactly the {len(TOKENS)} values of the table and $widget-alpha")
 
 
 # ── 4. yuck ──
@@ -672,8 +682,15 @@ def strip_hash_comment(line, kind):
     return re.sub(r"\s*//.*$", "", line)
 
 
-def colour_ok(hexval, where, allow_transparent=False):
-    """hexval: 6 or 8 hex digits. A token value, opaque (alpha FF when written)."""
+def widget_alpha_byte(root):
+    """$widget-alpha of _tokens.scss as the alpha byte a RRGGBBAA colour carries (0.85 -> D9)."""
+    m = re.search(r"^\$widget-alpha:\s*([0-9.]+);", read(root, EWW + "/_tokens.scss"), flags=re.M)
+    return f"{round(float(m.group(1)) * 255):02X}" if m else None
+
+
+def colour_ok(hexval, where, allow_transparent=False, allow_alpha=None):
+    """hexval: 6 or 8 hex digits. A token value, opaque (alpha FF when written), or with allow_alpha (the widgets'
+    alpha byte) for a widget background."""
     tokens = {v[1:].upper() for v in TOKENS.values()}
     h = hexval.upper()
     if len(h) not in (6, 8):
@@ -681,8 +698,9 @@ def colour_ok(hexval, where, allow_transparent=False):
         return
     if h[:6] not in tokens:
         err(f"{where}: colour {hexval} is not a token value (eww/_tokens.scss)")
-    if len(h) == 8 and h[6:] != "FF" and not (allow_transparent and h[6:] == "00"):
-        err(f"{where}: colour {hexval} is not opaque")
+    if len(h) == 8 and h[6:] != "FF" and not (allow_transparent and h[6:] == "00") and h[6:] != (allow_alpha or "FF"):
+        err(f"{where}: colour {hexval} is not opaque" + (f" (a widget background may carry {allow_alpha}, "
+                                                         "$widget-alpha of _tokens.scss)" if allow_alpha else ""))
 
 
 def cmd_copied(root):
@@ -709,7 +727,9 @@ def cmd_copied(root):
                     if not re.fullmatch(r"[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?", value):
                         err(f"{where}: {key}={value} is not RRGGBB or RRGGBBAA")
                     else:
-                        colour_ok(value, where)
+                        # the screenshot menu's background is a widget background: the widgets' alpha, nothing else
+                        widget_bg = kind == "fuzzel" and key == "background"
+                        colour_ok(value, where, allow_alpha=widget_alpha_byte(root) if widget_bg else None)
                         count += 1
                 elif re.search(r"#?\b[0-9A-Fa-f]{6}\b", value) and re.search(r"[0-9]", value):
                     err(f"{where}: a colour-like value outside the colour keys: {key}={value}")
@@ -722,7 +742,8 @@ def cmd_copied(root):
             if re.search(r"\b(rgba?|hsla?)\(", line):
                 err(f"{where}: a colour function; write the token value")
     finish(f"{count} colours copied into sway (look section), mako, fuzzel, swaylock, alacritty and zellij: all token "
-           "values, all opaque (sway's transparent shadow_inactive_color excepted)")
+           "values, all opaque (sway's transparent shadow_inactive_color excepted, and fuzzel's background at "
+           f"$widget-alpha, {widget_alpha_byte(root)})")
 
 
 # ── 12. known keys ──
