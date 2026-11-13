@@ -12,8 +12,11 @@ reasons on failure.
   check-look.py --root DIR palette            no old palette value left under etc/skel/.config
   check-look.py --root DIR copied             colours copied into sway, mako, fuzzel, swaylock, alacritty, zellij
   check-look.py --root DIR keys               every key of swaylock, mako, fuzzel and the sway look section is known
-  check-look.py --root DIR commands --base REF  the :on... commands of eww.yuck are the same as REF's
+  check-look.py --root DIR commands --base REF  the :on... commands of eww.yuck are the same as REF's, apart from the
+                                              changes listed in COMMAND_CHANGES
   check-look.py --root DIR variables          every name read by an eww.yuck expression is defined
+  check-look.py --root DIR device-fields      no :on... command of eww.yuck takes more from an audio device than its
+                                              id or default flag (a self-test runs first)
   check-look.py png-size FILE W H             the PNG's size
 """
 import argparse
@@ -850,10 +853,17 @@ def yuck_commands(src):
     return out
 
 
+# commands changed on purpose: the base's command -> the command that replaces it (a base that already has the new
+# command is not affected). The default-device button passes the device's numeric id, never its name (step 15).
+COMMAND_CHANGES = {
+    "~/.config/eww/scripts/audio default ${kind} '${d.name}'": "~/.config/eww/scripts/audio default ${kind} ${d.id}",
+}
+
+
 def cmd_commands(root, base):
     try:
         new = yuck_commands(read(root, EWW + "/eww.yuck"))
-        old = yuck_commands(git_show(root, base, EWW + "/eww.yuck"))
+        old = {COMMAND_CHANGES.get(c, c) for c in yuck_commands(git_show(root, base, EWW + "/eww.yuck"))}
     except YuckError as e:
         err(f"eww.yuck: {e}")
         finish("")
@@ -1106,6 +1116,310 @@ def cmd_variables(root):
            "(globals, parameters, for variables, EWW_*); every expression has a plausible shape")
 
 
+# ── 15. no audio device name or description in a command of eww.yuck ──
+# Audio device names and descriptions are chosen by whichever program created the device, and eww runs a command
+# attribute with /bin/sh -c: a device may reach a command only through its id or its default flag (a number, a boolean).
+# A device source is any defpoll, deflisten or defvar one of whose strings runs pactl, wpctl, pw-dump, pw-cli or the
+# audio script (with any argument). The rule is exact: from a source variable a command may read only
+# VAR.sinks[INDEX].id or .default (or .sources), and from a device element (a for variable over a source variable or
+# over its sinks or sources list, or a parameter holding one) only ELEMENT.id or ELEMENT.default; any other read of a
+# source (the value itself, another field, a longer path, an index by a string or a computed key, a function of it, a
+# string built from it and passed on) fails.
+# Limit: a variable that a script fills only with `eww update` is invisible to this check, so no script may push audio
+# device data into eww that way.
+DEVICE_SAFE_FIELDS = {"id", "default"}
+DEVICE_LISTS = {"sinks", "sources"}
+# a string of a variable's definition that runs one of these makes the variable a device source
+DEVICE_TOOLS = re.compile(r"(?<![\w.-])(?:pactl|wpctl|pw-dump|pw-cli)(?![\w-])|(?<![\w.-])audio(?![\w./-])")
+# the variable the sound panel really uses: the check refuses to run without one (it would see no device)
+DEVICE_COMMAND = "scripts/audio devices"
+# what a read of a device source holds, after its path: the source variable itself, one of its device lists, a device
+# element, an id or default flag (the only thing a command may take), or anything else
+D_SOURCE, D_LIST, D_DEVICE, D_SAFE, D_OPAQUE = "source", "list", "device", "safe", "opaque"
+INDEX = None  # a path step that indexes by a computed value (a number, a variable), not by a string literal
+
+
+def device_advance(state, path):
+    """The state reached from `state` by the accessors of `path` (exact: one step out of the grammar is opaque)."""
+    for step in path:
+        if state == D_SOURCE and step in DEVICE_LISTS:
+            state = D_LIST
+        elif state == D_LIST and step is INDEX:
+            state = D_DEVICE
+        elif state == D_DEVICE and step in DEVICE_SAFE_FIELDS:
+            state = D_SAFE
+        else:
+            return D_OPAQUE
+    return state
+
+
+def device_element(state):
+    """What a for variable holds when it iterates a value in `state`."""
+    return D_DEVICE if state in (D_SOURCE, D_LIST) else D_OPAQUE
+
+
+def scan_index(text, i):
+    """text[i] is '['; return the index of the matching ']' (strings inside are skipped)."""
+    depth = 0
+    j = i
+    while j < len(text):
+        c = text[j]
+        if c in "\"'`":
+            j += 1
+            while j < len(text) and text[j] != c:
+                j += 2 if text[j] == "\\" else 1
+        elif c == "[":
+            depth += 1
+        elif c == "]":
+            depth -= 1
+            if depth == 0:
+                return j
+        j += 1
+    raise ExprError("'[' never closed")
+
+
+def expr_refs(text):
+    """(name, path) for every variable a simplexpr reads, its ${...} interpolations included. path lists the accessors
+    after the name: a field name, the key of an index by a string literal, or INDEX for any other index."""
+    out = []
+    i = 0
+    while i < len(text):
+        c = text[i]
+        if c in "\"'`":
+            j = i + 1
+            while j < len(text) and text[j] != c:
+                if text[j] == "\\":
+                    j += 2
+                    continue
+                if text.startswith("${", j):
+                    k = scan_expr(text, j + 1)
+                    out += expr_refs(text[j + 2:k])
+                    j = k + 1
+                    continue
+                j += 1
+            if j >= len(text):
+                raise ExprError("unterminated string")
+            i = j + 1
+        elif c.isdigit():
+            i += len(re.match(r"\d+(\.\d+)?", text[i:]).group(0))
+        elif c.isalpha() or c == "_":
+            name = re.match(r"[A-Za-z_][A-Za-z0-9_]*", text[i:]).group(0)
+            i += len(name)
+            if text[i:].lstrip().startswith("("):
+                continue  # a function: its arguments are read by the loop
+            path = []
+            while True:
+                m = re.match(r"\s*\??\.\s*([A-Za-z_][A-Za-z0-9_-]*)", text[i:])
+                if m:
+                    path.append(m.group(1))
+                    i += m.end()
+                    continue
+                m = re.match(r"\s*\[", text[i:])
+                if m:
+                    start = i + m.end() - 1
+                    end = scan_index(text, start)
+                    inner = text[start + 1:end].strip()
+                    lit = re.fullmatch(r"(['\"`])([^'\"`$\\]*)\1", inner)
+                    path.append(lit.group(2) if lit else INDEX)
+                    out += expr_refs(inner)
+                    i = end + 1
+                    continue
+                break
+            if name not in LITERAL_SYMS:
+                out.append((name, path))
+        else:
+            i += 1
+    return out
+
+
+def value_refs(tok):
+    """The (name, path) reads of an attribute value: an expression, a string's ${...}, or a bare name."""
+    if is_form(tok):
+        return []
+    kind, text = tok[0], tok[1]
+    if kind == "expr":
+        return expr_refs(text)
+    if kind == "str":
+        out = []
+        i = 0
+        while (i := text.find("${", i)) >= 0:
+            k = scan_expr(text, i + 1)
+            out += expr_refs(text[i + 2:k])
+            i = k + 1
+        return out
+    if kind == "sym" and not text.startswith(":") and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", text) \
+            and text not in LITERAL_SYMS:
+        return [(text, [])]
+    return []
+
+
+def device_reads(tok, taint):
+    """(name, path, states) for every read of a value that takes from a device source; `taint` maps a name to the
+    states it may hold, and `states` are the ones the read reaches after its path."""
+    return [(n, p, {device_advance(s, p) for s in taint[n]}) for n, p in value_refs(tok) if n in taint]
+
+
+def device_carried(tok, taint):
+    """The states a value built from `tok` carries (to a parameter, or to a for variable before iteration): everything
+    its device reads reach, except an id or a default flag, which is harmless wherever it goes."""
+    return {s for _, _, states in device_reads(tok, taint) for s in states} - {D_SAFE}
+
+
+def device_field_errors(src):
+    """(errors, number of commands checked, number of commands reading a device) for one eww.yuck source."""
+    errs = []
+    forms = [f for f in parse(src) if is_form(f)]
+    sources = set()
+    real = False
+    for f in forms:
+        if head(f) in ("defvar", "defpoll", "deflisten") and len(f[1]) > 1:
+            strings = [x[1] for x in f[1][2:] if not is_form(x) and x[0] == "str"]
+            if any(DEVICE_TOOLS.search(s) for s in strings):
+                sources.add(f[1][1][1])
+            real = real or any(DEVICE_COMMAND in s for s in strings)
+    if not real:
+        return [f"no variable is filled by '{DEVICE_COMMAND}': this check would see no device"], 0, 0
+    scopes = [(head(f), f[1][1][1], f) for f in forms if head(f) in ("defwidget", "defwindow")]
+    widgets = {name: {p.lstrip("?") for p in params} for name, (params, _) in defs(forms, "defwidget").items()}
+    tainted_params = {name: {} for name in widgets}
+
+    def add(taint, name, states):
+        """Add `states` to what `name` may hold; True when that grew."""
+        new = states - taint.get(name, set())
+        if new:
+            taint.setdefault(name, set()).update(new)
+        return bool(new)
+
+    def scope_taint(kind, name, f):
+        # a parameter of the same name hides a global; a for variable adds to what its name may hold in the whole scope
+        # (wider than eww's own scoping, so it can only add failures, never hide a read)
+        hidden = widgets.get(name, set()) if kind == "defwidget" else set()
+        t = {s: {D_SOURCE} for s in sources - hidden}
+        for p, states in tainted_params.get(name, {}).items():
+            add(t, p, states)
+        grew = True
+        while grew:
+            grew = False
+            for w in walk(f):
+                items = w[1]
+                if head(w) == "for" and len(items) >= 4 and items[1][0] == "sym":
+                    states = {device_element(s) for s in device_carried(items[3], t)}
+                    grew = add(t, items[1][1], states) or grew
+        return t
+
+    changed = True
+    while changed:
+        changed = False
+        for kind, name, f in scopes:
+            t = scope_taint(kind, name, f)
+            for w in walk(f):
+                callee = head(w)
+                if callee in widgets:
+                    for k, v in kwargs(w).items():
+                        if v is not None:
+                            changed = add(tainted_params[callee], k, device_carried(v, t)) or changed
+    commands = reading = 0
+    for kind, name, f in scopes:
+        t = scope_taint(kind, name, f)
+        for w in walk(f):
+            items = w[1]
+            for i, x in enumerate(items[:-1]):
+                if is_form(x) or x[0] != "sym" or not re.fullmatch(r":on[a-z]+", x[1]):
+                    continue
+                v = items[i + 1]
+                commands += 1
+                reads = device_reads(v, t)
+                if reads:
+                    reading += 1
+                for n, p, states in reads:
+                    if states == {D_SAFE}:
+                        continue
+                    what = n + "".join("[]" if s is INDEX else "." + s for s in p)
+                    errs.append(f"eww.yuck:{line_of(src, w[2])}: {x[1]} in {name} substitutes {what}, which takes "
+                                f"from an audio device more than its id or default flag: a command may read only "
+                                f"ELEMENT.id, ELEMENT.default, or VAR.sinks/sources[INDEX].id/default")
+    return errs, commands, reading
+
+
+DEVICE_SELF_TEST_HEAD = '(defpoll adev :interval "2s" "~/.config/eww/scripts/audio devices")\n'
+# (case, eww.yuck body, whether the check must fail on it)
+DEVICE_SELF_TESTS = [
+    ("name in single quotes", '(defwidget devices [kind items] (box (for d in items (button :onclick '
+     '"audio default ${kind} \'${d.name}\'" "x")))) (defwindow w (devices :kind "sink" :items {adev.sinks}))', True),
+    ("description", '(defwidget devs [items] (box (for d in items (button :onclick "x ${d.desc}" "y")))) '
+     '(defwindow w (devs :items {adev.sources}))', True),
+    ("index by a string", '(defwidget a [] (box (for d in {adev.sinks} (button :onclick "x ${d[\'name\']}" "y"))))',
+     True),
+    ("index by a computed key", '(defwidget a [k] (box (for d in {adev.sinks} (button :onclick "x ${d[k]}" "y"))))',
+     True),
+    ("the global itself", '(defwidget a [] (button :onrightclick "x ${adev.sinks[0].name}" "y"))', True),
+    ("through a parameter", '(defwidget b [cmd] (button :onclick cmd "y")) '
+     '(defwidget c [] (box (for d in {adev.sources} (b :cmd "set ${d.name}"))))', True),
+    ("an expression command", '(defwidget a [] (box (for d in {adev.sinks} '
+     '(button :onclick {d.default ? "" : "set ${d.desc}"} "y"))))', True),
+    ("the whole device", '(defwidget a [] (box (for d in {adev.sinks} (button :onmiddleclick "set ${d}" "y"))))', True),
+    ("a jq call", '(defwidget a [] (box (for d in {adev.sinks} (button :onclick "x ${jq(d, \'.name\')}" "y"))))', True),
+    ("on change", '(defwidget a [] (box (for d in {adev.sinks} (scale :onchange "x ${d.name} {}"))))', True),
+    ("a field of the name", '(defwidget a [] (box (for d in {adev.sinks} (button :onclick "x ${d.name.id}" "y"))))',
+     True),
+    ("a field of the description", '(defwidget a [] (box (for d in {adev.sinks} '
+     '(button :onclick "x ${d.desc.default}" "y"))))', True),
+    ("a field of the id", '(defwidget a [] (box (for d in {adev.sinks} (button :onclick "x ${d.id.x}" "y"))))', True),
+    ("the global with a longer path", '(defwidget a [] (button :onclick "x ${adev.sinks[0].id.x}" "y"))', True),
+    ("the global through a name", '(defwidget a [] (button :onclick "x ${adev.sinks[0].name.id}" "y"))', True),
+    ("the global without an index", '(defwidget a [] (button :onclick "x ${adev.sinks.id}" "y"))', True),
+    ("the global indexed without a list", '(defwidget a [] (button :onclick "x ${adev[0].id}" "y"))', True),
+    ("a list through a parameter, its name", '(defwidget b [items] (button :onclick "x ${items[0].name}" "y")) '
+     '(defwindow w (b :items {adev.sinks}))', True),
+    ("a device through a parameter, its name", '(defwidget b [dev] (button :onclick "x ${dev.name}" "y")) '
+     '(defwidget c [] (box (for d in {adev.sinks} (b :dev d))))', True),
+    ("a raw pactl poll, its name", '(defpoll raw :interval "2s" "pactl -f json list sinks") '
+     '(defwidget a [] (box (for d in raw (button :onclick "x ${d.name}" "y"))))', True),
+    ("another call of the audio script", '(defpoll s :interval "1s" "~/.config/eww/scripts/audio sink") '
+     '(defwidget a [] (button :onclick "x ${s.muted}" "y"))', True),
+    ("a wpctl poll itself", '(defpoll w :interval "1s" "wpctl status") (defwidget a [] (button :onclick "x ${w}" "y"))',
+     True),
+    ("a pw-dump listener through a parameter", '(deflisten pw "pw-dump --monitor") (defwidget b [cmd] '
+     '(button :onclick cmd "y")) (defwidget c [] (box (for n in pw (b :cmd "x ${n.info}"))))', True),
+    ("a pw-cli defvar", '(defvar pc "pw-cli ls Node") (defwidget a [] (button :onclick "x ${pc}" "y"))', True),
+    ("the id", '(defwidget devices [kind items] (box (for d in items (button :onclick '
+     '"audio default ${kind} ${d.id}" "x")))) (defwindow w (devices :kind "sink" :items {adev.sinks}))', False),
+    ("the id through a parameter", '(defwidget b [cmd] (button :onclick cmd "y")) '
+     '(defwidget c [] (box (for d in {adev.sources} (b :cmd "set ${d.id}"))))', False),
+    ("a label shows the description", '(defwidget a [] (box (for d in {adev.sinks} '
+     '(button :onclick "x ${d.id}" (label :text "${d.desc}")))))', False),
+    ("a name that is not a device", '(defwidget a [] (box (for ws in workspaces '
+     '(button :onclick "swaymsg workspace ${ws.name}" "y"))))', False),
+    ("the global spelled out", '(defwidget a [] (button :onclick "x ${adev.sinks[0].id} ${adev.sources[1].default}" '
+     '"y"))', False),
+    ("a list through a parameter, its id", '(defwidget b [items] (button :onclick "x ${items[0].id}" "y")) '
+     '(defwindow w (b :items {adev.sinks}))', False),
+    ("a raw pactl poll, its id", '(defpoll raw :interval "2s" "pactl -f json list sinks") '
+     '(defwidget a [] (box (for d in raw (button :onclick "x ${d.id}" "y"))))', False),
+]
+
+
+def cmd_device_fields(root):
+    for case, body, must_fail in DEVICE_SELF_TESTS:
+        try:
+            got, _, _ = device_field_errors(DEVICE_SELF_TEST_HEAD + body)
+        except (YuckError, ExprError) as e:
+            got = [str(e)]
+        if bool(got) != must_fail:
+            err(f"self-test '{case}': the check {'missed it' if must_fail else 'refused it'} ({'; '.join(got)})")
+    if errors:
+        finish("")
+    src = read(root, EWW + "/eww.yuck")
+    try:
+        errs, commands, reading = device_field_errors(src)
+    except (YuckError, ExprError) as e:
+        errs, commands, reading = [f"eww.yuck: {e}"], 0, 0
+    for e in errs:
+        err(e)
+    finish(f"{len(DEVICE_SELF_TESTS)} self-test cases judged right; none of the {commands} :on... commands of eww.yuck "
+           f"takes more from an audio device than its id or default flag ({reading} read a device source)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
@@ -1134,6 +1448,8 @@ def main():
         cmd_commands(root, a.base)
     elif a.check == "variables":
         cmd_variables(root)
+    elif a.check == "device-fields":
+        cmd_device_fields(root)
     elif a.check == "png-size":
         cmd_png_size(a.args[0], int(a.args[1]), int(a.args[2]))
     else:

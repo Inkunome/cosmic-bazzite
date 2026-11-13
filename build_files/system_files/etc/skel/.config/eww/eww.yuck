@@ -243,12 +243,13 @@
         (scale :timeout "10s" :class "slider" :hexpand true :valign "center" :min 0 :max 101 :value val
                :onchange "~/.config/eww/scripts/audio set ${kind} {}")))))
 
-;; pick the default device: the current one is marked
+;; pick the default device: the current one is marked. The button passes the device's numeric id, never its name or
+;; description: those are chosen by whichever program created the device, and eww runs the command with /bin/sh -c
 (defwidget devices [kind items]
   (box :orientation "v" :space-evenly false :spacing 2
     (for d in items
       (button :timeout "10s" :class "dev ${d.default ? 'selected' : ''}"
-              :onclick "~/.config/eww/scripts/audio default ${kind} '${d.name}'"
+              :onclick "~/.config/eww/scripts/audio default ${kind} ${d.id}"
         (label :halign "start" :limit-width 42 :text "${d.default ? '●' : '○'}  ${d.desc}")))))
 
 (defwidget volpop []
