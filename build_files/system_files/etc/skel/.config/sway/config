@@ -188,7 +188,6 @@ exec ink-ssh-load
 exec nm-applet --indicator
 exec blueman-applet
 exec wl-paste --watch cliphist store
-exec wl-clip-persist --clipboard regular
 # never lock or blank the screen while a window is fullscreen (a video, a game): the window keeps the session awake as long as
 # it is fullscreen. Wayland windows have an app_id, XWayland ones (games under Wine, Steam) a class.
 for_window [app_id=".*"] inhibit_idle fullscreen

@@ -6,7 +6,6 @@ COPRS=(
     varlad/zellij
     swayfx/swayfx
     varlad/eww
-    leloubil/wl-clip-persist
 )
 
 ### Install packages
@@ -21,7 +20,6 @@ dnf5 install -y --setopt=install_weak_deps=False \
     ibm-plex-sans-fonts \
     ibm-plex-mono-fonts \
     zellij \
-    wl-clip-persist \
     swayfx \
     eww \
     swaybg \
