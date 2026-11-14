@@ -121,14 +121,14 @@ In the launcher, dashboard and expose, `Esc` closes the panel.
 
 ## Software kit
 
-Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varlad/zellij`, `leloubil/wl-clip-persist`; they are left disabled after the build.
+Installed in `build_files/build.sh`. COPRs: `swayfx/swayfx`, `varlad/eww`, `varlad/zellij`; they are left disabled after the build.
 
 | Role | Packages |
 | --- | --- |
 | Compositor and session | `swayfx`, `swaybg`, `swayidle`, `swaylock`, `kanshi`, `wlr-randr`, `wdisplays`, `xdg-desktop-portal-wlr`, `xdg-desktop-portal-gtk` |
 | Bar, dock, panels | `eww` |
 | Launcher and menus | `fuzzel`, `wlogout` |
-| Notifications and clipboard | `mako`, `cliphist`, `wl-clipboard`, `wl-clip-persist` |
+| Notifications and clipboard | `mako`, `cliphist`, `wl-clipboard` |
 | Screenshots | `grim`, `slurp`, `swappy` |
 | System | `brightnessctl`, `playerctl`, `pavucontrol`, `wlsunset`, `udiskie`, `network-manager-applet`, `nm-connection-editor`, `blueman`, `mate-polkit`, `system-config-printer` |
 | Apps and tools | `alacritty`, `zellij`, `thunar`, `jq`, `socat`, `nix` |
