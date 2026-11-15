@@ -3,10 +3,27 @@
 #   audio sink|source          {"vol":N,"muted":bool} of the default output / input (polled by eww)
 #   audio set <sink|source> N  set that volume to N %, and update the number shown next to the slider at once
 #   audio mute <sink|source>   toggle mute
-#   audio devices              {"sinks":[…],"sources":[…]}: every output / input with its description and which is the default
-#   audio default <sink|source> <name>   make a device the default, then refresh the flyout
+#   audio devices              {"sinks":[…],"sources":[…]}: every output / input with its id, description and which is the default
+#   audio default <sink|source> <id>   make the device with that id the default, then refresh the flyout
 #   audio sync                 push the current volumes and devices to eww (run when the flyout opens)
+#
+# Device names and descriptions are chosen by whichever program created the audio node: they never go into a command
+# string of the widgets. The widgets pass the device's id (the audio server's index, a number), and `default` accepts
+# only digits that are the id of a device of that kind in the server's current list.
 kind_target() { [[ $1 == sink ]] && echo @DEFAULT_AUDIO_SINK@ || echo @DEFAULT_AUDIO_SOURCE@; }
+# listed <sink|source>: the devices the panel lists for that kind, as a JSON array: the sinks, or the sources without the
+# monitors of the sinks. A device is kept only when its index is spelled as plain decimal digits (no sign, fraction,
+# exponent or leading zero) and is at most 4294967294 (indexes are 32-bit and 4294967295 is PA_INVALID_INDEX), so a
+# float spelling or an overflowing number never becomes an id. jq 1.7 and later keep a number's spelling, which
+# `tostring` shows: the check needs that (jq 1.6 would read 47.0 as 47).
+listed() {
+    local json
+    json=$(pactl -f json list "${1}s" 2>/dev/null) || return 1
+    jq -c --arg kind "$1" '[.[]
+        | select((.index | type) == "number" and .index <= 4294967294
+                 and (.index | tostring | test("^(0|[1-9][0-9]*)$")))
+        | select($kind == "sink" or ((.name // "") | endswith(".monitor") | not))]' <<<"$json"
+}
 state() {
     local t="@DEFAULT_AUDIO_${1^^}@" out vol muted
     out=$(wpctl get-volume "$t" 2>/dev/null) || { echo '{"vol":0,"muted":true}'; return; }
@@ -15,18 +32,34 @@ state() {
     echo "{\"vol\":$vol,\"muted\":$muted}"
 }
 devices() {
-    local ds dsrc
+    local ds dsrc sinks sources
     ds=$(pactl get-default-sink 2>/dev/null); dsrc=$(pactl get-default-source 2>/dev/null)
-    jq -nc \
-        --argjson sinks "$(pactl -f json list sinks 2>/dev/null || echo '[]')" \
-        --argjson sources "$(pactl -f json list sources 2>/dev/null || echo '[]')" \
-        --arg ds "$ds" --arg dsrc "$dsrc" '
+    sinks=$(listed sink) || sinks='[]'
+    sources=$(listed source) || sources='[]'
+    jq -nc --argjson sinks "$sinks" --argjson sources "$sources" --arg ds "$ds" --arg dsrc "$dsrc" '
         # PipeWire sometimes reports the description "(null)" (a webcam microphone does): fall back on the other names it has
         def nicename: if (.description // "") != "" and .description != "(null)" then .description
                    else (.properties["device.description"] // .properties["device.product.name"] // .properties["device.nick"]
                          // .properties["node.nick"] // .properties["alsa.card_name"] // .name) end;
-        {sinks:   [$sinks[]   | {name, desc: nicename, default: (.name == $ds)}],
-         sources: [$sources[] | select(.name | endswith(".monitor") | not) | {name, desc: nicename, default: (.name == $dsrc)}]}'
+        # the id is the server index, a JSON number (listed keeps only plain digits); the name is not printed (no widget
+        # needs it), it only decides which device is the default
+        {sinks:   [$sinks[]   | {id: .index, desc: nicename, default: (.name == $ds)}],
+         sources: [$sources[] | {id: .index, desc: nicename, default: (.name == $dsrc)}]}'
+}
+# set_default <sink|source> <id>: everything is checked before the first command runs
+set_default() {
+    local kind=$1 id=$2 list
+    [[ $kind == sink || $kind == source ]] || { echo "audio default: the kind must be sink or source" >&2; return 2; }
+    # digits only, listed one by one (a range such as 0-9 can match other characters in some locales)
+    case $id in
+        '' | *[!0123456789]*) echo "audio default: the id must be digits only" >&2; return 2 ;;
+    esac
+    list=$(listed "$kind") || { echo "audio default: cannot read the ${kind}s" >&2; return 1; }
+    jq -e --arg id "$id" 'any(.[]; (.index | tostring) == $id)' <<<"$list" >/dev/null \
+        || { echo "audio default: no $kind with id $id" >&2; return 1; }
+    # the checked digits go to pactl, never a name: a name could begin with "-" and be read as an option; the "--"
+    # before the command keeps every later argument an argument
+    pactl -- "set-default-$kind" "$id" || { echo "audio default: pactl refused $kind $id" >&2; return 1; }
 }
 sync() {
     local o i
@@ -47,8 +80,9 @@ case "${1:-}" in
         ;;
     devices) devices ;;
     default)
-        pactl "set-default-${2:?sink|source}" "${3:?name}"
+        (($# == 3)) || { echo "usage: audio default <sink|source> <id>" >&2; exit 2; }
+        set_default "$2" "$3" || exit
         sync ;;
     sync) sync ;;
-    *) sed -n '2,9p' "$0" >&2; exit 1 ;;
+    *) sed -n '2,8p' "$0" >&2; exit 1 ;;
 esac

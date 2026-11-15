@@ -7,7 +7,7 @@
 #   check-look.sh --strict   a missing tool is a failure too: every check must run (the acceptance mode)
 #
 # Stops at the first real failure. Tools: python3 and git (most checks), grass (the Sass compiler eww embeds:
-# cargo install grass --locked), fc-scan, dnf with network access (the font packages), shellcheck. Tools can be named
+# cargo install grass --locked), fc-scan, dnf with network access (the font packages), shellcheck, jq. Tools can be named
 # by path: GRASS=/path/to/grass SHELLCHECK=/path/to/shellcheck. BASE_REF is what the bindings, the eww windows and
 # commands, and the changed scripts are compared with; by default the merge base of HEAD and origin/main (or main).
 set -euo pipefail
@@ -181,11 +181,19 @@ needs python3 && check copied
 step 12 "every key of swaylock, mako, fuzzel and the sway look section is a known one"
 needs python3 && check keys
 
-step 13 "the commands of eww.yuck's :on... attributes are the same as $BASE_REF's"
+step 13 "the commands of eww.yuck's :on... attributes are the same as $BASE_REF's, apart from the listed changes"
 needs python3 git && check commands
 
 step 14 "every name an eww.yuck expression reads is defined, every expression has a plausible shape"
 needs python3 && check variables
+
+step 15 "no :on... command of eww.yuck substitutes an audio device's name or description"
+needs python3 && check device-fields
+
+step 16 "the sound panel's default-device button and script, against a fake audio server (test-audio.sh)"
+if needs jq; then
+    bash "$here/test-audio.sh" || fail "test-audio.sh"
+fi
 
 if ((skipped)); then
     printf '\nall checks that could run passed; %d skipped (run with --strict to require every tool)\n' "$skipped"
